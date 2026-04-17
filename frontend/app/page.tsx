@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import RdsForm     from "../components/RdsForm";
-import RecordsPage from "../components/RecordsPage";
+import dynamic from "next/dynamic";
+
+const RdsForm = dynamic(() => import("../components/RdsForm"), { ssr: false });
+const RecordsPage = dynamic(() => import("../components/RecordsPage"), { ssr: false });
 import { rdsSchema } from "../schema";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";

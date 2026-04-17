@@ -1,7 +1,7 @@
 "use client";
 import { useState, useRef } from "react";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL;
 
 async function extractFromBackend(type, content) {
   const res = await fetch(`${API_BASE}/extract`, {

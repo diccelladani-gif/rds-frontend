@@ -9,7 +9,11 @@ import FieldRenderer from "./FieldRenderer";
 import UploadZone from "./UploadZone";
 
 const DRAFT_KEY = "rds_draft_v2";
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+const API = process.env.NEXT_PUBLIC_API_URL || "";
+
+if (!API) {
+  console.error("API URL missing");
+}
 
 const sectionDesc = {
   "room-identity":          "Basic identification and classification of this room",
