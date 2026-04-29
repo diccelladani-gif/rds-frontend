@@ -12,11 +12,6 @@ const mammoth     = require("mammoth");
 const pdfjsLib    = require("pdfjs-dist/legacy/build/pdf.js");
 const AdmZip      = require("adm-zip");
 const sizeOf      = require("image-size");
-const { createClient } = require("@supabase/supabase-js");
-
-const SUPABASE_URL = process.env.SUPABASE_URL || "https://czgyxziunupgypvtkbod.supabase.co";
-const SUPABASE_KEY = process.env.SUPABASE_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN6Z3l4eml1bnVwZ3lwdnRrYm9kIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NzM2OTIxNCwiZXhwIjoyMDkyOTQ1MjE0fQ.azBkUIm_bJGXaz3wkvHNU5MnltTN4F2It8jo8ZUrD_I";
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 async function extractPdfText(base64) {
   const buf  = Buffer.from(base64, "base64");
@@ -95,34 +90,49 @@ function safeJson(str) {
   try { return JSON.parse(str); } catch { return {}; }
 }
 
-async function readAll() {
+function readAll() {
+  if (!fs.existsSync(FILE_PATH)) return [];
   try {
-    const { data, error } = await supabase
-      .from("rds_rooms")
-      .select("*")
-      .order("id", { ascending: true });
-    if (error) throw error;
-    return (data || []).map(row => ({
+    const wb = XLSX.readFile(FILE_PATH);
+    const ws = wb.Sheets[SHEET];
+    if (!ws) return [];
+    return XLSX.utils.sheet_to_json(ws).map(row => ({
       ...row,
       data: typeof row.data === "string" ? safeJson(row.data) : (row.data || {})
     }));
-  } catch(e) {
+  } catch (e) {
     console.error("readAll error:", e.message);
     return [];
   }
 }
 
-async function writeAll(rows) {
-  // writeAll is only used for bulk replace — not needed with Supabase (individual ops used)
-  return true;
+function writeAll(rows) {
+  try {
+    let wb = fs.existsSync(FILE_PATH) ? XLSX.readFile(FILE_PATH) : XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(
+      rows.map(r => ({ ...r, data: JSON.stringify(r.data || {}) }))
+    );
+    wb.Sheets[SHEET] = ws;
+    if (!wb.SheetNames.includes(SHEET)) XLSX.utils.book_append_sheet(wb, ws, SHEET);
+    XLSX.writeFile(wb, FILE_PATH);
+    return true;
+  } catch (e) {
+    console.error("writeAll error:", e.message);
+    return false;
+  }
 }
 
 // ─── USERS HELPER ─────────────────────────────────────────  ← NEW
 function readUsers() {
-  return [
-    { id: "EMP001", name: "Rohan", email: "rohan@rds.med", password: "123",  role: "admin",    department: "administration" },
-    { id: "EMP002", name: "Ravi",  email: "ravi@rds.med",  password: "1234", role: "reviewer", department: "clinical"       },
-  ];
+  if (!fs.existsSync(USERS_FILE)) return [];
+  try {
+    const wb = XLSX.readFile(USERS_FILE);
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    return XLSX.utils.sheet_to_json(ws);
+  } catch (e) {
+    console.error("readUsers error:", e.message);
+    return [];
+  }
 }
 
 // ─── PDF BUILDER ─────────────────────────────────────────
@@ -418,11 +428,10 @@ app.post("/auth/login", (req, res) => {
   }
 });
 
-
 // GET all records
-app.get("/data", async (req, res) => {
+app.get("/data", (req, res) => {
   try {
-    let rows = await readAll();
+    let rows = readAll();
     const { search, department, roomTypology, criticalityLevel, page=1, limit=20 } = req.query;
     if (search) {
       const q = search.toLowerCase();
@@ -445,17 +454,16 @@ app.get("/data", async (req, res) => {
 });
 
 // GET single record
-app.get("/data/:id", async (req, res) => {
+app.get("/data/:id", (req, res) => {
   try {
-    const { data, error } = await supabase.from("rds_rooms").select("*").eq("id", req.params.id).single();
-    if (error || !data) return res.status(404).json({error:"Record not found"});
-    data.data = typeof data.data === "string" ? safeJson(data.data) : (data.data || {});
-    res.json(data);
+    const row = readAll().find(r=>String(r.id)===req.params.id);
+    if(!row) return res.status(404).json({error:"Record not found"});
+    res.json(row);
   } catch{res.status(500).json({error:"Failed to fetch record"});}
 });
 
 // POST save
-app.post("/save", async (req, res) => {
+app.post("/save", (req, res) => {
   try {
     const newData = req.body;
     console.log("Saving RDS...");
@@ -471,38 +479,45 @@ app.post("/save", async (req, res) => {
         const filepath = path.join(IMAGE_DIR, filename);
         fs.writeFileSync(filepath, imgBuffer);
         imagePath = filepath;
-      } catch (e) { console.warn("Failed to save image:", e.message); }
+        console.log(`Image saved: ${filepath}`);
+      } catch (e) {
+        console.warn("Failed to save image:", e.message);
+      }
       delete newData.roomImage;
     }
-    if (imagePath) newData.imagePath = imagePath;
 
+    if (imagePath) {
+      newData.imagePath = imagePath;
+    }
+
+    const rows = readAll();
     const now = Date.now();
-    // Check duplicate
-    const { data: existing } = await supabase.from("rds_rooms")
-      .select("id").eq("roomcode", roomCode)
-      .gte("id", now - 30000).limit(1);
-    if (existing?.length) {
-      return res.status(201).json({ message: "Saved successfully", id: existing[0].id });
+    const recent = rows.find(r => r.roomCode === roomCode && (now - r.id) < 30000);
+    if (recent) {
+      console.log("Duplicate blocked:", roomCode);
+      if (imagePath) fs.unlinkSync(imagePath);
+      return res.status(201).json({ message: "Saved successfully", id: recent.id, record: recent });
     }
 
     const newRow = {
-      id:          String(now),
-      roomcode:    roomCode,
-      roomname:    newData.roomName   || newData.data?.roomName   || "",
+      id: now,
+      roomCode,
+      roomName:    newData.roomName   || newData.data?.roomName   || "",
       department:  newData.department || newData.data?.department || "",
       project:     newData.project    || newData.data?.project    || "",
-      createdat:   new Date().toISOString(),
-      updatedat:   new Date().toISOString(),
-      submittedby: newData._submittedBy || "system",
+      createdAt:   new Date().toISOString(),
+      updatedAt:   new Date().toISOString(),
+      submittedBy: newData._submittedBy || "system",
       status:      "submitted",
-      data:        JSON.stringify(newData)
+      data:        newData
     };
-
-    const { data: saved, error } = await supabase.from("rds_rooms").insert(newRow).select().single();
-    if (error) throw error;
-    saved.data = safeJson(saved.data);
+    rows.push(newRow);
+    if (!writeAll(rows)) {
+      if (imagePath) fs.unlinkSync(imagePath);
+      return res.status(500).json({ error: "Failed to write to disk" });
+    }
     console.log(`✓ Saved id=${now} roomCode=${roomCode}`);
-    res.status(201).json({ message: "Saved successfully", id: now, record: saved });
+    res.status(201).json({ message: "Saved successfully", id: now, record: newRow });
   } catch (e) {
     console.error("Save error:", e);
     res.status(500).json({ error: "Save failed: " + e.message });
@@ -510,25 +525,32 @@ app.post("/save", async (req, res) => {
 });
 
 // PUT update
-app.put("/data/:id", async (req, res) => {
+app.put("/data/:id", (req, res) => {
   try {
-    const updates = {
-      roomname:   req.body.roomName   || "",
-      department: req.body.department || "",
-      updatedat:  new Date().toISOString(),
-      data:       JSON.stringify(req.body)
-    };
-    const { data, error } = await supabase.from("rds_rooms").update(updates).eq("id", req.params.id).select().single();
-    if (error) throw error;
-    res.json({message:"Updated", record: data});
+    const rows=readAll(), idx=rows.findIndex(r=>String(r.id)===req.params.id);
+    if(idx===-1) return res.status(404).json({error:"Not found"});
+    rows[idx]={...rows[idx],...req.body,id:rows[idx].id,createdAt:rows[idx].createdAt,updatedAt:new Date().toISOString(),data:req.body};
+    writeAll(rows);res.json({message:"Updated",record:rows[idx]});
   } catch{res.status(500).json({error:"Failed to update"});}
 });
 
 // DELETE
-app.delete("/data/:id", async (req, res) => {
+app.delete("/data/:id", (req, res) => {
   try {
-    const { error } = await supabase.from("rds_rooms").delete().eq("id", req.params.id);
-    if (error) throw error;
+    const rows = readAll();
+    const idx = rows.findIndex(r => String(r.id) === req.params.id);
+    if (idx === -1) return res.status(404).json({ error: "Not found" });
+    const row = rows[idx];
+    if (row.data?.imagePath && fs.existsSync(row.data.imagePath)) {
+      try {
+        fs.unlinkSync(row.data.imagePath);
+        console.log(`Deleted image: ${row.data.imagePath}`);
+      } catch (e) {
+        console.warn("Failed to delete image:", e.message);
+      }
+    }
+    rows.splice(idx, 1);
+    writeAll(rows);
     res.json({ message: "Deleted" });
   } catch {
     res.status(500).json({ error: "Failed to delete" });
@@ -536,24 +558,23 @@ app.delete("/data/:id", async (req, res) => {
 });
 
 // GET stats
-app.get("/stats", async (_req, res) => {
+app.get("/stats", (_req, res) => {
   try {
-    const rows = await readAll();
-    const depts={}, typologies={}, criticalities={};
+    const rows=readAll(), depts={}, typologies={}, criticalities={};
     rows.forEach(r=>{
       const d=r.data||{};
-      if(d.department)       depts[d.department]               =(depts[d.department]              ||0)+1;
-      if(d.roomTypology)     typologies[d.roomTypology]        =(typologies[d.roomTypology]       ||0)+1;
-      if(d.criticalityLevel) criticalities[d.criticalityLevel] =(criticalities[d.criticalityLevel]||0)+1;
+      if(d.department)       depts[d.department]                =(depts[d.department]               ||0)+1;
+      if(d.roomTypology)     typologies[d.roomTypology]         =(typologies[d.roomTypology]        ||0)+1;
+      if(d.criticalityLevel) criticalities[d.criticalityLevel]  =(criticalities[d.criticalityLevel] ||0)+1;
     });
     res.json({total:rows.length,byDepartment:depts,byTypology:typologies,byCriticality:criticalities,recent:rows.slice(-5).reverse()});
   } catch{res.status(500).json({error:"Failed to compute stats"});}
 });
 
 // GET filter options
-app.get("/filter-options", async (_req, res) => {
+app.get("/filter-options", (_req, res) => {
   try {
-    const rows = await readAll();
+    const rows=readAll();
     res.json({
       departments:   [...new Set(rows.map(r=>r.data?.department      ||r.department).filter(Boolean))].sort(),
       typologies:    [...new Set(rows.map(r=>r.data?.roomTypology    ).filter(Boolean))].sort(),
@@ -564,40 +585,24 @@ app.get("/filter-options", async (_req, res) => {
 
 // ─── EXCEL EXPORTS ────────────────────────────────────────
 
-// ── Save buffer to Supabase Storage ──────────────────────
-async function saveToStorage(buf, filename, mimetype) {
-  try {
-    const { error } = await supabase.storage
-      .from("rds-exports")
-      .upload(filename, buf, { contentType: mimetype, upsert: true });
-    if (error) console.warn("Storage upload warn:", error.message);
-    else console.log(`✓ Saved to Supabase Storage: ${filename}`);
-  } catch(e) { console.warn("Storage upload failed:", e.message); }
-}
-
 app.get("/export/excel", async (req, res) => {
   try {
-    const rows = await readAll();
+    const rows=readAll();
     if(!rows.length) return res.status(404).json({error:"No records found"});
-    const filename = `RDS_All_${new Date().toISOString().slice(0,10)}.xlsx`;
     const wb=buildExcel(rows), buf=XLSX.write(wb,{type:"buffer",bookType:"xlsx"});
-    saveToStorage(buf, filename, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
     res.setHeader("Content-Type","application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-    res.setHeader("Content-Disposition",`attachment; filename="${filename}"`);
+    res.setHeader("Content-Disposition",`attachment; filename="RDS_All_${new Date().toISOString().slice(0,10)}.xlsx"`);
     res.send(buf);
   } catch(e){console.error(e);res.status(500).json({error:"Excel failed: "+e.message});}
 });
 
 app.get("/export/excel/:id", async (req, res) => {
   try {
-    const all  = await readAll();
-    const rows = all.filter(r=>String(r.id)===req.params.id);
+    const rows=readAll().filter(r=>String(r.id)===req.params.id);
     if(!rows.length) return res.status(404).json({error:"Record not found"});
-    const filename = `RDS_${rows[0].roomcode||rows[0].id}_${new Date().toISOString().slice(0,10)}.xlsx`;
     const wb=buildExcel(rows), buf=XLSX.write(wb,{type:"buffer",bookType:"xlsx"});
-    saveToStorage(buf, filename, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
     res.setHeader("Content-Type","application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-    res.setHeader("Content-Disposition",`attachment; filename="${filename}"`);
+    res.setHeader("Content-Disposition",`attachment; filename="RDS_${rows[0].roomCode||rows[0].id}.xlsx"`);
     res.send(buf);
   } catch(e){console.error(e);res.status(500).json({error:"Excel failed: "+e.message});}
 });
@@ -608,7 +613,7 @@ app.get("/export/csv", (_req, res) => res.redirect("/export/excel"));
 
 app.get("/export/pdf", async (req, res) => {
   try {
-    const rows = await readAll();
+    const rows = readAll();
     if (!rows.length) return res.status(404).json({ error: "No records found. Submit at least one RDS first." });
     console.log(`Generating PDF for ${rows.length} room(s)...`);
     const buf = await buildPDF(rows);
@@ -616,6 +621,7 @@ app.get("/export/pdf", async (req, res) => {
     res.setHeader("Content-Disposition", `attachment; filename="RDS_All_${new Date().toISOString().slice(0,10)}.pdf"`);
     res.setHeader("Content-Length", buf.length);
     res.send(buf);
+    console.log(`✓ PDF sent (${buf.length} bytes)`);
   } catch(e) {
     console.error("PDF error:", e);
     res.status(500).json({ error: "PDF generation failed: " + e.message });
@@ -624,14 +630,15 @@ app.get("/export/pdf", async (req, res) => {
 
 app.get("/export/pdf/:id", async (req, res) => {
   try {
-    const all  = await readAll();
-    const rows = all.filter(r => String(r.id) === req.params.id);
+    const rows = readAll().filter(r => String(r.id) === req.params.id);
     if (!rows.length) return res.status(404).json({ error: "Record not found" });
+    console.log(`Generating PDF for room ${rows[0].roomCode}...`);
     const buf = await buildPDF(rows);
     res.setHeader("Content-Type", "application/pdf");
-    res.setHeader("Content-Disposition", `attachment; filename="RDS_${rows[0].roomcode || rows[0].id}.pdf"`);
+    res.setHeader("Content-Disposition", `attachment; filename="RDS_${rows[0].roomCode || rows[0].id}.pdf"`);
     res.setHeader("Content-Length", buf.length);
     res.send(buf);
+    console.log(`✓ PDF sent (${buf.length} bytes)`);
   } catch(e) {
     console.error("PDF error:", e);
     res.status(500).json({ error: "PDF generation failed: " + e.message });

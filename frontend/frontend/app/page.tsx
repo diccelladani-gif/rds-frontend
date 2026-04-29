@@ -1,6 +1,5 @@
 "use client";
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import RdsForm     from "../components/RdsForm";
 import RecordsPage from "../components/RecordsPage";
 import { rdsSchema } from "../schema";
@@ -8,56 +7,23 @@ import { rdsSchema } from "../schema";
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 type View = "form" | "records" | "search";
 
-interface RDSUser {
-  name: string;
-  role: string;
-  email: string;
-}
-
-function Page() {
-  const router = useRouter();
-  const [currentUser,    setCurrentUser]    = useState<RDSUser | null>(null);
-  const [activeSection,  setActiveSection]  = useState(0);
-  const [completedCount, setCompletedCount] = useState(0);
-  const [sidebarJump,    setSidebarJump]    = useState<{idx:number,ts:number}|null>(null);
-  const [view,           setView]           = useState<View>("form");
-  const [time,           setTime]           = useState("");
-  const [sidebarOpen,    setSidebarOpen]    = useState(true);
+export default function Page() {
+  const [activeSection,    setActiveSection]    = useState(0);
+  const [completedCount,   setCompletedCount]   = useState(0);
+  const [sidebarJump,   setSidebarJump]   = useState<{idx:number,ts:number}|null>(null);
+  const [view,          setView]          = useState<View>("form");
+  const [time,          setTime]          = useState("");
+  const [sidebarOpen,   setSidebarOpen]   = useState(true);
 
   const progress = Math.round((completedCount / rdsSchema.length) * 100);
 
-  // ── Auth check on mount ───────────────────────────────
-  useEffect(() => {
-    const raw = sessionStorage.getItem("rds_user");
-    if (!raw) {
-      router.replace("/login");
-      return;
-    }
-    try {
-      setCurrentUser(JSON.parse(raw));
-    } catch {
-      router.replace("/login");
-    }
-  }, [router]);
-
-  // ── Live clock ────────────────────────────────────────
+  // Live clock
   useEffect(() => {
     const tick = () => setTime(new Date().toLocaleTimeString("en-IN", { hour:"2-digit", minute:"2-digit" }));
     tick();
     const id = setInterval(tick, 60000);
     return () => clearInterval(id);
   }, []);
-
-  // ── Logout ────────────────────────────────────────────
-  const handleLogout = () => {
-    sessionStorage.removeItem("rds_user");
-    router.replace("/login");
-  };
-
-  // ── Show nothing while auth check happens ─────────────
-  if (!currentUser) return null;
-
-  const avatarInitial = currentUser.name?.charAt(0)?.toUpperCase() || "U";
 
   return (
     <div style={{ display:"flex", minHeight:"100vh" }}>
@@ -87,27 +53,11 @@ function Page() {
               fontSize:15, fontWeight:800, color:"#93c5fd",
               border:"1px solid rgba(59,130,246,0.25)",
               boxShadow:"0 4px 12px rgba(37,99,235,0.2)"
-            }}>{avatarInitial}</div>
+            }}>A</div>
             <div style={{ flex:1, minWidth:0 }}>
-              <div style={{ fontSize:12.5, color:"rgba(255,255,255,0.82)", fontWeight:600, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
-                {currentUser.name}
-              </div>
-              <div style={{ fontSize:10, color:"rgba(255,255,255,0.28)", marginTop:1, textTransform:"capitalize" }}>
-                {currentUser.role} · {time}
-              </div>
+              <div style={{ fontSize:12.5, color:"rgba(255,255,255,0.82)", fontWeight:600 }}>Administrator</div>
+              <div style={{ fontSize:10, color:"rgba(255,255,255,0.28)", marginTop:1 }}>Super Admin · {time}</div>
             </div>
-            {/* Logout button */}
-            <button
-              onClick={handleLogout}
-              title="Logout"
-              style={{
-                background:"none", border:"none", cursor:"pointer",
-                color:"rgba(255,255,255,0.3)", fontSize:14, padding:4,
-                flexShrink:0, transition:"color 0.2s"
-              }}
-              onMouseOver={e => (e.currentTarget.style.color = "rgba(255,255,255,0.7)")}
-              onMouseOut={e  => (e.currentTarget.style.color = "rgba(255,255,255,0.3)")}
-            >⏻</button>
           </div>
         </div>
 
@@ -187,6 +137,7 @@ function Page() {
         {/* TOPBAR */}
         <header className="topbar">
           <div style={{ display:"flex", alignItems:"center", gap:14 }}>
+            {/* Hamburger */}
             <button
               onClick={() => setSidebarOpen(o => !o)}
               style={{ width:36, height:36, borderRadius:10, border:"1.5px solid #e0e7ef", background:"#fff", display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", flexShrink:0 }}
@@ -197,7 +148,8 @@ function Page() {
             </button>
             <div className="topbar-left">
               <h1>
-                {view === "form" ? "Room Data Sheet Dashboard" : "All Room Records"}
+                {view === "form" ? "Room Data Sheet Dashboard"
+                : "All Room Records"}
               </h1>
               <p>
                 {view === "form"
@@ -210,6 +162,7 @@ function Page() {
           <div className="topbar-actions">
             {view === "form" && (
               <>
+                {/* Progress ring */}
                 <div style={{ display:"flex", alignItems:"center", gap:8, padding:"6px 14px", background:"#fff", border:"1.5px solid #e0e7ef", borderRadius:12 }}>
                   <svg width="18" height="18" viewBox="0 0 36 36" style={{ transform:"rotate(-90deg)" }}>
                     <circle cx="18" cy="18" r="15" fill="none" stroke="#e0e7ef" strokeWidth="3"/>
@@ -241,13 +194,14 @@ function Page() {
         {/* PAGE BODY */}
         <main className="page-content">
 
+          {/* Stats strip */}
           {view === "form" && (
             <div className="stats-strip">
               {[
-                { icon:"📋", label:"Total Sections",   value: rdsSchema.length,                color:"#eff6ff", ac:"#2563eb" },
-                { icon:"✅", label:"Completed",         value: completedCount,                   color:"#f0fdf4", ac:"#10b981" },
+                { icon:"📋", label:"Total Sections",   value: rdsSchema.length,               color:"#eff6ff", ac:"#2563eb" },
+                { icon:"✅", label:"Completed",         value: completedCount,                  color:"#f0fdf4", ac:"#10b981" },
                 { icon:"⏳", label:"Remaining",         value: rdsSchema.length - completedCount, color:"#fefce8", ac:"#f59e0b" },
-                { icon:"📊", label:"Progress",          value: `${progress}%`,                  color:"#fdf4ff", ac:"#7c3aed" },
+                { icon:"📊", label:"Progress",          value: `${progress}%`,                 color:"#fdf4ff", ac:"#7c3aed" },
               ].map(stat => (
                 <div key={stat.label} className="stat-card">
                   <div className="stat-icon" style={{ background:stat.color }}>{stat.icon}</div>
@@ -279,5 +233,3 @@ function Page() {
     </div>
   );
 }
-
-export default Page;
