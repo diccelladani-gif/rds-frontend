@@ -371,6 +371,7 @@ export default function RecordsPage({ onBack, onEdit }) {
                               ["Floor Finish",      d.floor],
                               ["Wall Finish",       d.wallFinish],
                               ["Submitted By",      row.submittedby || row.submittedBy],
+                              ["Last Edited By",    row.lasteditedby || row.lastEditedBy],
                               ["Record ID",         String(row.id)],
                               ["Last Updated",      fmtDate(row.updatedat || row.updatedAt)],
                             ].filter(([,v]) => v != null && String(v).trim() !== "").map(([label, value]) => (
