@@ -45,6 +45,30 @@ export default function RecordsPage({ onBack, onEdit }) {
   const [deleting,    setDeleting]    = useState(null);
   const [expandedId,  setExpandedId]  = useState(null);
   const [toast,       setToast]       = useState(null);
+  const [auditLog,    setAuditLog]    = useState({});
+  const [auditOpen,   setAuditOpen]   = useState({});
+  const [auditLoading,setAuditLoading]= useState(null);
+
+  const fetchAuditLog = async (roomId) => {
+    if (auditLog[roomId]) { // already loaded, just toggle
+      setAuditOpen(p => ({ ...p, [roomId]: !p[roomId] }));
+      return;
+    }
+    setAuditLoading(roomId);
+    try {
+      const res = await axios.get(`${API}/audit/${roomId}`);
+      setAuditLog(p => ({ ...p, [roomId]: res.data.logs || [] }));
+      setAuditOpen(p => ({ ...p, [roomId]: true }));
+    } catch { showToast("Failed to load audit log", "error"); }
+    finally { setAuditLoading(null); }
+  };
+
+  const ACTION_STYLE = {
+    created:  { bg:"#f0fdf4", text:"#15803d", icon:"✅" },
+    updated:  { bg:"#eff6ff", text:"#1d4ed8", icon:"✏️" },
+    deleted:  { bg:"#fef2f2", text:"#dc2626", icon:"🗑️" },
+    exported: { bg:"#fdf4ff", text:"#7c3aed", icon:"📤" },
+  };
   const LIMIT = 10;
 
   const showToast = (msg, type = "success") => {
@@ -330,6 +354,20 @@ export default function RecordsPage({ onBack, onEdit }) {
                             📄
                           </button>
 
+                          {/* AUDIT LOG */}
+                          <button
+                            title="View Activity Log"
+                            onClick={() => fetchAuditLog(row.id)}
+                            style={{
+                              fontSize:13, padding:"5px 8px",
+                              background: auditOpen[row.id] ? "#fef3c7" : "#fefce8",
+                              color:"#92400e",
+                              border:"1px solid #fcd34d", borderRadius:7, cursor:"pointer",
+                              opacity: auditLoading === row.id ? 0.6 : 1,
+                            }}>
+                            {auditLoading === row.id ? "⏳" : "📋"}
+                          </button>
+
                           {/* DELETE */}
                           <button
                             title="Delete"
@@ -416,6 +454,113 @@ export default function RecordsPage({ onBack, onEdit }) {
                               }}>
                               📊 Download Excel
                             </button>
+                          </div>
+
+                          {/* ── AUDIT LOG PANEL ── */}
+                          <div style={{ marginTop:14 }}>
+                            <button
+                              onClick={() => fetchAuditLog(row.id)}
+                              style={{
+                                display:"flex", alignItems:"center", gap:8,
+                                padding:"8px 16px", borderRadius:8, cursor:"pointer",
+                                background: auditOpen[row.id] ? "#fef3c7" : "#fff",
+                                border:"1px solid #fcd34d", color:"#92400e",
+                                fontSize:13, fontWeight:700, marginBottom: auditOpen[row.id] ? 12 : 0,
+                              }}>
+                              📋 {auditOpen[row.id] ? "Hide" : "View"} Activity Log
+                              {auditLog[row.id] && <span style={{ background:"#fcd34d", color:"#78350f", borderRadius:20, padding:"1px 8px", fontSize:11 }}>{auditLog[row.id].length}</span>}
+                            </button>
+
+                            {auditOpen[row.id] && (
+                              <div style={{ background:"#fff", border:"1px solid #e2e8f0", borderRadius:10, overflow:"hidden" }}>
+                                {/* Header */}
+                                <div style={{ padding:"10px 16px", background:"#f8fafc", borderBottom:"1px solid #e2e8f0", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+                                  <span style={{ fontSize:12, fontWeight:700, color:"#374151", letterSpacing:0.5 }}>ACTIVITY TRAIL — {row.roomCode || row.roomcode}</span>
+                                  <span style={{ fontSize:11, color:"#94a3b8" }}>{auditLog[row.id]?.length || 0} events</span>
+                                </div>
+
+                                {/* Timeline */}
+                                {!auditLog[row.id]?.length ? (
+                                  <div style={{ padding:"20px 16px", textAlign:"center", color:"#94a3b8", fontSize:13 }}>No activity recorded yet</div>
+                                ) : (
+                                  <div style={{ padding:"12px 16px", display:"flex", flexDirection:"column", gap:0 }}>
+                                    {auditLog[row.id].map((log, li) => {
+                                      const as = ACTION_STYLE[log.action] || { bg:"#f8fafc", text:"#374151", icon:"•" };
+                                      const logDate = log.created_at ? new Date(log.created_at) : null;
+                                      let details = {};
+                                      try { details = JSON.parse(log.details || "{}"); } catch {}
+                                      return (
+                                        <div key={log.id || li} style={{ display:"flex", gap:12, paddingBottom:16, position:"relative" }}>
+                                          {/* Timeline line */}
+                                          {li < auditLog[row.id].length - 1 && (
+                                            <div style={{ position:"absolute", left:15, top:28, bottom:0, width:2, background:"#e2e8f0" }} />
+                                          )}
+                                          {/* Icon */}
+                                          <div style={{
+                                            width:30, height:30, borderRadius:"50%", flexShrink:0,
+                                            background:as.bg, border:`2px solid ${as.text}30`,
+                                            display:"flex", alignItems:"center", justifyContent:"center",
+                                            fontSize:13, zIndex:1,
+                                          }}>{as.icon}</div>
+                                          {/* Content */}
+                                          <div style={{ flex:1, paddingTop:4 }}>
+                                            <div style={{ display:"flex", alignItems:"center", gap:8, flexWrap:"wrap" }}>
+                                              <span style={{ fontSize:12, fontWeight:700, color:as.text, background:as.bg, padding:"2px 9px", borderRadius:20 }}>
+                                                {(log.action || "").toUpperCase()}
+                                              </span>
+                                              <span style={{ fontSize:12, fontWeight:600, color:"#334155" }}>
+                                                {log.performed_by || "system"}
+                                              </span>
+                                            </div>
+                                            {logDate && (
+                                              <div style={{ fontSize:11, color:"#94a3b8", marginTop:3 }}>
+                                                {logDate.toLocaleDateString("en-IN", { day:"numeric", month:"short", year:"numeric" })}
+                                                {" · "}
+                                                {logDate.toLocaleTimeString("en-IN", { hour:"2-digit", minute:"2-digit", hour12:true })}
+                                              </div>
+                                            )}
+                                            {Object.keys(details).length > 0 && (
+                                              <div style={{ fontSize:11, color:"#64748b", marginTop:6 }}>
+                                                {/* Show field-level changes if present */}
+                                                {details.changes && Object.keys(details.changes).length > 0 ? (
+                                                  <div style={{ marginTop:4 }}>
+                                                    <div style={{ fontSize:10, fontWeight:700, color:"#94a3b8", marginBottom:4, letterSpacing:1, textTransform:"uppercase" }}>
+                                                      {Object.keys(details.changes).length} field{Object.keys(details.changes).length > 1 ? "s" : ""} changed
+                                                    </div>
+                                                    <div style={{ display:"flex", flexDirection:"column", gap:4 }}>
+                                                      {Object.entries(details.changes).map(([field, change]) => (
+                                                        <div key={field} style={{ display:"flex", alignItems:"flex-start", gap:6, background:"#f8fafc", borderRadius:6, padding:"4px 8px", border:"1px solid #e2e8f0" }}>
+                                                          <span style={{ color:"#64748b", fontWeight:600, minWidth:120, fontSize:10.5 }}>
+                                                            {field.replace(/([A-Z])/g," $1").replace(/^./,s=>s.toUpperCase())}
+                                                          </span>
+                                                          <span style={{ color:"#dc2626", textDecoration:"line-through", fontSize:10.5, maxWidth:140, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }} title={change.from}>
+                                                            {change.from}
+                                                          </span>
+                                                          <span style={{ color:"#94a3b8", fontSize:10 }}>→</span>
+                                                          <span style={{ color:"#16a34a", fontWeight:600, fontSize:10.5, maxWidth:140, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }} title={change.to}>
+                                                            {change.to}
+                                                          </span>
+                                                        </div>
+                                                      ))}
+                                                    </div>
+                                                  </div>
+                                                ) : (
+                                                  <div style={{ display:"flex", gap:10, flexWrap:"wrap" }}>
+                                                    {Object.entries(details).map(([k,v]) => v && k !== "changes" ? (
+                                                      <span key={k}><span style={{ color:"#94a3b8" }}>{k}:</span> {String(v)}</span>
+                                                    ) : null)}
+                                                  </div>
+                                                )}
+                                              </div>
+                                            )}
+                                          </div>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                )}
+                              </div>
+                            )}
                           </div>
                         </td>
                       </tr>
