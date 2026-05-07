@@ -64,41 +64,20 @@ export const rdsSchema = [
     ]
   },
   {
-    id: "Clinical functionality and workflow",
+    id: "Clinical functionality and workflow", // merged with Planning & Zoning
     section: "Clinical functionality and workflow",
     icon: "⚙️",
     color: "#8b5cf6",
-    fields: [
-      { name: "roomFunction", label: "Room Function", type: "textarea", required: true, colSpan: 4 },
-      { name: "keyActivities", label: "Key Activities", type: "textarea", required: true, colSpan: 4 },
-      { name: "userGroups", label: "User Groups", type: "usergroups", required: true, colSpan: 4 },
-      { name: "operationalScenarios", label: "Operational Scenarios", type: "textarea", required: false, colSpan: 2 }
-    ]
-  },
-  {
-    id: "capacity-operations",
-    section: "Capacity & Operations",
-    icon: "📊",
-    color: "#10b981",
-    fields: [
-      { name: "patientCapacity", label: "Patient Capacity", type: "number", placeholder: "No. of beds / users", required: true, colSpan: 2 },
-      { name: "staffRequirement", label: "Staff Requirement", type: "number", placeholder: "Per shift", required: true, colSpan: 2 },
-      { name: "peakLoad", label: "Peak Load", type: "number", placeholder: "Max occupancy", required: false, colSpan: 2 },
-      { name: "throughput", label: "Throughput", type: "text", placeholder: "Patients/day (if applicable)", required: false, colSpan: 2 },
-      { name: "averageStayTime", label: "Average Stay Time(min)", type: "text", placeholder: "Per patient", required: false, colSpan: 2 },
-      { name: "surgeCapacity", label: "Surge Capacity", type: "text", placeholder: "Expandability logic", required: false, colSpan: 2 },
-      {
-        name: "operationalHours", label: "Operational Hours", type: "select", required: true, colSpan: 4,
-        options: ["24×7", "Scheduled (Day only)", "Scheduled (Day & Evening)", "On-call", "As Required"]
-      }
-    ]
-  },
-  {
-    id: "planning-zoning",
-    section: "Planning & Zoning",
-    icon: "🗺️",
-    color: "#f59e0b",
     subsections: [
+      {
+        title: "Functionality & Workflow",
+        fields: [
+          { name: "roomFunction", label: "Room Function", type: "textarea", required: true, colSpan: 4 },
+          { name: "keyActivities", label: "Key Activities", type: "textarea", required: true, colSpan: 4 },
+          { name: "userGroups", label: "User Groups", type: "usergroups", required: true, colSpan: 4 },
+          { name: "operationalScenarios", label: "Operational Scenarios", type: "textarea", required: false, colSpan: 2 }
+        ]
+      },
       {
         title: "Functional Zones",
         fields: [
@@ -123,6 +102,24 @@ export const rdsSchema = [
           { name: "entryPoints", label: "Entry Points", type: "textarea", required: false, colSpan: 2 },
           { name: "restrictedZones", label: "Restricted Zones", type: "textarea", required: false, colSpan: 2 }
         ]
+      }
+    ]
+  },
+  {
+    id: "capacity-operations",
+    section: "Capacity & Operations",
+    icon: "📊",
+    color: "#10b981",
+    fields: [
+      { name: "patientCapacity", label: "Patient Capacity", type: "number", placeholder: "No. of beds / users", required: true, colSpan: 2 },
+      { name: "staffRequirement", label: "Staff Requirement", type: "number", placeholder: "Per shift", required: true, colSpan: 2 },
+      { name: "peakLoad", label: "Peak Load", type: "number", placeholder: "Max occupancy", required: false, colSpan: 2 },
+      { name: "throughput", label: "Throughput", type: "text", placeholder: "Patients/day (if applicable)", required: false, colSpan: 2 },
+      { name: "averageStayTime", label: "Average Stay Time(min)", type: "text", placeholder: "Per patient", required: false, colSpan: 2 },
+      { name: "surgeCapacity", label: "Surge Capacity", type: "text", placeholder: "Expandability logic", required: false, colSpan: 2 },
+      {
+        name: "operationalHours", label: "Operational Hours", type: "select", required: true, colSpan: 4,
+        options: ["24×7", "Scheduled (Day only)", "Scheduled (Day & Evening)", "On-call", "As Required"]
       }
     ]
   },
