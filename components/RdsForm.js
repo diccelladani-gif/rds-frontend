@@ -15,19 +15,17 @@ const API = process.env.NEXT_PUBLIC_API_URL || "";
 if (!API) console.error("API URL missing");
 
 const sectionDesc = {
-  "room-identity":           "Basic identification and classification of this room",
-  "function-workflow":       "Define the clinical purpose and operational workflow",
-  "capacity-operations":     "Occupancy, staffing, and operational hour requirements",
-  "planning-zoning":         "Functional zoning, circulation and access control",
-  "adjacency-matrix":        "Spatial relationships with neighbouring spaces",
-  "spatial-requirements":    "Dimensions, clearances, and compliance requirements",
-  "room-finishes":           "Material specifications for all surfaces",
-  "engineering-systems":     "HVAC, electrical, medical gas and plumbing requirements",
-  "digital-smart-systems":   "IT, clinical systems and smart technology integration",
-  "safety-infection-control":"Infection prevention, safety and hazard provisions",
-  "user-experience":         "Comfort, privacy, lighting and wayfinding considerations",
-  "fittings-furniture":      "Fixed and loose furniture quantities",
-  "fixtures-equipment":      "Clinical equipment and associated services",
+  "Room identity and General Information":          "Basic identification and classification of this room",
+  "Architectural and spatial-requirements":         "Dimensions, clearances, and compliance requirements",
+  "Interior finishes and Aesthetics":               "Material specifications for all surfaces",
+  "Clinical functionality and workflow":             "Define the clinical purpose, operational workflow, functional zones, and circulation",
+  "capacity-operations":                            "Occupancy, staffing, and operational hour requirements",
+  "adjacency-matrix":                               "Spatial relationships with neighbouring spaces",
+  "MEP & engineering-systems":                      "HVAC, electrical, medical gas and plumbing requirements",
+  "digital-smart-systems":                          "IT, clinical systems and smart technology integration",
+  "safety-infection-control":                       "Infection prevention, safety and hazard provisions",
+  "Stakeholder experience":                         "Comfort, privacy, lighting and wayfinding considerations",
+  "fittings-fixtures-and-equipment":                "Fixed/loose furniture, and clinical equipment & services",
 };
 
 function useToast() {
@@ -248,7 +246,7 @@ export default function RdsForm({ onSectionChange, jumpToSection, editRecord, on
   };
 
   const isLastSection   = currentIdx === rdsSchema.length - 1;
-  const funcSectionIdx  = rdsSchema.findIndex(s => s.id === "function-workflow");
+  const funcSectionIdx  = rdsSchema.findIndex(s => s.id === "Clinical functionality and workflow");
 
   return (
     <>
