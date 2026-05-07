@@ -1,7 +1,7 @@
 export const rdsSchema = [
   {
-    id: "room-identity",
-    section: "Room Identity",
+    id: "Room identity and General Information",
+    section: "Room identity and General Information",
     icon: "🏥",
     color: "#0ea5e9",
     fields: [
@@ -29,8 +29,8 @@ export const rdsSchema = [
     ]
   },
   {
-    id: "spatial-requirements",
-    section: "Spatial Requirements",
+    id: "Architectural and spatial-requirements",
+    section: "Architectural and spatial-requirements",
     icon: "📐",
     color: "#06b6d4",
     fields: [
@@ -50,8 +50,8 @@ export const rdsSchema = [
     ]
   },
   {
-    id: "room-finishes",
-    section: "Room Finishes",
+    id: "Interior finishes and Aesthetics",
+    section: "Interior finishes and Aesthetics",
     icon: "🎨",
     color: "#ec4899",
     fields: [
@@ -64,8 +64,8 @@ export const rdsSchema = [
     ]
   },
   {
-    id: "function-workflow",
-    section: "Function & Workflow",
+    id: "Clinical functionality and workflow",
+    section: "Clinical functionality and workflow",
     icon: "⚙️",
     color: "#8b5cf6",
     fields: [
@@ -138,8 +138,8 @@ export const rdsSchema = [
     ]
   },
   {
-    id: "engineering-systems",
-    section: "Engineering Systems",
+    id: "MEP & engineering-systems",
+    section: "MEP & engineering-systems",
     icon: "⚡",
     color: "#f97316",
     subsections: [
@@ -241,8 +241,8 @@ export const rdsSchema = [
     ]
   },
   {
-    id: "user-experience",
-    section: "User Experience",
+    id: "Stakeholder experience",
+    section: "Stakeholder experience",
     icon: "✨",
     color: "#0891b2",
     fields: [
