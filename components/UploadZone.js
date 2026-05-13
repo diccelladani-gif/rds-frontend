@@ -21,16 +21,16 @@ export default function UploadZone({ onExtracted }) {
   const [dragging, setDragging] = useState(false);
   const inputRef = useRef();
 
-  // FIX 1: declared as async so await works inside
   async function processFile(file) {
     if (!file) return;
 
     const isXLS  = file.type.includes("spreadsheet") || /\.xlsx?$/i.test(file.name);
     const isDOCX = file.type.includes("wordprocessingml") || /\.docx?$/i.test(file.name);
+    const isPDF  = file.type === "application/pdf" || /\.pdf$/i.test(file.name);
 
-    if (!isXLS && !isDOCX) {
+    if (!isXLS && !isDOCX && !isPDF) {
       setStatus("error");
-      setMsg("Unsupported file. Please upload an Excel (.xlsx) or Word (.docx).");
+      setMsg("Unsupported file. Please upload an Excel (.xlsx), Word (.docx), or PDF (.pdf).");
       return;
     }
 
@@ -41,15 +41,15 @@ export default function UploadZone({ onExtracted }) {
       // Read file as base64
       const base64Content = await new Promise((res, rej) => {
         const r = new FileReader();
-        r.onload = e => res(e.target.result.split(",")[1]); // base64 part only
+        r.onload = e => res(e.target.result.split(",")[1]);
         r.onerror = rej;
         r.readAsDataURL(file);
       });
 
-      const type = isDOCX ? "word" : "excel";
+      // Determine type for backend
+      const type = isPDF ? "pdf" : isDOCX ? "word" : "excel";
 
       setMsg("AI is mapping fields…");
-      // FIX 2: use API (not API_BASE which was never defined)
       const result = await extractFromBackend(type, base64Content);
       const fields = result.fields;
       const image  = result.image || null;
@@ -115,7 +115,7 @@ export default function UploadZone({ onExtracted }) {
                 Upload Room Data Sheet to Auto-Fill
               </div>
               <div style={{ fontSize: 12, color: "#64748b", marginTop: 3 }}>
-                Drag &amp; drop or click — Excel or Word. AI extracts fields and images automatically.
+                Drag &amp; drop or click — Excel, Word, or PDF. AI extracts fields and images automatically.
               </div>
             </>
           )}
@@ -156,7 +156,7 @@ export default function UploadZone({ onExtracted }) {
 
         {status === "idle" && (
           <div style={{ display: "flex", gap: 5, flexShrink: 0 }}>
-            {[["XLSX","#dcfce7","#15803d"],["DOCX","#dbeafe","#1d4ed8"]].map(([t, bg, c]) => (
+            {[["XLSX","#dcfce7","#15803d"],["DOCX","#dbeafe","#1d4ed8"],["PDF","#fee2e2","#dc2626"]].map(([t, bg, c]) => (
               <span key={t} style={{
                 background: bg, color: c, padding: "3px 10px",
                 borderRadius: 20, fontSize: 11, fontWeight: 700
@@ -169,7 +169,7 @@ export default function UploadZone({ onExtracted }) {
       <input
         ref={inputRef}
         type="file"
-        accept=".xlsx,.xls,.docx,.doc"
+        accept=".xlsx,.xls,.docx,.doc,.pdf"
         style={{ display: "none" }}
         onChange={e => processFile(e.target.files[0])}
       />
