@@ -199,16 +199,46 @@ export const rdsSchema = [
     icon: "💻",
     color: "#6366f1",
     fields: [
+      // --- Existing fields (unchanged) ---
       { name: "hisEmr", label: "HIS / EMR Integration", type: "text", placeholder: "System name & integration type", required: false, colSpan: 2 },
       { name: "pacs", label: "PACS", type: "text", placeholder: "Imaging system details", required: false, colSpan: 2 },
       { name: "lis", label: "LIS (Laboratory)", type: "text", placeholder: "Lab information system", required: false, colSpan: 2 },
       { name: "rtls", label: "RTLS (Real-time Location)", type: "text", placeholder: "Asset/patient tracking", required: false, colSpan: 2 },
       { name: "nurseCall", label: "Nurse Call System", type: "text", placeholder: "System specification", required: false, colSpan: 2 },
-      {
-        name: "cctv", label: "CCTV / Surveillance", type: "yesno", required: false, colSpan: 2
-      },
+      { name: "cctv", label: "CCTV / Surveillance", type: "yesno", required: false, colSpan: 2 },
       { name: "iotSensors", label: "IoT Sensors", type: "text", placeholder: "Environmental, occupancy, etc.", required: false, colSpan: 2 },
-      { name: "aiAnalytics", label: "AI / Analytics", type: "text", placeholder: "Clinical decision support, etc.", required: false, colSpan: 2 }
+      { name: "aiAnalytics", label: "AI / Analytics", type: "text", placeholder: "Clinical decision support, etc.", required: false, colSpan: 2 },
+
+      // --- New: Extra Low Voltage Systems (from Excel Table 1) ---
+      { name: "lv_nurseCall", label: "Nurse Call System – Locations & Qty", type: "text", placeholder: "e.g., Wall:2, BHP:1, MP:0, C:1", required: false, colSpan: 2 },
+      { name: "lv_codeBlue", label: "Code Blue System – Locations & Qty", type: "text", placeholder: "e.g., Wall:1, BHP:0, MP:1, C:0", required: false, colSpan: 2 },
+      { name: "lv_intercom", label: "Intercom – Locations & Qty", type: "text", placeholder: "e.g., Wall:2, BHP:0, MP:0, C:1", required: false, colSpan: 2 },
+      { name: "lv_telephone", label: "Telephone – Locations & Qty", type: "text", placeholder: "e.g., Wall:1, BHP:1, MP:0, C:0", required: false, colSpan: 2 },
+      { name: "lv_ipPhone", label: "IP Phone – Locations & Qty", type: "text", placeholder: "e.g., Wall:1, BHP:1, MP:0, C:0", required: false, colSpan: 2 },
+      { name: "lv_scv", label: "SCV – Locations & Qty", type: "text", placeholder: "e.g., Wall:0, BHP:0, MP:2, C:0", required: false, colSpan: 2 },
+      { name: "lv_matv_iptv", label: "MATV / IPTV – Locations & Qty", type: "text", placeholder: "e.g., Wall:0, BHP:0, MP:0, C:1", required: false, colSpan: 2 },
+      { name: "lv_faxPrinter", label: "Fax / Printer – Locations & Qty", type: "text", placeholder: "e.g., Wall:1, BHP:0, MP:0, C:0", required: false, colSpan: 2 },
+      { name: "lv_lanPoint", label: "LAN / Network Point – Locations & Qty", type: "text", placeholder: "e.g., Wall:2, BHP:1, MP:1, C:0", required: false, colSpan: 2 },
+      { name: "lv_wirelessPoint", label: "Wireless Point – Locations & Qty", type: "text", placeholder: "e.g., Wall:1, BHP:0, MP:0, C:1", required: false, colSpan: 2 },
+      { name: "lv_masterClock", label: "MasterClock – Locations & Qty", type: "text", placeholder: "e.g., Wall:1, BHP:0, MP:0, C:0", required: false, colSpan: 2 },
+      { name: "lv_physioMonitors", label: "Physiological Monitors – Locations & Qty", type: "text", placeholder: "e.g., Wall:0, BHP:2, MP:0, C:0", required: false, colSpan: 2 },
+      { name: "lv_otherBedside", label: "Other Bedside Terminals – Locations & Qty", type: "text", placeholder: "Specify type and quantities", required: false, colSpan: 2 },
+      { name: "lv_otherInfra", label: "Other Healthcare Infra System – Locations & Qty", type: "text", placeholder: "Specify system and quantities", required: false, colSpan: 2 },
+
+      // --- New: Accessories & IT Equipment (from Excel Table 2, unique items) ---
+      { name: "acc_monitorSystem", label: "Monitor System", type: "yesno", required: false, colSpan: 2 },
+      { name: "acc_printer", label: "Printer (General)", type: "yesno", required: false, colSpan: 2 },
+      { name: "acc_vitalAutomated", label: "Vital Automated Equipment", type: "yesno", required: false, colSpan: 2 },
+      { name: "acc_barcodePrinter", label: "Barcode Printer", type: "yesno", required: false, colSpan: 2 },
+      { name: "acc_laptop", label: "Laptop", type: "yesno", required: false, colSpan: 2 },
+      { name: "acc_kiosk", label: "Kiosk", type: "yesno", required: false, colSpan: 2 },
+      { name: "acc_multiFunctionPrinter", label: "Multifunctional Printer", type: "yesno", required: false, colSpan: 2 },
+      { name: "acc_scanner", label: "Scanner 2D/3D", type: "yesno", required: false, colSpan: 2 },
+      { name: "acc_highSpeedPrinter", label: "High Speed Printer", type: "yesno", required: false, colSpan: 2 },
+      { name: "acc_queManagement", label: "Queue Management System", type: "yesno", required: false, colSpan: 2 },
+      { name: "acc_tv", label: "TV", type: "yesno", required: false, colSpan: 2 },
+      { name: "acc_networkSwitch", label: "Network Switch (IT Hub Room)", type: "yesno", required: false, colSpan: 2 },
+      { name: "acc_distributionHub", label: "Distribution Hub for LAN", type: "yesno", required: false, colSpan: 2 }
     ]
   },
   {
