@@ -152,6 +152,285 @@ function YesNoInput({ field, register, setValue, watch }) {
   );
 }
 
+// ─── ELV MATRIX (Dynamic Location Quantities) ──────────────────────────────
+function ELVMatrixInput({ field, register, setValue, watch }) {
+  // Available systems
+  const AVAILABLE_SYSTEMS = [
+    "Nurse Call System",
+    "Code Blue System",
+    "Intercom",
+    "Telephone",
+    "IP Phone",
+    "SCV",
+    "MATV / IPTV",
+    "Fax / Printer",
+    "LAN / Network Point",
+    "Wireless Point",
+    "Master Clock",
+    "Physiological Monitors",
+    "Other Bedside Terminals",
+    "Other Healthcare Infra System"
+  ];
+
+  const LOCATIONS = ["WALL (W)", "BEDHEAD PANEL (BHP)", "MEDICAL PENDANT (MP)", "CEILING (C)"];
+
+  // Get current value
+  const rawVal = watch?.(field.name) || "{}";
+  let matrixData = {};
+  try { 
+    matrixData = JSON.parse(rawVal);
+    if (!matrixData.selectedSystems) matrixData.selectedSystems = [];
+    if (!matrixData.quantities) matrixData.quantities = {};
+  } catch { 
+    matrixData = { selectedSystems: [], quantities: {} };
+  }
+
+  const selectedSystems = matrixData.selectedSystems || [];
+  const quantities = matrixData.quantities || {};
+
+  const updateMatrix = (newSelected, newQuantities) => {
+    const output = {
+      selectedSystems: newSelected,
+      quantities: newQuantities
+    };
+    setValue?.(field.name, JSON.stringify(output), { shouldDirty: true });
+  };
+
+  const toggleSystem = (system) => {
+    let newSelected;
+    if (selectedSystems.includes(system)) {
+      newSelected = selectedSystems.filter(s => s !== system);
+      // Clean up quantities for removed system
+      const newQuantities = { ...quantities };
+      delete newQuantities[system];
+      updateMatrix(newSelected, newQuantities);
+    } else {
+      newSelected = [...selectedSystems, system];
+      // Initialize quantities for new system
+      const newQuantities = { ...quantities };
+      if (!newQuantities[system]) {
+        newQuantities[system] = {
+          "WALL (W)": 0,
+          "BEDHEAD PANEL (BHP)": 0,
+          "MEDICAL PENDANT (MP)": 0,
+          "CEILING (C)": 0
+        };
+      }
+      updateMatrix(newSelected, newQuantities);
+    }
+  };
+
+  const updateQuantity = (system, location, value) => {
+    const newQuantities = { ...quantities };
+    if (!newQuantities[system]) {
+      newQuantities[system] = {
+        "WALL (W)": 0,
+        "BEDHEAD PANEL (BHP)": 0,
+        "MEDICAL PENDANT (MP)": 0,
+        "CEILING (C)": 0
+      };
+    }
+    newQuantities[system][location] = Math.max(0, parseInt(value) || 0);
+    updateMatrix(selectedSystems, newQuantities);
+  };
+
+  const getTotalForSystem = (system) => {
+    if (!quantities[system]) return 0;
+    return Object.values(quantities[system]).reduce((sum, qty) => sum + (parseInt(qty) || 0), 0);
+  };
+
+  const getGrandTotal = () => {
+    let total = 0;
+    selectedSystems.forEach(system => {
+      total += getTotalForSystem(system);
+    });
+    return total;
+  };
+
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const filteredSystems = AVAILABLE_SYSTEMS.filter(system =>
+    system.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  return (
+    <div style={{ border: "1.5px solid #e8edf5", borderRadius: 12, overflow: "hidden", background: "#fff" }}>
+      <input type="hidden" {...register(field.name)} />
+
+      {/* Header */}
+      <div style={{ padding: "12px 16px", background: "#f8fafc", borderBottom: "1px solid #e8edf5" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: selectedSystems.length > 0 ? 10 : 0 }}>
+          <span style={{ fontSize: 13, fontWeight: 700, color: "#1e293b" }}>
+            {field.label || "ELV Systems Configuration"}
+          </span>
+          {getGrandTotal() > 0 && (
+            <span style={{ background: "#dbeafe", color: "#1d4ed8", fontSize: 11.5, fontWeight: 700, padding: "4px 12px", borderRadius: 20 }}>
+              Total: {getGrandTotal()} points
+            </span>
+          )}
+        </div>
+        
+        {/* Search */}
+        <div style={{ position: "relative" }}>
+          <input
+            type="text"
+            placeholder="🔍 Search systems..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            style={{
+              width: "100%",
+              padding: "8px 12px",
+              border: "1px solid #e2e8f0",
+              borderRadius: 8,
+              fontSize: 12.5,
+              outline: "none",
+              transition: "all 0.15s"
+            }}
+            onFocus={(e) => e.target.style.borderColor = "#3b82f6"}
+            onBlur={(e) => e.target.style.borderColor = "#e2e8f0"}
+          />
+        </div>
+      </div>
+
+      {/* Systems Selection */}
+      <div style={{ maxHeight: 400, overflowY: "auto" }}>
+        {filteredSystems.length === 0 && (
+          <div style={{ padding: "40px 20px", textAlign: "center", color: "#94a3b8", fontSize: 12.5 }}>
+            No systems match your search
+          </div>
+        )}
+        
+        {filteredSystems.map(system => {
+          const isSelected = selectedSystems.includes(system);
+          const totalQty = getTotalForSystem(system);
+          
+          return (
+            <div key={system} style={{ borderBottom: "1px solid #f1f5f9" }}>
+              {/* System Header */}
+              <div 
+                style={{
+                  padding: "12px 16px",
+                  background: isSelected ? "#f0f9ff" : "#fff",
+                  cursor: "pointer",
+                  transition: "all 0.15s"
+                }}
+                onClick={() => toggleSystem(system)}
+                onMouseEnter={(e) => {
+                  if (!isSelected) e.currentTarget.style.background = "#f8fafc";
+                }}
+                onMouseLeave={(e) => {
+                  if (!isSelected) e.currentTarget.style.background = "#fff";
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <span style={{ 
+                      display: "inline-flex",
+                      width: 18, height: 18,
+                      borderRadius: 4,
+                      border: `2px solid ${isSelected ? "#3b82f6" : "#cbd5e1"}`,
+                      background: isSelected ? "#3b82f6" : "#fff",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      color: "#fff",
+                      fontSize: 12,
+                      fontWeight: "bold"
+                    }}>
+                      {isSelected && "✓"}
+                    </span>
+                    <span style={{ fontSize: 13, fontWeight: 500, color: isSelected ? "#1e40af" : "#334155" }}>
+                      {system}
+                    </span>
+                  </div>
+                  {isSelected && totalQty > 0 && (
+                    <span style={{ background: "#dbeafe", color: "#1d4ed8", fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 12 }}>
+                      {totalQty} pts
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Quantity Matrix (shown when selected) */}
+              {isSelected && (
+                <div style={{ padding: "8px 16px 16px 44px", background: "#fafcff" }}>
+                  <div style={{ 
+                    display: "grid", 
+                    gridTemplateColumns: "repeat(4, 1fr)", 
+                    gap: 10,
+                    background: "#fff",
+                    border: "1px solid #e8edf5",
+                    borderRadius: 10,
+                    overflow: "hidden"
+                  }}>
+                    {LOCATIONS.map(location => {
+                      const qty = quantities[system]?.[location] || 0;
+                      return (
+                        <div key={location} style={{ padding: "10px", textAlign: "center" }}>
+                          <div style={{ fontSize: 11, fontWeight: 600, color: "#64748b", marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.3px" }}>
+                            {location.replace(/[()]/g, '')}
+                          </div>
+                          <div className="qty-input-wrap" style={{ justifyContent: "center" }}>
+                            <button
+                              type="button"
+                              className="qty-btn"
+                              onClick={() => updateQuantity(system, location, qty - 1)}
+                            >
+                              −
+                            </button>
+                            <input
+                              type="number"
+                              className="qty-input"
+                              min="0"
+                              value={qty}
+                              onChange={(e) => updateQuantity(system, location, e.target.value)}
+                              style={{ width: 50, textAlign: "center" }}
+                            />
+                            <button
+                              type="button"
+                              className="qty-btn"
+                              onClick={() => updateQuantity(system, location, qty + 1)}
+                            >
+                              +
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Summary Footer */}
+      {selectedSystems.length > 0 && getGrandTotal() > 0 && (
+        <div style={{ padding: "12px 16px", background: "#f0fdf4", borderTop: "1px solid #bbf7d0" }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "#15803d", marginBottom: 8 }}>
+            CONFIGURATION SUMMARY
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+            {selectedSystems.map(system => {
+              const total = getTotalForSystem(system);
+              if (total === 0) return null;
+              const details = LOCATIONS.map(loc => {
+                const qty = quantities[system]?.[loc] || 0;
+                return qty > 0 ? `${loc.replace(/[()]/g, '')}: ${qty}` : null;
+              }).filter(Boolean).join(", ");
+              return (
+                <span key={system} style={{ background: "#dcfce7", color: "#15803d", border: "1px solid #86efac", borderRadius: 20, padding: "4px 12px", fontSize: 11.5, fontWeight: 600 }}>
+                  {system}: {details}
+                </span>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── MAIN RENDERER ─────────────────────────────────────────
 export default function FieldRenderer({ field, register, errors, setValue, watch }) {
   const err = errors?.[field.name];
@@ -218,6 +497,10 @@ export default function FieldRenderer({ field, register, errors, setValue, watch
 
       {field.type === "yesno" && (
         <YesNoInput field={field} register={register} setValue={setValue} watch={watch} />
+      )}
+
+      {field.type === "elvmatrix" && (
+        <ELVMatrixInput field={field} register={register} setValue={setValue} watch={watch} />
       )}
 
       {field.type === "date" && (

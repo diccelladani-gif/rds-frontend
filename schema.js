@@ -193,7 +193,7 @@ export const rdsSchema = [
       }
     ]
   },
-{
+  {
   id: "digital-smart-systems",
   section: "Digital & Smart Systems",
   icon: "💻",
@@ -213,40 +213,14 @@ export const rdsSchema = [
     },
     {
       title: "Extra Low Voltage (ELV) Points",
-      description: "Select ELV systems and configure quantities per location",
-      type: "dynamicELVMatrix",
+      description: "Select systems and configure quantities per location",
       fields: [
-        {
-          name: "elvSystems",
-          label: "Select ELV Systems",
-          type: "multiselect",
-          required: false,
-          colSpan: 4,
-          options: [
-            "Nurse Call System",
-            "Code Blue System",
-            "Intercom",
-            "Telephone",
-            "IP Phone",
-            "SCV",
-            "MATV / IPTV",
-            "Fax / Printer",
-            "LAN / Network Point",
-            "Wireless Point",
-            "Master Clock",
-            "Physiological Monitors",
-            "Other Bedside Terminals",
-            "Other Healthcare Infra System"
-          ]
-        },
-        {
-          name: "elvQuantities",
-          label: "Quantity per Location",
-          type: "dynamicQuantityMatrix",
-          required: false,
-          colSpan: 4,
-          locations: ["WALL (W)", "BEDHEAD PANEL (BHP)", "MEDICAL PENDANT (MP)", "CEILING (C)"],
-          dependsOn: "elvSystems"
+        { 
+          name: "elvMatrix", 
+          label: "ELV Systems Configuration", 
+          type: "elvmatrix", 
+          required: false, 
+          colSpan: 4 
         }
       ]
     },
