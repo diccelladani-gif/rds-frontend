@@ -627,10 +627,13 @@ export default function FieldRenderer({ field, register, errors, setValue, watch
 
   return (
     <div className={`field-group col-${field.colSpan || 2}`}>
+      {/* Only show label if field is NOT hidden */}
+      {field.type !== "hidden" && (
       <label className="field-label">
         {field.label}
         {field.required && <span className="required-star">*</span>}
       </label>
+    )}
 
       {field.type === "text" && (
         <input
