@@ -202,135 +202,64 @@ export const rdsSchema = [
       {
         title: "Clinical & IT Systems",
         fields: [
-          { name: "hisEmr",     label: "HIS / EMR Integration",       type: "text",  placeholder: "System name & integration type",    required: false, colSpan: 2 },
-          { name: "pacs",       label: "PACS",                         type: "text",  placeholder: "Imaging system details",             required: false, colSpan: 2 },
-          { name: "lis",        label: "LIS (Laboratory)",             type: "text",  placeholder: "Lab information system",             required: false, colSpan: 2 },
-          { name: "rtls",       label: "RTLS (Real-time Location)",    type: "text",  placeholder: "Asset / patient tracking",           required: false, colSpan: 2 },
-          { name: "nurseCall",  label: "Nurse Call System",            type: "text",  placeholder: "System specification",               required: false, colSpan: 2 },
-          { name: "cctv",       label: "CCTV / Surveillance",          type: "yesno",                                                    required: false, colSpan: 2 },
-          { name: "iotSensors", label: "IoT Sensors",                  type: "text",  placeholder: "Environmental, occupancy, etc.",     required: false, colSpan: 2 },
-          { name: "aiAnalytics",label: "AI / Analytics",               type: "text",  placeholder: "Clinical decision support, etc.",    required: false, colSpan: 2 }
+          { name: "hisEmr", label: "HIS / EMR Integration", type: "text", placeholder: "System name & integration type", required: false, colSpan: 2 },
+          { name: "pacs", label: "PACS", type: "text", placeholder: "Imaging system details", required: false, colSpan: 2 },
+          { name: "lis", label: "LIS (Laboratory)", type: "text", placeholder: "Lab information system", required: false, colSpan: 2 },
+          { name: "rtls", label: "RTLS (Real-time Location)", type: "text", placeholder: "Asset / patient tracking", required: false, colSpan: 2 },
+          { name: "nurseCall", label: "Nurse Call System", type: "text", placeholder: "System specification", required: false, colSpan: 2 },
+          { name: "cctv", label: "CCTV / Surveillance", type: "yesno", required: false, colSpan: 2 },
+          { name: "iotSensors", label: "IoT Sensors", type: "text", placeholder: "Environmental, occupancy, etc.", required: false, colSpan: 2 },
+          { name: "aiAnalytics", label: "AI / Analytics", type: "text", placeholder: "Clinical decision support, etc.", required: false, colSpan: 2 }
         ]
       },
       {
         title: "Extra Low Voltage (ELV) Points",
         fields: [
-          {
-            name: "elvNurseCall",
-            label: "Nurse Call System",
-            type: "elv",
-            required: false, colSpan: 4,
-            hint: "Specify quantity at each location"
-          },
-          {
-            name: "elvCodeBlue",
-            label: "Code Blue System",
-            type: "elv",
-            required: false, colSpan: 4
-          },
-          {
-            name: "elvIntercom",
-            label: "Intercom",
-            type: "elv",
-            required: false, colSpan: 4
-          },
-          {
-            name: "elvTelephone",
-            label: "Telephone",
-            type: "elv",
-            required: false, colSpan: 4
-          },
-          {
-            name: "elvIpPhone",
-            label: "IP Phone",
-            type: "elv",
-            required: false, colSpan: 4
-          },
-          {
-            name: "elvScv",
-            label: "SCV",
-            type: "elv",
-            required: false, colSpan: 4
-          },
-          {
-            name: "elvMatvIptv",
-            label: "MATV / IPTV",
-            type: "elv",
-            required: false, colSpan: 4
-          },
-          {
-            name: "elvFaxPrinter",
-            label: "Fax / Printer",
-            type: "elv",
-            required: false, colSpan: 4
-          },
-          {
-            name: "elvLanNetwork",
-            label: "LAN / Network Point",
-            type: "elv",
-            required: false, colSpan: 4
-          },
-          {
-            name: "elvWireless",
-            label: "Wireless Point",
-            type: "elv",
-            required: false, colSpan: 4
-          },
-          {
-            name: "elvMasterClock",
-            label: "Master Clock",
-            type: "elv",
-            required: false, colSpan: 4
-          },
-          {
-            name: "elvPhysioMonitor",
-            label: "Physiological Monitors",
-            type: "elv",
-            required: false, colSpan: 4
-          },
-          {
-            name: "elvBedsideTerminals",
-            label: "Other Bedside Terminals",
-            type: "elv",
-            required: false, colSpan: 4
-          },
-          {
-            name: "elvHealthcareInfra",
-            label: "Other Healthcare Infra System",
-            type: "elv",
-            required: false, colSpan: 4
-          }
+          { name: "elvNurseCall", label: "Nurse Call System", type: "elv", required: false, colSpan: 4, hint: "Specify quantity at each location" },
+          { name: "elvCodeBlue", label: "Code Blue System", type: "elv", required: false, colSpan: 4 },
+          { name: "elvIntercom", label: "Intercom", type: "elv", required: false, colSpan: 4 },
+          { name: "elvTelephone", label: "Telephone", type: "elv", required: false, colSpan: 4 },
+          { name: "elvIpPhone", label: "IP Phone", type: "elv", required: false, colSpan: 4 },
+          { name: "elvScv", label: "SCV", type: "elv", required: false, colSpan: 4 },
+          { name: "elvMatvIptv", label: "MATV / IPTV", type: "elv", required: false, colSpan: 4 },
+          { name: "elvFaxPrinter", label: "Fax / Printer", type: "elv", required: false, colSpan: 4 },
+          { name: "elvLanNetwork", label: "LAN / Network Point", type: "elv", required: false, colSpan: 4 },
+          { name: "elvWireless", label: "Wireless Point", type: "elv", required: false, colSpan: 4 },
+          { name: "elvMasterClock", label: "Master Clock", type: "elv", required: false, colSpan: 4 },
+          { name: "elvPhysioMonitor", label: "Physiological Monitors", type: "elv", required: false, colSpan: 4 },
+          { name: "elvBedsideTerminals", label: "Other Bedside Terminals", type: "elv", required: false, colSpan: 4 },
+          { name: "elvHealthcareInfra", label: "Other Healthcare Infra System", type: "elv", required: false, colSpan: 4 }
         ]
       },
       {
         title: "IT Accessories & Equipment",
         fields: [
-          { name: "accMonitorSystem",        label: "Monitor System",               type: "yesno",   required: false, colSpan: 2 },
-          { name: "accMonitorQty",           label: "Monitor System — Qty",         type: "number",  placeholder: "Qty", required: false, colSpan: 2 },
-          { name: "accPrinter",              label: "Printer",                      type: "yesno",   required: false, colSpan: 2 },
-          { name: "accPrinterQty",           label: "Printer — Qty",                type: "number",  placeholder: "Qty", required: false, colSpan: 2 },
-          { name: "accVitalEquipment",       label: "Vital Automated Equipment",    type: "yesno",   required: false, colSpan: 2 },
-          { name: "accVitalEquipmentQty",    label: "Vital Equipment — Qty",        type: "number",  placeholder: "Qty", required: false, colSpan: 2 },
-          { name: "accBarcodePrinter",       label: "Barcode Printer",              type: "yesno",   required: false, colSpan: 2 },
-          { name: "accBarcodePrinterQty",    label: "Barcode Printer — Qty",        type: "number",  placeholder: "Qty", required: false, colSpan: 2 },
-          { name: "accLaptop",               label: "Laptop",                       type: "yesno",   required: false, colSpan: 2 },
-          { name: "accLaptopQty",            label: "Laptop — Qty",                 type: "number",  placeholder: "Qty", required: false, colSpan: 2 },
-          { name: "accKiosk",                label: "Kiosk",                        type: "yesno",   required: false, colSpan: 2 },
-          { name: "accKioskQty",             label: "Kiosk — Qty",                  type: "number",  placeholder: "Qty", required: false, colSpan: 2 },
-          { name: "accMultifunctionPrinter", label: "Multifunctional Printer",      type: "yesno",   required: false, colSpan: 2 },
+          { name: "accMonitorSystem", label: "Monitor System", type: "yesno", required: false, colSpan: 2 },
+          { name: "accMonitorQty", label: "Monitor System — Qty", type: "number", placeholder: "Qty", required: false, colSpan: 2 },
+          { name: "accPrinter", label: "Printer", type: "yesno", required: false, colSpan: 2 },
+          { name: "accPrinterQty", label: "Printer — Qty", type: "number", placeholder: "Qty", required: false, colSpan: 2 },
+          { name: "accVitalEquipment", label: "Vital Automated Equipment", type: "yesno", required: false, colSpan: 2 },
+          { name: "accVitalEquipmentQty", label: "Vital Equipment — Qty", type: "number", placeholder: "Qty", required: false, colSpan: 2 },
+          { name: "accBarcodePrinter", label: "Barcode Printer", type: "yesno", required: false, colSpan: 2 },
+          { name: "accBarcodePrinterQty", label: "Barcode Printer — Qty", type: "number", placeholder: "Qty", required: false, colSpan: 2 },
+          { name: "accLaptop", label: "Laptop", type: "yesno", required: false, colSpan: 2 },
+          { name: "accLaptopQty", label: "Laptop — Qty", type: "number", placeholder: "Qty", required: false, colSpan: 2 },
+          { name: "accKiosk", label: "Kiosk", type: "yesno", required: false, colSpan: 2 },
+          { name: "accKioskQty", label: "Kiosk — Qty", type: "number", placeholder: "Qty", required: false, colSpan: 2 },
+          { name: "accMultifunctionPrinter", label: "Multifunctional Printer", type: "yesno", required: false, colSpan: 2 },
           { name: "accMultifunctionPrinterQty", label: "Multifunctional Printer — Qty", type: "number", placeholder: "Qty", required: false, colSpan: 2 },
-          { name: "accScanner",              label: "Scanner 2D / 3D",              type: "yesno",   required: false, colSpan: 2 },
-          { name: "accScannerQty",           label: "Scanner — Qty",                type: "number",  placeholder: "Qty", required: false, colSpan: 2 },
-          { name: "accHighSpeedPrinter",     label: "High Speed Printer",           type: "yesno",   required: false, colSpan: 2 },
-          { name: "accHighSpeedPrinterQty",  label: "High Speed Printer — Qty",     type: "number",  placeholder: "Qty", required: false, colSpan: 2 },
-          { name: "accQueueMgmt",            label: "Queue Management System",      type: "yesno",   required: false, colSpan: 2 },
-          { name: "accQueueMgmtQty",         label: "Queue Mgmt — Qty",             type: "number",  placeholder: "Qty", required: false, colSpan: 2 },
-          { name: "accTV",                   label: "TV",                           type: "yesno",   required: false, colSpan: 2 },
-          { name: "accTVQty",                label: "TV — Qty",                     type: "number",  placeholder: "Qty", required: false, colSpan: 2 },
-          { name: "accNetworkSwitch",        label: "Network Switch / IT Hub Room", type: "yesno",   required: false, colSpan: 2 },
-          { name: "accNetworkSwitchQty",     label: "Network Switch — Qty",         type: "number",  placeholder: "Qty", required: false, colSpan: 2 },
-          { name: "accDistributionHub",      label: "Distribution Hub for LAN",     type: "yesno",   required: false, colSpan: 2 },
-          { name: "accDistributionHubQty",   label: "Distribution Hub — Qty",       type: "number",  placeholder: "Qty", required: false, colSpan: 2 }
+          { name: "accScanner", label: "Scanner 2D / 3D", type: "yesno", required: false, colSpan: 2 },
+          { name: "accScannerQty", label: "Scanner — Qty", type: "number", placeholder: "Qty", required: false, colSpan: 2 },
+          { name: "accHighSpeedPrinter", label: "High Speed Printer", type: "yesno", required: false, colSpan: 2 },
+          { name: "accHighSpeedPrinterQty", label: "High Speed Printer — Qty", type: "number", placeholder: "Qty", required: false, colSpan: 2 },
+          { name: "accQueueMgmt", label: "Queue Management System", type: "yesno", required: false, colSpan: 2 },
+          { name: "accQueueMgmtQty", label: "Queue Mgmt — Qty", type: "number", placeholder: "Qty", required: false, colSpan: 2 },
+          { name: "accTV", label: "TV", type: "yesno", required: false, colSpan: 2 },
+          { name: "accTVQty", label: "TV — Qty", type: "number", placeholder: "Qty", required: false, colSpan: 2 },
+          { name: "accNetworkSwitch", label: "Network Switch / IT Hub Room", type: "yesno", required: false, colSpan: 2 },
+          { name: "accNetworkSwitchQty", label: "Network Switch — Qty", type: "number", placeholder: "Qty", required: false, colSpan: 2 },
+          { name: "accDistributionHub", label: "Distribution Hub for LAN", type: "yesno", required: false, colSpan: 2 },
+          { name: "accDistributionHubQty", label: "Distribution Hub — Qty", type: "number", placeholder: "Qty", required: false, colSpan: 2 }
         ]
       }
     ]
