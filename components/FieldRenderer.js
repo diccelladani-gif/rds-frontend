@@ -132,22 +132,82 @@ function QtyInput({ field, register, setValue, watch }) {
   );
 }
 
-// ─── YES/NO TOGGLE ─────────────────────────────────────────
+// ─── YES/NO TOGGLE WITH QUANTITY ─────────────────────────────────────────
 function YesNoInput({ field, register, setValue, watch }) {
   const val = watch?.(field.name);
+  const quantityFieldName = field.name.replace("Required", "Quantity");
+  const quantityVal = watch?.(quantityFieldName);
+  
+  // Check if this field should show quantity (based on a flag in the schema)
+  const showQuantity = field.showQuantity === true;
+  
   return (
-    <div className="yesno-wrap">
-      <input type="hidden" {...register(field.name)} />
-      <button type="button"
-        className={`yesno-btn ${val === "Yes" ? "selected-yes" : ""}`}
-        onClick={() => setValue?.(field.name, val === "Yes" ? "" : "Yes")}>
-        ✓ Yes
-      </button>
-      <button type="button"
-        className={`yesno-btn ${val === "No" ? "selected-no" : ""}`}
-        onClick={() => setValue?.(field.name, val === "No" ? "" : "No")}>
-        ✗ No
-      </button>
+    <div>
+      <div className="yesno-wrap">
+        <input type="hidden" {...register(field.name)} />
+        <button type="button"
+          className={`yesno-btn ${val === "Yes" ? "selected-yes" : ""}`}
+          onClick={() => {
+            const newVal = val === "Yes" ? "" : "Yes";
+            setValue?.(field.name, newVal);
+            // Reset quantity when No is selected
+            if (newVal !== "Yes" && showQuantity) {
+              setValue?.(quantityFieldName, 0);
+            }
+          }}>
+          ✓ Yes
+        </button>
+        <button type="button"
+          className={`yesno-btn ${val === "No" ? "selected-no" : ""}`}
+          onClick={() => {
+            setValue?.(field.name, val === "No" ? "" : "No");
+            // Reset quantity when No is selected
+            if (showQuantity) {
+              setValue?.(quantityFieldName, 0);
+            }
+          }}>
+          ✗ No
+        </button>
+      </div>
+      
+      {showQuantity && val === "Yes" && (
+        <div style={{ marginTop: 8 }}>
+          <div className="qty-input-wrap" style={{ justifyContent: "flex-start" }}>
+            <button
+              type="button"
+              className="qty-btn"
+              onClick={() => {
+                const currentQty = parseInt(quantityVal) || 0;
+                setValue?.(quantityFieldName, Math.max(0, currentQty - 1));
+              }}
+            >
+              −
+            </button>
+            <input
+              type="number"
+              className="qty-input"
+              min="0"
+              placeholder="Quantity"
+              value={quantityVal || 0}
+              onChange={(e) => {
+                const newQty = parseInt(e.target.value) || 0;
+                setValue?.(quantityFieldName, Math.max(0, newQty));
+              }}
+              style={{ width: 80, textAlign: "center" }}
+            />
+            <button
+              type="button"
+              className="qty-btn"
+              onClick={() => {
+                const currentQty = parseInt(quantityVal) || 0;
+                setValue?.(quantityFieldName, currentQty + 1);
+              }}
+            >
+              +
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -501,6 +561,10 @@ export default function FieldRenderer({ field, register, errors, setValue, watch
 
       {field.type === "elvmatrix" && (
         <ELVMatrixInput field={field} register={register} setValue={setValue} watch={watch} />
+      )}
+
+      {field.type === "hidden" && (
+        <input type="hidden" {...register(field.name)} />
       )}
 
       {field.type === "date" && (
