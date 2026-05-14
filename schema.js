@@ -193,24 +193,164 @@ export const rdsSchema = [
       }
     ]
   },
-  {
-    id: "digital-smart-systems",
-    section: "Digital & Smart Systems",
-    icon: "💻",
-    color: "#6366f1",
-    fields: [
-      { name: "hisEmr", label: "HIS / EMR Integration", type: "text", placeholder: "System name & integration type", required: false, colSpan: 2 },
-      { name: "pacs", label: "PACS", type: "text", placeholder: "Imaging system details", required: false, colSpan: 2 },
-      { name: "lis", label: "LIS (Laboratory)", type: "text", placeholder: "Lab information system", required: false, colSpan: 2 },
-      { name: "rtls", label: "RTLS (Real-time Location)", type: "text", placeholder: "Asset/patient tracking", required: false, colSpan: 2 },
-      { name: "nurseCall", label: "Nurse Call System", type: "text", placeholder: "System specification", required: false, colSpan: 2 },
-      {
-        name: "cctv", label: "CCTV / Surveillance", type: "yesno", required: false, colSpan: 2
-      },
-      { name: "iotSensors", label: "IoT Sensors", type: "text", placeholder: "Environmental, occupancy, etc.", required: false, colSpan: 2 },
-      { name: "aiAnalytics", label: "AI / Analytics", type: "text", placeholder: "Clinical decision support, etc.", required: false, colSpan: 2 }
-    ]
-  },
+{
+  id: "digital-smart-systems",
+  section: "Digital & Smart Systems",
+  icon: "💻",
+  color: "#6366f1",
+  subsections: [
+    {
+      title: "Core Clinical Systems",
+      fields: [
+        { name: "hisEmr", label: "HIS / EMR Integration", type: "text", placeholder: "System name & integration type", required: false, colSpan: 2 },
+        { name: "pacs", label: "PACS", type: "text", placeholder: "Imaging system details", required: false, colSpan: 2 },
+        { name: "lis", label: "LIS (Laboratory)", type: "text", placeholder: "Lab information system", required: false, colSpan: 2 },
+        { name: "rtls", label: "RTLS (Real-time Location)", type: "text", placeholder: "Asset/patient tracking", required: false, colSpan: 2 },
+        { name: "nurseCall", label: "Nurse Call System", type: "text", placeholder: "System specification", required: false, colSpan: 2 },
+        { name: "cctv", label: "CCTV / Surveillance", type: "yesno", required: false, colSpan: 2 },
+        { name: "iotSensors", label: "IoT Sensors", type: "text", placeholder: "Environmental, occupancy, etc.", required: false, colSpan: 2 },
+        { name: "aiAnalytics", label: "AI / Analytics", type: "text", placeholder: "Clinical decision support, etc.", required: false, colSpan: 2 }
+      ]
+    },
+    {
+      title: "Extra Low Voltage (ELV) Points",
+      description: "Low-voltage infrastructure points by location type",
+      fields: [
+        {
+          name: "elvNurseCall",
+          label: "Nurse Call System",
+          type: "elvMatrix",
+          required: false,
+          colSpan: 4,
+          locations: ["Wall (W)", "Bedhead Panel (BHP)", "Medical Pendant (MP)", "Ceiling (C)"]
+        },
+        {
+          name: "elvCodeBlue",
+          label: "Code Blue System",
+          type: "elvMatrix",
+          required: false,
+          colSpan: 4,
+          locations: ["Wall (W)", "Bedhead Panel (BHP)", "Medical Pendant (MP)", "Ceiling (C)"]
+        },
+        {
+          name: "elvIntercom",
+          label: "Intercom",
+          type: "elvMatrix",
+          required: false,
+          colSpan: 4,
+          locations: ["Wall (W)", "Bedhead Panel (BHP)", "Medical Pendant (MP)", "Ceiling (C)"]
+        },
+        {
+          name: "elvTelephone",
+          label: "Telephone",
+          type: "elvMatrix",
+          required: false,
+          colSpan: 4,
+          locations: ["Wall (W)", "Bedhead Panel (BHP)", "Medical Pendant (MP)", "Ceiling (C)"]
+        },
+        {
+          name: "elvIpPhone",
+          label: "IP Phone",
+          type: "elvMatrix",
+          required: false,
+          colSpan: 4,
+          locations: ["Wall (W)", "Bedhead Panel (BHP)", "Medical Pendant (MP)", "Ceiling (C)"]
+        },
+        {
+          name: "elvScv",
+          label: "SCV (Structured Cabling)",
+          type: "elvMatrix",
+          required: false,
+          colSpan: 4,
+          locations: ["Wall (W)", "Bedhead Panel (BHP)", "Medical Pendant (MP)", "Ceiling (C)"]
+        },
+        {
+          name: "elvMatv",
+          label: "MATV / IPTV",
+          type: "elvMatrix",
+          required: false,
+          colSpan: 4,
+          locations: ["Wall (W)", "Bedhead Panel (BHP)", "Medical Pendant (MP)", "Ceiling (C)"]
+        },
+        {
+          name: "elvFax",
+          label: "Fax / Printer",
+          type: "elvMatrix",
+          required: false,
+          colSpan: 4,
+          locations: ["Wall (W)", "Bedhead Panel (BHP)", "Medical Pendant (MP)", "Ceiling (C)"]
+        },
+        {
+          name: "elvLan",
+          label: "LAN / Network Point",
+          type: "elvMatrix",
+          required: false,
+          colSpan: 4,
+          locations: ["Wall (W)", "Bedhead Panel (BHP)", "Medical Pendant (MP)", "Ceiling (C)"]
+        },
+        {
+          name: "elvWireless",
+          label: "Wireless Access Point",
+          type: "elvMatrix",
+          required: false,
+          colSpan: 4,
+          locations: ["Wall (W)", "Bedhead Panel (BHP)", "Medical Pendant (MP)", "Ceiling (C)"]
+        },
+        {
+          name: "elvMasterClock",
+          label: "Master Clock",
+          type: "elvMatrix",
+          required: false,
+          colSpan: 4,
+          locations: ["Wall (W)", "Bedhead Panel (BHP)", "Medical Pendant (MP)", "Ceiling (C)"]
+        },
+        {
+          name: "elvPhysioMonitors",
+          label: "Physiological Monitors",
+          type: "elvMatrix",
+          required: false,
+          colSpan: 4,
+          locations: ["Wall (W)", "Bedhead Panel (BHP)", "Medical Pendant (MP)", "Ceiling (C)"]
+        },
+        {
+          name: "elvBedsideTerminals",
+          label: "Other Bedside Terminals",
+          type: "elvMatrix",
+          required: false,
+          colSpan: 4,
+          locations: ["Wall (W)", "Bedhead Panel (BHP)", "Medical Pendant (MP)", "Ceiling (C)"]
+        },
+        {
+          name: "elvOtherInfra",
+          label: "Other Healthcare Infra Systems",
+          type: "elvMatrix",
+          required: false,
+          colSpan: 4,
+          locations: ["Wall (W)", "Bedhead Panel (BHP)", "Medical Pendant (MP)", "Ceiling (C)"]
+        }
+      ]
+    },
+    {
+      title: "IT & Digital Accessories",
+      description: "Enterprise digital equipment and peripherals",
+      fields: [
+        { name: "accessoryMonitorSystem", label: "Monitor System", type: "yesno", required: false, colSpan: 2 },
+        { name: "accessoryPrinter", label: "Printer", type: "yesno", required: false, colSpan: 2 },
+        { name: "accessoryVitalEquipment", label: "Vital Automated Equipment", type: "yesno", required: false, colSpan: 2 },
+        { name: "accessoryBarcodePrinter", label: "Barcode Printer", type: "yesno", required: false, colSpan: 2 },
+        { name: "accessoryLaptop", label: "Laptop / Workstation", type: "yesno", required: false, colSpan: 2 },
+        { name: "accessoryKiosk", label: "Kiosk", type: "yesno", required: false, colSpan: 2 },
+        { name: "accessoryMultiFunctionPrinter", label: "Multifunctional Printer (MFP)", type: "yesno", required: false, colSpan: 2 },
+        { name: "accessoryScanner", label: "2D/3D Scanner", type: "yesno", required: false, colSpan: 2 },
+        { name: "accessoryHighSpeedPrinter", label: "High-Speed Printer", type: "yesno", required: false, colSpan: 2 },
+        { name: "accessoryQueueManagement", label: "Queue Management System", type: "yesno", required: false, colSpan: 2 },
+        { name: "accessoryTv", label: "Display / TV", type: "yesno", required: false, colSpan: 2 },
+        { name: "accessoryNetworkSwitch", label: "Network Switch / IT Hub", type: "yesno", required: false, colSpan: 2 },
+        { name: "accessoryLanHub", label: "LAN Distribution Hub", type: "yesno", required: false, colSpan: 2 }
+      ]
+    }
+  ]
+},
   {
     id: "safety-infection-control",
     section: "Safety & Infection Control",
