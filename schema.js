@@ -228,43 +228,43 @@ export const rdsSchema = [
   title: "IT & Digital Accessories",
   description: "Enterprise digital equipment and peripherals requirement",
   fields: [
-    { name: "accessoryMonitorSystem", label: "Monitor System", type: "yesno", showQuantity: true, required: false, colSpan: 2 },
+    { name: "accessoryMonitorSystem", label: "Monitor System", type: "yesno", showQuantity: true, quantityFieldName: "accessoryMonitorSystemQuantity", required: false, colSpan: 2 },
     { name: "accessoryMonitorSystemQuantity", label: "Monitor System Quantity", type: "hidden", required: false, colSpan: 2 },
     
-    { name: "accessoryPrinter", label: "Printer", type: "yesno", showQuantity: true, required: false, colSpan: 2 },
+    { name: "accessoryPrinter", label: "Printer", type: "yesno", showQuantity: true, quantityFieldName: "accessoryPrinterQuantity", required: false, colSpan: 2 },
     { name: "accessoryPrinterQuantity", label: "Printer Quantity", type: "hidden", required: false, colSpan: 2 },
     
-    { name: "accessoryVitalEquipment", label: "Vital Automated Equipment", type: "yesno", showQuantity: true, required: false, colSpan: 2 },
+    { name: "accessoryVitalEquipment", label: "Vital Automated Equipment", type: "yesno", showQuantity: true, quantityFieldName: "accessoryVitalEquipmentQuantity", required: false, colSpan: 2 },
     { name: "accessoryVitalEquipmentQuantity", label: "Vital Equipment Quantity", type: "hidden", required: false, colSpan: 2 },
     
-    { name: "accessoryBarcodePrinter", label: "Barcode Printer", type: "yesno", showQuantity: true, required: false, colSpan: 2 },
+    { name: "accessoryBarcodePrinter", label: "Barcode Printer", type: "yesno", showQuantity: true, quantityFieldName: "accessoryBarcodePrinterQuantity", required: false, colSpan: 2 },
     { name: "accessoryBarcodePrinterQuantity", label: "Barcode Printer Quantity", type: "hidden", required: false, colSpan: 2 },
     
-    { name: "accessoryLaptop", label: "Laptop / Workstation", type: "yesno", showQuantity: true, required: false, colSpan: 2 },
+    { name: "accessoryLaptop", label: "Laptop / Workstation", type: "yesno", showQuantity: true, quantityFieldName: "accessoryLaptopQuantity", required: false, colSpan: 2 },
     { name: "accessoryLaptopQuantity", label: "Laptop Quantity", type: "hidden", required: false, colSpan: 2 },
     
-    { name: "accessoryKiosk", label: "Kiosk", type: "yesno", showQuantity: true, required: false, colSpan: 2 },
+    { name: "accessoryKiosk", label: "Kiosk", type: "yesno", showQuantity: true, quantityFieldName: "accessoryKioskQuantity", required: false, colSpan: 2 },
     { name: "accessoryKioskQuantity", label: "Kiosk Quantity", type: "hidden", required: false, colSpan: 2 },
     
-    { name: "accessoryMultiFunctionPrinter", label: "Multifunctional Printer (MFP)", type: "yesno", showQuantity: true, required: false, colSpan: 2 },
+    { name: "accessoryMultiFunctionPrinter", label: "Multifunctional Printer (MFP)", type: "yesno", showQuantity: true, quantityFieldName: "accessoryMultiFunctionPrinterQuantity", required: false, colSpan: 2 },
     { name: "accessoryMultiFunctionPrinterQuantity", label: "MFP Quantity", type: "hidden", required: false, colSpan: 2 },
     
-    { name: "accessoryScanner", label: "2D/3D Scanner", type: "yesno", showQuantity: true, required: false, colSpan: 2 },
+    { name: "accessoryScanner", label: "2D/3D Scanner", type: "yesno", showQuantity: true, quantityFieldName: "accessoryScannerQuantity", required: false, colSpan: 2 },
     { name: "accessoryScannerQuantity", label: "Scanner Quantity", type: "hidden", required: false, colSpan: 2 },
     
-    { name: "accessoryHighSpeedPrinter", label: "High-Speed Printer", type: "yesno", showQuantity: true, required: false, colSpan: 2 },
+    { name: "accessoryHighSpeedPrinter", label: "High-Speed Printer", type: "yesno", showQuantity: true, quantityFieldName: "accessoryHighSpeedPrinterQuantity", required: false, colSpan: 2 },
     { name: "accessoryHighSpeedPrinterQuantity", label: "High-Speed Printer Quantity", type: "hidden", required: false, colSpan: 2 },
     
-    { name: "accessoryQueueManagement", label: "Queue Management System", type: "yesno", showQuantity: true, required: false, colSpan: 2 },
+    { name: "accessoryQueueManagement", label: "Queue Management System", type: "yesno", showQuantity: true, quantityFieldName: "accessoryQueueManagementQuantity", required: false, colSpan: 2 },
     { name: "accessoryQueueManagementQuantity", label: "Queue Management Quantity", type: "hidden", required: false, colSpan: 2 },
     
-    { name: "accessoryTv", label: "Display / TV", type: "yesno", showQuantity: true, required: false, colSpan: 2 },
+    { name: "accessoryTv", label: "Display / TV", type: "yesno", showQuantity: true, quantityFieldName: "accessoryTvQuantity", required: false, colSpan: 2 },
     { name: "accessoryTvQuantity", label: "Display / TV Quantity", type: "hidden", required: false, colSpan: 2 },
     
-    { name: "accessoryNetworkSwitch", label: "Network Switch / IT Hub", type: "yesno", showQuantity: true, required: false, colSpan: 2 },
+    { name: "accessoryNetworkSwitch", label: "Network Switch / IT Hub", type: "yesno", showQuantity: true, quantityFieldName: "accessoryNetworkSwitchQuantity", required: false, colSpan: 2 },
     { name: "accessoryNetworkSwitchQuantity", label: "Network Switch Quantity", type: "hidden", required: false, colSpan: 2 },
     
-    { name: "accessoryLanHub", label: "LAN Distribution Hub", type: "yesno", showQuantity: true, required: false, colSpan: 2 },
+    { name: "accessoryLanHub", label: "LAN Distribution Hub", type: "yesno", showQuantity: true, quantityFieldName: "accessoryLanHubQuantity", required: false, colSpan: 2 },
     { name: "accessoryLanHubQuantity", label: "LAN Hub Quantity", type: "hidden", required: false, colSpan: 2 }
   ]
 }

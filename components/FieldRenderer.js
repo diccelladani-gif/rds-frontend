@@ -42,7 +42,6 @@ function UserGroupsInput({ field, register, setValue, watch }) {
         validate: v => { try { return JSON.parse(v||"[]").length > 0 || "Select at least one user group"; } catch { return "Invalid value"; } }
       })} />
 
-      {/* Header */}
       <div style={{ padding:"10px 14px", background:"#f8fafc", borderBottom:"1px solid #e8edf5", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
         <span style={{ fontSize:12.5, fontWeight:600, color:"#374151" }}>Select roles and set quantities</span>
         {selected.length > 0 && (
@@ -52,7 +51,6 @@ function UserGroupsInput({ field, register, setValue, watch }) {
         )}
       </div>
 
-      {/* Categories */}
       <div style={{ maxHeight:420, overflowY:"auto" }}>
         {USER_GROUP_CATEGORIES.map(({ category, icon, roles }) => {
           const isOpen = openCats.has(category);
@@ -95,7 +93,6 @@ function UserGroupsInput({ field, register, setValue, watch }) {
         })}
       </div>
 
-      {/* Summary */}
       {selected.length > 0 && (
         <div style={{ padding:"10px 14px", background:"#f0fdf4", borderTop:"1px solid #bbf7d0" }}>
           <div style={{ fontSize:11, fontWeight:700, color:"#15803d", marginBottom:5 }}>SELECTED ROLES</div>
@@ -132,80 +129,73 @@ function QtyInput({ field, register, setValue, watch }) {
   );
 }
 
-// ─── YES/NO TOGGLE WITH QUANTITY ─────────────────────────────────────────
+// ─── YES/NO TOGGLE WITH QUANTITY (FIXED) ─────────────────────────────────────────
 function YesNoInput({ field, register, setValue, watch }) {
   const val = watch?.(field.name);
-  const quantityFieldName = field.name.replace("Required", "Quantity");
-  const quantityVal = watch?.(quantityFieldName);
+  const quantityFieldName = field.quantityFieldName || `${field.name}Quantity`;
+  const quantityVal = watch?.(quantityFieldName) || 0;
   
-  // Check if this field should show quantity (based on a flag in the schema)
+  // Check if this field should show quantity
   const showQuantity = field.showQuantity === true;
   
+  const handleYesNo = (newVal) => {
+    setValue?.(field.name, newVal, { shouldDirty: true });
+    // Reset quantity when not Yes
+    if (newVal !== "Yes" && showQuantity) {
+      setValue?.(quantityFieldName, 0, { shouldDirty: true });
+    }
+  };
+  
+  const updateQuantity = (newQty) => {
+    const qty = Math.max(0, parseInt(newQty) || 0);
+    setValue?.(quantityFieldName, qty, { shouldDirty: true });
+  };
+  
   return (
-    <div>
+    <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
       <div className="yesno-wrap">
         <input type="hidden" {...register(field.name)} />
-        <button type="button"
+        <button
+          type="button"
           className={`yesno-btn ${val === "Yes" ? "selected-yes" : ""}`}
-          onClick={() => {
-            const newVal = val === "Yes" ? "" : "Yes";
-            setValue?.(field.name, newVal);
-            // Reset quantity when No is selected
-            if (newVal !== "Yes" && showQuantity) {
-              setValue?.(quantityFieldName, 0);
-            }
-          }}>
+          onClick={() => handleYesNo(val === "Yes" ? "" : "Yes")}
+        >
           ✓ Yes
         </button>
-        <button type="button"
+        <button
+          type="button"
           className={`yesno-btn ${val === "No" ? "selected-no" : ""}`}
-          onClick={() => {
-            setValue?.(field.name, val === "No" ? "" : "No");
-            // Reset quantity when No is selected
-            if (showQuantity) {
-              setValue?.(quantityFieldName, 0);
-            }
-          }}>
+          onClick={() => handleYesNo(val === "No" ? "" : "No")}
+        >
           ✗ No
         </button>
       </div>
       
       {showQuantity && val === "Yes" && (
-        <div style={{ marginTop: 8 }}>
-          <div className="qty-input-wrap" style={{ justifyContent: "flex-start" }}>
-            <button
-              type="button"
-              className="qty-btn"
-              onClick={() => {
-                const currentQty = parseInt(quantityVal) || 0;
-                setValue?.(quantityFieldName, Math.max(0, currentQty - 1));
-              }}
-            >
-              −
-            </button>
-            <input
-              type="number"
-              className="qty-input"
-              min="0"
-              placeholder="Quantity"
-              value={quantityVal || 0}
-              onChange={(e) => {
-                const newQty = parseInt(e.target.value) || 0;
-                setValue?.(quantityFieldName, Math.max(0, newQty));
-              }}
-              style={{ width: 80, textAlign: "center" }}
-            />
-            <button
-              type="button"
-              className="qty-btn"
-              onClick={() => {
-                const currentQty = parseInt(quantityVal) || 0;
-                setValue?.(quantityFieldName, currentQty + 1);
-              }}
-            >
-              +
-            </button>
-          </div>
+        <div className="qty-input-wrap" style={{ margin: 0 }}>
+          <button
+            type="button"
+            className="qty-btn"
+            onClick={() => updateQuantity(quantityVal - 1)}
+          >
+            −
+          </button>
+          <input
+            type="number"
+            className="qty-input"
+            min="0"
+            placeholder="Qty"
+            value={quantityVal}
+            onChange={(e) => updateQuantity(e.target.value)}
+            style={{ width: 70, textAlign: "center" }}
+          />
+          <button
+            type="button"
+            className="qty-btn"
+            onClick={() => updateQuantity(quantityVal + 1)}
+          >
+            +
+          </button>
         </div>
       )}
     </div>
@@ -214,7 +204,6 @@ function YesNoInput({ field, register, setValue, watch }) {
 
 // ─── ELV MATRIX (Dynamic Location Quantities) ──────────────────────────────
 function ELVMatrixInput({ field, register, setValue, watch }) {
-  // Available systems
   const AVAILABLE_SYSTEMS = [
     "Nurse Call System",
     "Code Blue System",
@@ -234,7 +223,6 @@ function ELVMatrixInput({ field, register, setValue, watch }) {
 
   const LOCATIONS = ["WALL (W)", "BEDHEAD PANEL (BHP)", "MEDICAL PENDANT (MP)", "CEILING (C)"];
 
-  // Get current value
   const rawVal = watch?.(field.name) || "{}";
   let matrixData = {};
   try { 
@@ -260,13 +248,11 @@ function ELVMatrixInput({ field, register, setValue, watch }) {
     let newSelected;
     if (selectedSystems.includes(system)) {
       newSelected = selectedSystems.filter(s => s !== system);
-      // Clean up quantities for removed system
       const newQuantities = { ...quantities };
       delete newQuantities[system];
       updateMatrix(newSelected, newQuantities);
     } else {
       newSelected = [...selectedSystems, system];
-      // Initialize quantities for new system
       const newQuantities = { ...quantities };
       if (!newQuantities[system]) {
         newQuantities[system] = {
@@ -317,7 +303,6 @@ function ELVMatrixInput({ field, register, setValue, watch }) {
     <div style={{ border: "1.5px solid #e8edf5", borderRadius: 12, overflow: "hidden", background: "#fff" }}>
       <input type="hidden" {...register(field.name)} />
 
-      {/* Header */}
       <div style={{ padding: "12px 16px", background: "#f8fafc", borderBottom: "1px solid #e8edf5" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: selectedSystems.length > 0 ? 10 : 0 }}>
           <span style={{ fontSize: 13, fontWeight: 700, color: "#1e293b" }}>
@@ -330,7 +315,6 @@ function ELVMatrixInput({ field, register, setValue, watch }) {
           )}
         </div>
         
-        {/* Search */}
         <div style={{ position: "relative" }}>
           <input
             type="text"
@@ -352,7 +336,6 @@ function ELVMatrixInput({ field, register, setValue, watch }) {
         </div>
       </div>
 
-      {/* Systems Selection */}
       <div style={{ maxHeight: 400, overflowY: "auto" }}>
         {filteredSystems.length === 0 && (
           <div style={{ padding: "40px 20px", textAlign: "center", color: "#94a3b8", fontSize: 12.5 }}>
@@ -366,7 +349,6 @@ function ELVMatrixInput({ field, register, setValue, watch }) {
           
           return (
             <div key={system} style={{ borderBottom: "1px solid #f1f5f9" }}>
-              {/* System Header */}
               <div 
                 style={{
                   padding: "12px 16px",
@@ -410,7 +392,6 @@ function ELVMatrixInput({ field, register, setValue, watch }) {
                 </div>
               </div>
 
-              {/* Quantity Matrix (shown when selected) */}
               {isSelected && (
                 <div style={{ padding: "8px 16px 16px 44px", background: "#fafcff" }}>
                   <div style={{ 
@@ -464,7 +445,6 @@ function ELVMatrixInput({ field, register, setValue, watch }) {
         })}
       </div>
 
-      {/* Summary Footer */}
       {selectedSystems.length > 0 && getGrandTotal() > 0 && (
         <div style={{ padding: "12px 16px", background: "#f0fdf4", borderTop: "1px solid #bbf7d0" }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: "#15803d", marginBottom: 8 }}>
