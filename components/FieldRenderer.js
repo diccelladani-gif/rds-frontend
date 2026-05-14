@@ -129,18 +129,16 @@ function QtyInput({ field, register, setValue, watch }) {
   );
 }
 
-// ─── YES/NO TOGGLE WITH QUANTITY (FIXED) ─────────────────────────────────────────
+// ─── YES/NO TOGGLE WITH QUANTITY (PROFESSIONAL LAYOUT) ─────────────────────────────────────────
 function YesNoInput({ field, register, setValue, watch }) {
   const val = watch?.(field.name);
   const quantityFieldName = field.quantityFieldName || `${field.name}Quantity`;
   const quantityVal = watch?.(quantityFieldName) || 0;
   
-  // Check if this field should show quantity
   const showQuantity = field.showQuantity === true;
   
   const handleYesNo = (newVal) => {
     setValue?.(field.name, newVal, { shouldDirty: true });
-    // Reset quantity when not Yes
     if (newVal !== "Yes" && showQuantity) {
       setValue?.(quantityFieldName, 0, { shouldDirty: true });
     }
@@ -152,50 +150,201 @@ function YesNoInput({ field, register, setValue, watch }) {
   };
   
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-      <div className="yesno-wrap">
-        <input type="hidden" {...register(field.name)} />
+    <div style={{ width: "100%" }}>
+      <input type="hidden" {...register(field.name)} />
+      
+      {/* Yes/No Buttons - Large & Premium */}
+      <div style={{ display: "flex", gap: 12, marginBottom: showQuantity && val === "Yes" ? 16 : 0 }}>
         <button
           type="button"
-          className={`yesno-btn ${val === "Yes" ? "selected-yes" : ""}`}
           onClick={() => handleYesNo(val === "Yes" ? "" : "Yes")}
+          style={{
+            flex: 1,
+            padding: "10px 20px",
+            borderRadius: 10,
+            fontWeight: 600,
+            fontSize: 13,
+            letterSpacing: "0.3px",
+            cursor: "pointer",
+            transition: "all 0.2s ease",
+            border: `1.5px solid ${val === "Yes" ? "#22c55e" : "#e2e8f0"}`,
+            background: val === "Yes" ? "#f0fdf4" : "#ffffff",
+            color: val === "Yes" ? "#15803d" : "#64748b",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 8
+          }}
+          onMouseEnter={(e) => {
+            if (val !== "Yes") {
+              e.currentTarget.style.borderColor = "#cbd5e1";
+              e.currentTarget.style.background = "#f8fafc";
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (val !== "Yes") {
+              e.currentTarget.style.borderColor = "#e2e8f0";
+              e.currentTarget.style.background = "#ffffff";
+            }
+          }}
         >
-          ✓ Yes
+          <span style={{ fontSize: 16 }}>✓</span>
+          <span>Yes</span>
         </button>
+        
         <button
           type="button"
-          className={`yesno-btn ${val === "No" ? "selected-no" : ""}`}
           onClick={() => handleYesNo(val === "No" ? "" : "No")}
+          style={{
+            flex: 1,
+            padding: "10px 20px",
+            borderRadius: 10,
+            fontWeight: 600,
+            fontSize: 13,
+            letterSpacing: "0.3px",
+            cursor: "pointer",
+            transition: "all 0.2s ease",
+            border: `1.5px solid ${val === "No" ? "#ef4444" : "#e2e8f0"}`,
+            background: val === "No" ? "#fef2f2" : "#ffffff",
+            color: val === "No" ? "#dc2626" : "#64748b",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 8
+          }}
+          onMouseEnter={(e) => {
+            if (val !== "No") {
+              e.currentTarget.style.borderColor = "#cbd5e1";
+              e.currentTarget.style.background = "#f8fafc";
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (val !== "No") {
+              e.currentTarget.style.borderColor = "#e2e8f0";
+              e.currentTarget.style.background = "#ffffff";
+            }
+          }}
         >
-          ✗ No
+          <span style={{ fontSize: 16 }}>✗</span>
+          <span>No</span>
         </button>
       </div>
       
+      {/* Quantity Section - Appears BELOW Yes/No when Yes is selected */}
       {showQuantity && val === "Yes" && (
-        <div className="qty-input-wrap" style={{ margin: 0 }}>
-          <button
-            type="button"
-            className="qty-btn"
-            onClick={() => updateQuantity(quantityVal - 1)}
-          >
-            −
-          </button>
-          <input
-            type="number"
-            className="qty-input"
-            min="0"
-            placeholder="Qty"
-            value={quantityVal}
-            onChange={(e) => updateQuantity(e.target.value)}
-            style={{ width: 70, textAlign: "center" }}
-          />
-          <button
-            type="button"
-            className="qty-btn"
-            onClick={() => updateQuantity(quantityVal + 1)}
-          >
-            +
-          </button>
+        <div style={{
+          background: "#f8fafc",
+          borderRadius: 10,
+          padding: "12px 16px",
+          border: "1px solid #e2e8f0",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          flexWrap: "wrap",
+          gap: 12
+        }}>
+          <span style={{
+            fontSize: 12,
+            fontWeight: 600,
+            color: "#475569",
+            letterSpacing: "0.3px"
+          }}>
+            📦 QUANTITY
+          </span>
+          
+          <div className="qty-input-wrap" style={{ margin: 0 }}>
+            <button
+              type="button"
+              className="qty-btn"
+              onClick={() => updateQuantity(quantityVal - 1)}
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: 8,
+                border: "1px solid #e2e8f0",
+                background: "#ffffff",
+                cursor: "pointer",
+                fontSize: 16,
+                fontWeight: 600,
+                color: "#475569",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                transition: "all 0.15s"
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "#f1f5f9";
+                e.currentTarget.style.borderColor = "#cbd5e1";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "#ffffff";
+                e.currentTarget.style.borderColor = "#e2e8f0";
+              }}
+            >
+              −
+            </button>
+            
+            <input
+              type="number"
+              className="qty-input"
+              min="0"
+              placeholder="0"
+              value={quantityVal}
+              onChange={(e) => updateQuantity(e.target.value)}
+              style={{
+                width: 80,
+                height: 32,
+                textAlign: "center",
+                border: "1px solid #e2e8f0",
+                borderRadius: 8,
+                fontSize: 14,
+                fontWeight: 600,
+                color: "#1e293b",
+                background: "#ffffff",
+                outline: "none",
+                transition: "all 0.15s"
+              }}
+              onFocus={(e) => {
+                e.target.style.borderColor = "#3b82f6";
+                e.target.style.boxShadow = "0 0 0 3px rgba(59,130,246,0.1)";
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = "#e2e8f0";
+                e.target.style.boxShadow = "none";
+              }}
+            />
+            
+            <button
+              type="button"
+              className="qty-btn"
+              onClick={() => updateQuantity(quantityVal + 1)}
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: 8,
+                border: "1px solid #e2e8f0",
+                background: "#ffffff",
+                cursor: "pointer",
+                fontSize: 16,
+                fontWeight: 600,
+                color: "#475569",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                transition: "all 0.15s"
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "#f1f5f9";
+                e.currentTarget.style.borderColor = "#cbd5e1";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "#ffffff";
+                e.currentTarget.style.borderColor = "#e2e8f0";
+              }}
+            >
+              +
+            </button>
+          </div>
         </div>
       )}
     </div>
