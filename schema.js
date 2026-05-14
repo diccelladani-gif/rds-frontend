@@ -193,77 +193,67 @@ export const rdsSchema = [
       }
     ]
   },
-  {
-    id: "digital-smart-systems",
-    section: "Digital & Smart Systems",
-    icon: "💻",
-    color: "#6366f1",
-    subsections: [
-      {
-        title: "Clinical & IT Systems",
-        fields: [
-          { name: "hisEmr", label: "HIS / EMR Integration", type: "text", placeholder: "System name & integration type", required: false, colSpan: 2 },
-          { name: "pacs", label: "PACS", type: "text", placeholder: "Imaging system details", required: false, colSpan: 2 },
-          { name: "lis", label: "LIS (Laboratory)", type: "text", placeholder: "Lab information system", required: false, colSpan: 2 },
-          { name: "rtls", label: "RTLS (Real-time Location)", type: "text", placeholder: "Asset / patient tracking", required: false, colSpan: 2 },
-          { name: "nurseCall", label: "Nurse Call System", type: "text", placeholder: "System specification", required: false, colSpan: 2 },
-          { name: "cctv", label: "CCTV / Surveillance", type: "yesno", required: false, colSpan: 2 },
-          { name: "iotSensors", label: "IoT Sensors", type: "text", placeholder: "Environmental, occupancy, etc.", required: false, colSpan: 2 },
-          { name: "aiAnalytics", label: "AI / Analytics", type: "text", placeholder: "Clinical decision support, etc.", required: false, colSpan: 2 }
-        ]
-      },
-      {
-        title: "Extra Low Voltage (ELV) Points",
-        fields: [
-          { name: "elvNurseCall", label: "Nurse Call System", type: "elv", required: false, colSpan: 4, hint: "Specify quantity at each location" },
-          { name: "elvCodeBlue", label: "Code Blue System", type: "elv", required: false, colSpan: 4 },
-          { name: "elvIntercom", label: "Intercom", type: "elv", required: false, colSpan: 4 },
-          { name: "elvTelephone", label: "Telephone", type: "elv", required: false, colSpan: 4 },
-          { name: "elvIpPhone", label: "IP Phone", type: "elv", required: false, colSpan: 4 },
-          { name: "elvScv", label: "SCV", type: "elv", required: false, colSpan: 4 },
-          { name: "elvMatvIptv", label: "MATV / IPTV", type: "elv", required: false, colSpan: 4 },
-          { name: "elvFaxPrinter", label: "Fax / Printer", type: "elv", required: false, colSpan: 4 },
-          { name: "elvLanNetwork", label: "LAN / Network Point", type: "elv", required: false, colSpan: 4 },
-          { name: "elvWireless", label: "Wireless Point", type: "elv", required: false, colSpan: 4 },
-          { name: "elvMasterClock", label: "Master Clock", type: "elv", required: false, colSpan: 4 },
-          { name: "elvPhysioMonitor", label: "Physiological Monitors", type: "elv", required: false, colSpan: 4 },
-          { name: "elvBedsideTerminals", label: "Other Bedside Terminals", type: "elv", required: false, colSpan: 4 },
-          { name: "elvHealthcareInfra", label: "Other Healthcare Infra System", type: "elv", required: false, colSpan: 4 }
-        ]
-      },
-      {
-        title: "IT Accessories & Equipment",
-        fields: [
-          { name: "accMonitorSystem", label: "Monitor System", type: "yesno", required: false, colSpan: 2 },
-          { name: "accMonitorQty", label: "Monitor System — Qty", type: "number", placeholder: "Qty", required: false, colSpan: 2 },
-          { name: "accPrinter", label: "Printer", type: "yesno", required: false, colSpan: 2 },
-          { name: "accPrinterQty", label: "Printer — Qty", type: "number", placeholder: "Qty", required: false, colSpan: 2 },
-          { name: "accVitalEquipment", label: "Vital Automated Equipment", type: "yesno", required: false, colSpan: 2 },
-          { name: "accVitalEquipmentQty", label: "Vital Equipment — Qty", type: "number", placeholder: "Qty", required: false, colSpan: 2 },
-          { name: "accBarcodePrinter", label: "Barcode Printer", type: "yesno", required: false, colSpan: 2 },
-          { name: "accBarcodePrinterQty", label: "Barcode Printer — Qty", type: "number", placeholder: "Qty", required: false, colSpan: 2 },
-          { name: "accLaptop", label: "Laptop", type: "yesno", required: false, colSpan: 2 },
-          { name: "accLaptopQty", label: "Laptop — Qty", type: "number", placeholder: "Qty", required: false, colSpan: 2 },
-          { name: "accKiosk", label: "Kiosk", type: "yesno", required: false, colSpan: 2 },
-          { name: "accKioskQty", label: "Kiosk — Qty", type: "number", placeholder: "Qty", required: false, colSpan: 2 },
-          { name: "accMultifunctionPrinter", label: "Multifunctional Printer", type: "yesno", required: false, colSpan: 2 },
-          { name: "accMultifunctionPrinterQty", label: "Multifunctional Printer — Qty", type: "number", placeholder: "Qty", required: false, colSpan: 2 },
-          { name: "accScanner", label: "Scanner 2D / 3D", type: "yesno", required: false, colSpan: 2 },
-          { name: "accScannerQty", label: "Scanner — Qty", type: "number", placeholder: "Qty", required: false, colSpan: 2 },
-          { name: "accHighSpeedPrinter", label: "High Speed Printer", type: "yesno", required: false, colSpan: 2 },
-          { name: "accHighSpeedPrinterQty", label: "High Speed Printer — Qty", type: "number", placeholder: "Qty", required: false, colSpan: 2 },
-          { name: "accQueueMgmt", label: "Queue Management System", type: "yesno", required: false, colSpan: 2 },
-          { name: "accQueueMgmtQty", label: "Queue Mgmt — Qty", type: "number", placeholder: "Qty", required: false, colSpan: 2 },
-          { name: "accTV", label: "TV", type: "yesno", required: false, colSpan: 2 },
-          { name: "accTVQty", label: "TV — Qty", type: "number", placeholder: "Qty", required: false, colSpan: 2 },
-          { name: "accNetworkSwitch", label: "Network Switch / IT Hub Room", type: "yesno", required: false, colSpan: 2 },
-          { name: "accNetworkSwitchQty", label: "Network Switch — Qty", type: "number", placeholder: "Qty", required: false, colSpan: 2 },
-          { name: "accDistributionHub", label: "Distribution Hub for LAN", type: "yesno", required: false, colSpan: 2 },
-          { name: "accDistributionHubQty", label: "Distribution Hub — Qty", type: "number", placeholder: "Qty", required: false, colSpan: 2 }
-        ]
-      }
-    ]
-  },
+ {
+  id: "digital-smart-systems",
+  section: "Digital & Smart Systems",
+  icon: "💻",
+  color: "#6366f1",
+  // ================= PART 1: ORIGINAL FIELDS (unchanged) =================
+  fields: [
+    { name: "hisEmr", label: "HIS / EMR Integration", type: "text", placeholder: "System name & integration type", required: false, colSpan: 2 },
+    { name: "pacs", label: "PACS", type: "text", placeholder: "Imaging system details", required: false, colSpan: 2 },
+    { name: "lis", label: "LIS (Laboratory)", type: "text", placeholder: "Lab information system", required: false, colSpan: 2 },
+    { name: "rtls", label: "RTLS (Real-time Location)", type: "text", placeholder: "Asset/patient tracking", required: false, colSpan: 2 },
+    { name: "nurseCall", label: "Nurse Call System", type: "text", placeholder: "System specification", required: false, colSpan: 2 },
+    { name: "cctv", label: "CCTV / Surveillance", type: "yesno", required: false, colSpan: 2 },
+    { name: "iotSensors", label: "IoT Sensors", type: "text", placeholder: "Environmental, occupancy, etc.", required: false, colSpan: 2 },
+    { name: "aiAnalytics", label: "AI / Analytics", type: "text", placeholder: "Clinical decision support, etc.", required: false, colSpan: 2 },
+  ],
+  // ================= PART 2: EXTRA LOW VOLTAGE POINTS =================
+  subsections: [
+    {
+      title: "Extra Low Voltage Points in Room",
+      description: "Specify quantity for each mounting location per system",
+      fields: [
+        { name: "elv_nurseCall", label: "Nurse Call System", type: "elvSystem", required: false, colSpan: 4 },
+        { name: "elv_codeBlue", label: "Code Blue System", type: "elvSystem", required: false, colSpan: 4 },
+        { name: "elv_intercom", label: "Intercom", type: "elvSystem", required: false, colSpan: 4 },
+        { name: "elv_telephone", label: "Telephone", type: "elvSystem", required: false, colSpan: 4 },
+        { name: "elv_ipPhone", label: "IP Phone", type: "elvSystem", required: false, colSpan: 4 },
+        { name: "elv_scv", label: "SCV", type: "elvSystem", required: false, colSpan: 4 },
+        { name: "elv_matv_iptv", label: "MATV / IPTV", type: "elvSystem", required: false, colSpan: 4 },
+        { name: "elv_faxPrinter", label: "Fax / Printer", type: "elvSystem", required: false, colSpan: 4 },
+        { name: "elv_lanPoint", label: "LAN / Network Point", type: "elvSystem", required: false, colSpan: 4 },
+        { name: "elv_wirelessPoint", label: "Wireless Point", type: "elvSystem", required: false, colSpan: 4 },
+        { name: "elv_masterClock", label: "MasterClock", type: "elvSystem", required: false, colSpan: 4 },
+        { name: "elv_physioMonitors", label: "Physiological Monitors", type: "elvSystem", required: false, colSpan: 4 },
+        { name: "elv_otherBedside", label: "Other Bedside Terminals", type: "elvSystem", required: false, colSpan: 4 },
+        { name: "elv_otherInfra", label: "Other Healthcare Infra System", type: "elvSystem", required: false, colSpan: 4 }
+      ]
+    },
+    // ================= PART 3: IT & MEDICAL SUPPORT EQUIPMENT =================
+    {
+      title: "IT & Medical Support Equipment",
+      description: "Mark required equipment and specify quantity if needed",
+      fields: [
+        { name: "it_monitorSystem", label: "Monitor System", type: "yesnoQty", required: false, colSpan: 2 },
+        { name: "it_printer", label: "Printer", type: "yesnoQty", required: false, colSpan: 2 },
+        { name: "it_vitalAutomated", label: "Vital Automated Equipment", type: "yesnoQty", required: false, colSpan: 2 },
+        { name: "it_barcodePrinter", label: "Barcode Printer", type: "yesnoQty", required: false, colSpan: 2 },
+        { name: "it_laptop", label: "Laptop", type: "yesnoQty", required: false, colSpan: 2 },
+        { name: "it_kiosk", label: "Kiosk", type: "yesnoQty", required: false, colSpan: 2 },
+        // Note: "Printer" appears twice in Excel; second instance is likely different – merged as one.
+        { name: "it_multiFunctionPrinter", label: "Multifunctional Printer", type: "yesnoQty", required: false, colSpan: 2 },
+        { name: "it_scanner", label: "Scanner 2D/3D", type: "yesnoQty", required: false, colSpan: 2 },
+        { name: "it_highSpeedPrinter", label: "High Speed Printer", type: "yesnoQty", required: false, colSpan: 2 },
+        { name: "it_queManagement", label: "Queue Management System", type: "yesnoQty", required: false, colSpan: 2 },
+        { name: "it_tv", label: "TV", type: "yesnoQty", required: false, colSpan: 2 },
+        { name: "it_networkSwitch", label: "Network Switch (IT Hub Room)", type: "yesnoQty", required: false, colSpan: 2 },
+        { name: "it_distributionHub", label: "Distribution Hub for LAN", type: "yesnoQty", required: false, colSpan: 2 }
+      ]
+    }
+  ]
+},
   {
     id: "safety-infection-control",
     section: "Safety & Infection Control",
