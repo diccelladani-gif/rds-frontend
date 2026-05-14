@@ -206,7 +206,6 @@ export const rdsSchema = [
         { name: "pacs", label: "PACS", type: "text", placeholder: "Imaging system details", required: false, colSpan: 2 },
         { name: "lis", label: "LIS (Laboratory)", type: "text", placeholder: "Lab information system", required: false, colSpan: 2 },
         { name: "rtls", label: "RTLS (Real-time Location)", type: "text", placeholder: "Asset/patient tracking", required: false, colSpan: 2 },
-        { name: "nurseCall", label: "Nurse Call System", type: "text", placeholder: "System specification", required: false, colSpan: 2 },
         { name: "cctv", label: "CCTV / Surveillance", type: "yesno", required: false, colSpan: 2 },
         { name: "iotSensors", label: "IoT Sensors", type: "text", placeholder: "Environmental, occupancy, etc.", required: false, colSpan: 2 },
         { name: "aiAnalytics", label: "AI / Analytics", type: "text", placeholder: "Clinical decision support, etc.", required: false, colSpan: 2 }
@@ -214,125 +213,46 @@ export const rdsSchema = [
     },
     {
       title: "Extra Low Voltage (ELV) Points",
-      description: "Low-voltage infrastructure points by location type",
+      description: "Select ELV systems and configure quantities per location",
+      type: "dynamicELVMatrix",
       fields: [
         {
-          name: "elvNurseCall",
-          label: "Nurse Call System",
-          type: "elvMatrix",
+          name: "elvSystems",
+          label: "Select ELV Systems",
+          type: "multiselect",
           required: false,
           colSpan: 4,
-          locations: ["Wall (W)", "Bedhead Panel (BHP)", "Medical Pendant (MP)", "Ceiling (C)"]
+          options: [
+            "Nurse Call System",
+            "Code Blue System",
+            "Intercom",
+            "Telephone",
+            "IP Phone",
+            "SCV",
+            "MATV / IPTV",
+            "Fax / Printer",
+            "LAN / Network Point",
+            "Wireless Point",
+            "Master Clock",
+            "Physiological Monitors",
+            "Other Bedside Terminals",
+            "Other Healthcare Infra System"
+          ]
         },
         {
-          name: "elvCodeBlue",
-          label: "Code Blue System",
-          type: "elvMatrix",
+          name: "elvQuantities",
+          label: "Quantity per Location",
+          type: "dynamicQuantityMatrix",
           required: false,
           colSpan: 4,
-          locations: ["Wall (W)", "Bedhead Panel (BHP)", "Medical Pendant (MP)", "Ceiling (C)"]
-        },
-        {
-          name: "elvIntercom",
-          label: "Intercom",
-          type: "elvMatrix",
-          required: false,
-          colSpan: 4,
-          locations: ["Wall (W)", "Bedhead Panel (BHP)", "Medical Pendant (MP)", "Ceiling (C)"]
-        },
-        {
-          name: "elvTelephone",
-          label: "Telephone",
-          type: "elvMatrix",
-          required: false,
-          colSpan: 4,
-          locations: ["Wall (W)", "Bedhead Panel (BHP)", "Medical Pendant (MP)", "Ceiling (C)"]
-        },
-        {
-          name: "elvIpPhone",
-          label: "IP Phone",
-          type: "elvMatrix",
-          required: false,
-          colSpan: 4,
-          locations: ["Wall (W)", "Bedhead Panel (BHP)", "Medical Pendant (MP)", "Ceiling (C)"]
-        },
-        {
-          name: "elvScv",
-          label: "SCV (Structured Cabling)",
-          type: "elvMatrix",
-          required: false,
-          colSpan: 4,
-          locations: ["Wall (W)", "Bedhead Panel (BHP)", "Medical Pendant (MP)", "Ceiling (C)"]
-        },
-        {
-          name: "elvMatv",
-          label: "MATV / IPTV",
-          type: "elvMatrix",
-          required: false,
-          colSpan: 4,
-          locations: ["Wall (W)", "Bedhead Panel (BHP)", "Medical Pendant (MP)", "Ceiling (C)"]
-        },
-        {
-          name: "elvFax",
-          label: "Fax / Printer",
-          type: "elvMatrix",
-          required: false,
-          colSpan: 4,
-          locations: ["Wall (W)", "Bedhead Panel (BHP)", "Medical Pendant (MP)", "Ceiling (C)"]
-        },
-        {
-          name: "elvLan",
-          label: "LAN / Network Point",
-          type: "elvMatrix",
-          required: false,
-          colSpan: 4,
-          locations: ["Wall (W)", "Bedhead Panel (BHP)", "Medical Pendant (MP)", "Ceiling (C)"]
-        },
-        {
-          name: "elvWireless",
-          label: "Wireless Access Point",
-          type: "elvMatrix",
-          required: false,
-          colSpan: 4,
-          locations: ["Wall (W)", "Bedhead Panel (BHP)", "Medical Pendant (MP)", "Ceiling (C)"]
-        },
-        {
-          name: "elvMasterClock",
-          label: "Master Clock",
-          type: "elvMatrix",
-          required: false,
-          colSpan: 4,
-          locations: ["Wall (W)", "Bedhead Panel (BHP)", "Medical Pendant (MP)", "Ceiling (C)"]
-        },
-        {
-          name: "elvPhysioMonitors",
-          label: "Physiological Monitors",
-          type: "elvMatrix",
-          required: false,
-          colSpan: 4,
-          locations: ["Wall (W)", "Bedhead Panel (BHP)", "Medical Pendant (MP)", "Ceiling (C)"]
-        },
-        {
-          name: "elvBedsideTerminals",
-          label: "Other Bedside Terminals",
-          type: "elvMatrix",
-          required: false,
-          colSpan: 4,
-          locations: ["Wall (W)", "Bedhead Panel (BHP)", "Medical Pendant (MP)", "Ceiling (C)"]
-        },
-        {
-          name: "elvOtherInfra",
-          label: "Other Healthcare Infra Systems",
-          type: "elvMatrix",
-          required: false,
-          colSpan: 4,
-          locations: ["Wall (W)", "Bedhead Panel (BHP)", "Medical Pendant (MP)", "Ceiling (C)"]
+          locations: ["WALL (W)", "BEDHEAD PANEL (BHP)", "MEDICAL PENDANT (MP)", "CEILING (C)"],
+          dependsOn: "elvSystems"
         }
       ]
     },
     {
       title: "IT & Digital Accessories",
-      description: "Enterprise digital equipment and peripherals",
+      description: "Enterprise digital equipment and peripherals requirement",
       fields: [
         { name: "accessoryMonitorSystem", label: "Monitor System", type: "yesno", required: false, colSpan: 2 },
         { name: "accessoryPrinter", label: "Printer", type: "yesno", required: false, colSpan: 2 },
