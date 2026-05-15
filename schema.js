@@ -1,31 +1,184 @@
 export const rdsSchema = [
   {
     id: "Room identity and General Information",
-    section: "Room identity and General Information",
+    section: "Room Identity & General Information",
     icon: "🏥",
     color: "#0ea5e9",
-    fields: [
-      { name: "project", label: "Project", type: "text", required: true, colSpan: 2 },
-      { name: "department", label: "Department", type: "text", required: true, colSpan: 2 },
-      { name: "roomName", label: "Room Name", type: "text", required: true, colSpan: 2 },
-      { name: "roomCode", label: "Room Code", type: "text", required: true, colSpan: 2 },
-      { name: "location", label: "Location", type: "text", required: true, colSpan: 4 },
+    subsections: [
+
+      // ─── 1. PROJECT & ROOM IDENTIFICATION ─────────────────────────
       {
-        name: "roomTypology", label: "Room Typology", type: "select", required: true, colSpan: 2,
-        options: ["ICU", "Ward", "OT", "Emergency", "Outpatient", "Diagnostic", "Laboratory", "Pharmacy", "Administrative", "Support", "NICU", "PICU", "CCU", "HDU", "Isolation", "Other"]
+        title: "Project & Room Identification",
+        description: "Core identifiers for unambiguous referencing across all project documents and drawings",
+        fields: [
+          { name: "project", label: "Project Name", type: "text", required: true, colSpan: 2, placeholder: "e.g. Apollo Hospital — Phase III Expansion" },
+          { name: "projectCode", label: "Project Code / Reference No.", type: "text", required: false, colSpan: 2, placeholder: "e.g. APL-2025-PH3" },
+          { name: "department", label: "Department", type: "text", required: true, colSpan: 2, placeholder: "e.g. Critical Care" },
+          { name: "subDepartment", label: "Sub-Department / Unit", type: "text", required: false, colSpan: 2, placeholder: "e.g. Medical ICU (MICU)" },
+          { name: "roomName", label: "Room Name", type: "text", required: true, colSpan: 2, placeholder: "e.g. ICU Bay — Bed 04" },
+          { name: "roomCode", label: "Room Code", type: "text", required: true, colSpan: 2, placeholder: "e.g. ICU-B04" },
+          { name: "roomNumber", label: "Room Number / Drawing Reference", type: "text", required: false, colSpan: 2, placeholder: "e.g. Room 4.12 — Drawing GA-L04-021" },
+          { name: "location", label: "Location / Site Address", type: "text", required: true, colSpan: 2, placeholder: "e.g. Apollo Hospitals, Jubilee Hills, Hyderabad" },
+          {
+            name: "buildingBlock", label: "Building / Block", type: "text", required: false, colSpan: 1, placeholder: "e.g. Tower B"
+          },
+          {
+            name: "floorLevel", label: "Floor / Level", type: "text", required: false, colSpan: 1, placeholder: "e.g. Level 4"
+          },
+          {
+            name: "wing", label: "Wing / Zone", type: "text", required: false, colSpan: 1, placeholder: "e.g. North Wing"
+          },
+          {
+            name: "gridReference", label: "Grid Reference", type: "text", required: false, colSpan: 1, placeholder: "e.g. D4–E6"
+          }
+        ]
       },
+
+      // ─── 2. CLINICAL & FUNCTIONAL CLASSIFICATION ──────────────────
       {
-        name: "criticalityLevel", label: "Criticality Level", type: "select", required: true, colSpan: 2,
-        options: ["Critical", "High", "Medium", "Low", "Ancillary"]
+        title: "Clinical & Functional Classification",
+        description: "Defines the room's clinical role, care typology, patient profile, and functional zone within the facility",
+        fields: [
+          {
+            name: "roomTypology", label: "Room Typology", type: "select", required: true, colSpan: 2,
+            options: [
+              "ICU — General", "ICU — Cardiac (CCU)", "ICU — Neuro", "ICU — Burns",
+              "NICU — Level I", "NICU — Level II", "NICU — Level III",
+              "PICU", "HDU (High Dependency Unit)", "Step-Down Unit",
+              "Ward — General", "Ward — Surgical", "Ward — Paediatric", "Ward — Maternity", "Ward — Oncology",
+              "Operating Theatre (OT) — Major", "Operating Theatre (OT) — Minor", "Operating Theatre (OT) — Day Surgery",
+              "Emergency — Resuscitation Bay", "Emergency — Triage", "Emergency — Observation",
+              "Outpatient — Consultation Room", "Outpatient — Procedure Room", "Outpatient — Treatment Room",
+              "Diagnostic — Radiology", "Diagnostic — MRI", "Diagnostic — CT Scan", "Diagnostic — Ultrasound", "Diagnostic — Cardiology",
+              "Laboratory", "Pharmacy", "Endoscopy Suite", "Catheterisation Laboratory",
+              "Isolation Room", "Negative Pressure Room", "Positive Pressure Room",
+              "Administrative", "Support / Utility", "Other"
+            ]
+          },
+          {
+            name: "functionalZone", label: "Functional Zone Type", type: "select", required: false, colSpan: 2,
+            options: [
+              "Clean (Sterile / Aseptic)", "Semi-Clean (Restricted Access)", "Dirty / Contaminated Zone",
+              "Patient Zone — Bedside", "Patient Zone — Examination", "Patient Zone — Treatment",
+              "Staff Zone — Clinical Work", "Staff Zone — Rest / Locker",
+              "Public Zone — Waiting", "Public Zone — Reception",
+              "Support Zone — Storage", "Support Zone — Utility",
+              "Transition / Airlock Zone", "Not Applicable"
+            ]
+          },
+          {
+            name: "criticalityLevel", label: "Criticality Level", type: "select", required: true, colSpan: 2,
+            options: [
+              "Critical — Life-Sustaining (Highest Priority)",
+              "High — Clinically Sensitive",
+              "Medium — Standard Clinical",
+              "Low — Support / Administrative",
+              "Ancillary — Non-Clinical"
+            ]
+          },
+          {
+            name: "patientAgeGroup", label: "Patient Age Group", type: "select", required: false, colSpan: 2,
+            options: [
+              "Neonatal (0–28 days)", "Paediatric — Infant (1 month – 2 years)",
+              "Paediatric — Child (2–12 years)", "Paediatric — Adolescent (12–18 years)",
+              "Adult (18–60 years)", "Elderly / Geriatric (60+ years)",
+              "Mixed — All Age Groups", "Not Applicable"
+            ]
+          },
+          {
+            name: "careModel", label: "Care Delivery Model", type: "select", required: false, colSpan: 2,
+            options: [
+              "Inpatient — Acute", "Inpatient — Sub-Acute / Rehabilitation",
+              "Day Care / Day Surgery", "Ambulatory / Outpatient",
+              "Emergency / Unplanned", "Telemedicine / Virtual Care Hybrid",
+              "Diagnostic Only", "Procedural Only", "Mixed / Multi-Function"
+            ]
+          },
+          {
+            name: "operationalHoursType", label: "Operational Hours", type: "select", required: false, colSpan: 2,
+            options: [
+              "24 × 7 — Continuous", "Scheduled — Day Only (06:00–22:00)",
+              "Scheduled — Day & Evening (06:00–00:00)", "On-Call / As Required",
+              "Sessional (Defined Time Slots)", "Emergency On-Demand Only"
+            ]
+          }
+        ]
       },
+
+      // ─── 3. RISK & COMPLIANCE PROFILE ─────────────────────────────
       {
-        name: "infectionRiskCategory", label: "Infection Risk Category", type: "select", required: true, colSpan: 2,
-        options: ["Very High", "High", "Medium", "Low", "Minimal"]
+        title: "Risk, Infection & Compliance Profile",
+        description: "Infection risk grading, isolation classification, regulatory compliance standards and special hazard designations",
+        fields: [
+          {
+            name: "infectionRiskCategory", label: "Infection Risk Category", type: "select", required: true, colSpan: 2,
+            options: [
+              "Very High — Immunocompromised / Transplant",
+              "High — Infectious Disease / Isolation",
+              "Medium — General Clinical Procedures",
+              "Low — Outpatient / Administrative",
+              "Minimal — Non-Clinical / Ancillary"
+            ]
+          },
+          {
+            name: "isolationType", label: "Isolation Type", type: "select", required: false, colSpan: 2,
+            options: [
+              "None — No Isolation Required",
+              "Contact Isolation",
+              "Droplet Isolation",
+              "Airborne Isolation (Negative Pressure)",
+              "Protective / Reverse Isolation (Positive Pressure)",
+              "Combined (Contact + Airborne)",
+              "Strict / Level-4 Isolation"
+            ]
+          },
+          {
+            name: "radiationClassification", label: "Radiation Zone Classification", type: "select", required: false, colSpan: 2,
+            options: [
+              "Not Applicable",
+              "Supervised Zone (≤1 mSv/year)",
+              "Controlled Zone (>1 mSv/year)",
+              "Restricted Zone — Lead Lining Required",
+              "Restricted Zone — Lead Glass Windows Required",
+              "Full Radiation Suite (Shielded Structure)"
+            ]
+          },
+          {
+            name: "biohazardClassification", label: "Biohazard / BSL Classification", type: "select", required: false, colSpan: 2,
+            options: [
+              "Not Applicable",
+              "BSL-1 — Basic (Minimal Risk Agents)",
+              "BSL-2 — Standard (Moderate Risk Agents)",
+              "BSL-3 — Containment (Serious / Potentially Lethal)",
+              "BSL-4 — Maximum Containment (Exotic / Life-Threatening)"
+            ]
+          },
+          {
+            name: "regulatoryStandards", label: "Applicable Regulatory Standards & Codes", type: "textarea", required: false, colSpan: 4,
+            placeholder: "e.g. NABH — Hospital Standards 5th Ed.; NBC 2016 Part 4; ASHRAE 170-2021; HBN 04-01 (UK); FGI Guidelines 2022; AERB Safety Code; Local Authority Fire NOC Conditions"
+          }
+        ]
       },
+
+      // ─── 4. DOCUMENT CONTROL & STATUS ─────────────────────────────
       {
-        name: "isolationType", label: "Isolation Type", type: "select", required: false, colSpan: 2,
-        options: ["None", "Contact", "Droplet", "Airborne", "Protective (Reverse)", "Combined", "Strict Isolation"]
+        title: "Document Control & RDS Status",
+        description: "Version control, authorship, review cycle and current approval status for this Room Data Sheet",
+        fields: [
+          { name: "rdsVersion", label: "RDS Version", type: "text", required: false, colSpan: 1, placeholder: "e.g. v1.0" },
+          {
+            name: "rdsStatus", label: "RDS Status", type: "select", required: false, colSpan: 1,
+            options: ["Draft — In Progress", "Draft — Under Review", "Issued for Review (IFR)", "Issued for Approval (IFA)", "Approved for Construction (AFC)", "As-Built / Record", "Superseded / Archived"]
+          },
+          { name: "preparedBy", label: "Prepared By", type: "text", required: false, colSpan: 1, placeholder: "Name / Designation" },
+          { name: "reviewedBy", label: "Reviewed By", type: "text", required: false, colSpan: 1, placeholder: "Name / Designation" },
+          { name: "rdsDate", label: "Date of Issue", type: "date", required: false, colSpan: 1 },
+          { name: "nextReviewDate", label: "Next Review Date", type: "date", required: false, colSpan: 1 },
+          { name: "relatedDrawings", label: "Related Drawing Numbers", type: "text", required: false, colSpan: 2, placeholder: "e.g. GA-L04-021, RCP-L04-021, MEP-L04-021" },
+          { name: "roomDataNotes", label: "General Notes & Special Requirements", type: "textarea", required: false, colSpan: 4, placeholder: "Document any project-specific assumptions, authority conditions, client brief deviations, or special considerations relevant to this room." }
+        ]
       }
+
     ]
   },
   {
