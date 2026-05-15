@@ -286,25 +286,261 @@ export const rdsSchema = [
     section: "Safety & Infection Control",
     icon: "🛡️",
     color: "#dc2626",
-    fields: [
+    subsections: [
+
+      // ─── 1. CORE SAFETY PARAMETERS ────────────────────────────────
       {
-        name: "pressureRegime", label: "Pressure Regime", type: "select", required: false, colSpan: 2,
-        options: ["Positive (+ve)", "Negative (-ve)", "Neutral", "Variable / Switchable"]
+        title: "Core Safety Parameters",
+        description: "Fundamental safety classification and containment requirements for this room",
+        fields: [
+          {
+            name: "pressureRegime", label: "Pressure Regime", type: "select", required: false, colSpan: 2,
+            options: ["Positive", "Negative", "Neutral", "Variable", "Not Applicable"]
+          },
+          {
+            name: "isolationLevel", label: "Isolation Level", type: "select", required: false, colSpan: 2,
+            options: ["Level-1 Standard", "Level-2 Enhanced", "Level-3 Strict", "Level-4 Maximum"]
+          },
+          {
+            name: "radiationProtection", label: "Radiation Protection", type: "select", required: false, colSpan: 2,
+            options: ["Not Required", "Lead Lining Required", "Lead Glass Window", "Controlled Zone", "Supervised Zone"]
+          },
+          {
+            name: "biohazardHandling", label: "Biohazard Handling", type: "select", required: false, colSpan: 2,
+            options: ["Not Applicable", "BSL-1", "BSL-2", "BSL-3", "BSL-4"]
+          }
+        ]
       },
+
+      // ─── 2. INFECTION CONTROL & HYGIENE ───────────────────────────
       {
-        name: "isolationLevel", label: "Isolation Level", type: "select", required: false, colSpan: 2,
-        options: ["Level 1 – Standard", "Level 2 – Enhanced", "Level 3 – Strict", "Level 4 – Maximum / BSL-4", "Not Applicable"]
+        title: "Infection Control & Hygiene",
+        description: "Hand hygiene provisions, air quality, disinfection systems and waste management",
+        fields: [
+          {
+            name: "handHygieneProvision", label: "Hand Hygiene Provision", type: "select", required: false, colSpan: 2,
+            options: ["Not Required", "Alcohol-Based Hand Rub (ABHR) Dispenser Only", "Clinical Handwash Basin (HWB)", "ABHR + HWB", "Surgical Scrub Trough"]
+          },
+          {
+            name: "hepaFiltration", label: "HEPA Filtration", type: "select", required: false, colSpan: 2,
+            options: ["Not Required", "Terminal HEPA (H13)", "Terminal HEPA (H14)", "Laminar Airflow + HEPA", "Recirculating HEPA Unit"]
+          },
+          {
+            name: "airChangesACHInfection", label: "Air Changes per Hour (ACH)", type: "select", required: false, colSpan: 2,
+            options: ["Standard (6 ACH)", "Enhanced (12 ACH)", "High (15 ACH)", "Ultra-High (20+ ACH — OT/BMT)", "As per ASHRAE 170"]
+          },
+          {
+            name: "temperatureHumidityControl", label: "Temperature & Humidity Control", type: "select", required: false, colSpan: 2,
+            options: ["General Comfort (22–26°C)", "Controlled (20–24°C, 30–60% RH)", "Precision (18–22°C, 45–55% RH)", "Ultra-Precision (OT/Cath Lab Specific)", "Cold Storage Specific"]
+          },
+          {
+            name: "uvDisinfection", label: "UV-C / Room Disinfection", type: "select", required: false, colSpan: 2,
+            options: ["Not Required", "Portable UV-C Device Provision", "Fixed Ceiling-Mounted UV-C", "Hydrogen Peroxide Vapour (HPV) Ready", "UV-C + HPV Combined"]
+          },
+          {
+            name: "anteRoom", label: "Ante-Room / Airlock", type: "select", required: false, colSpan: 2,
+            options: ["Not Required", "Single-Door Anteroom", "Double-Door Airlock (Positive)", "Double-Door Airlock (Negative)", "Pass-Through with Interlock"]
+          },
+          {
+            name: "sharpsDisposal", label: "Sharps Disposal", type: "select", required: false, colSpan: 2,
+            options: ["Not Applicable", "Wall-Mounted Sharps Container", "Bench-Mounted Sharps Container", "Enclosed Sharps Management System", "Needle Destruction Device"]
+          },
+          {
+            name: "bmwWasteSegregation", label: "BMW / Clinical Waste Segregation", type: "select", required: false, colSpan: 2,
+            options: ["Not Applicable", "General Waste Only", "2-Bin (General + Infectious)", "4-Bin (as per BMW Rules 2016)", "Full BMW Station (Colour-Coded 4+)"]
+          },
+          {
+            name: "fumigationProvision", label: "Fumigation / Terminal Cleaning Provision", type: "select", required: false, colSpan: 2,
+            options: ["Not Required", "Standard Terminal Clean", "Fogging / Misting Provision", "HPV Decontamination Ready", "Sealed Room for Gaseous Decontamination"]
+          }
+        ]
       },
+
+      // ─── 3. PLUMBING SAFETY FIXTURES ──────────────────────────────
       {
-        name: "radiationProtection", label: "Radiation Protection", type: "select", required: false, colSpan: 2,
-        options: ["Not Required", "Lead Lining Required", "Lead Glass Windows", "Controlled Zone", "Supervised Zone"]
+        title: "Plumbing Safety Fixtures",
+        description: "Specialized clinical fixtures for safe water handling, hand hygiene and emergency decontamination",
+        fields: [
+          {
+            name: "eyeWash", label: "Eye Wash", type: "select", required: false, colSpan: 2,
+            options: ["Not Required", "Plumbed (Fixed Wall/Counter-Mounted)", "Portable (Squeeze Bottle/Gravity-Fed)", "Plumbed + Tepid Water (ANSI Z358.1 Compliant)"]
+          },
+          {
+            name: "emergencyShower", label: "Emergency Shower (E-Shower)", type: "select", required: false, colSpan: 2,
+            options: ["Not Required", "Standard Drench Shower", "Tepid Water Drench Shower", "Barrier-Free / ADA-Compliant Shower"]
+          },
+          {
+            name: "integratedEyeWashShower", label: "Integrated Eye Wash & E-Shower", type: "select", required: false, colSpan: 2,
+            options: ["Not Required", "Standard Combination Unit", "Recessed/Flush-Mounted Combination", "Barrier-Free Combination with Tepid Water"]
+          },
+          {
+            name: "kneeOperatedFixtures", label: "Knee-Operated Fixtures", type: "select", required: false, colSpan: 2,
+            options: ["Not Required", "Required — Clinical Wash Basins", "Required — Scrub Sinks (OT/Procedure Areas)"]
+          },
+          {
+            name: "footOperatedFixtures", label: "Foot-Operated Fixtures", type: "select", required: false, colSpan: 2,
+            options: ["Not Required", "Foot-Operated Waste Bins (Clinical/BMW)", "Foot-Operated Soap/Sanitizer Dispensers", "Foot-Operated Wash Basin Taps"]
+          },
+          {
+            name: "wristBladeFaucets", label: "Wrist Blade Faucets", type: "select", required: false, colSpan: 2,
+            options: ["Not Required", "Standard — Clinical Handwash Areas", "Surgical — OT/Procedure/Scrub Stations"]
+          },
+          {
+            name: "sprayHose", label: "Spray Hose", type: "select", required: false, colSpan: 2,
+            options: ["Not Required", "Pre-Rinse Spray (Dirty Utility/CSSD)", "Utility Spray (Sluice/Bedpan Wash)", "Laboratory Spray Hose"]
+          },
+          {
+            name: "elbowFaucets", label: "Elbow-Operated Faucets", type: "select", required: false, colSpan: 2,
+            options: ["Not Required", "Standard Clinical Areas", "Surgical Scrub Stations", "CSSD / Decontamination Areas"]
+          }
+        ]
       },
+
+      // ─── 4. FIRE & LIFE SAFETY ────────────────────────────────────
       {
-        name: "biohazardHandling", label: "Biohazard Handling", type: "select", required: false, colSpan: 2,
-        options: ["Not Applicable", "BSL-1", "BSL-2", "BSL-3", "BSL-4"]
+        title: "Fire & Life Safety",
+        description: "Fire suppression, detection, compartmentation and emergency evacuation provisions",
+        fields: [
+          {
+            name: "fireSafetyProvision", label: "Fire Safety Provision", type: "select", required: false, colSpan: 2,
+            options: ["Not Applicable", "Basic (Portable Extinguishers Only)", "Standard (Extinguishers + Manual Call Points)", "Enhanced (Sprinklers + Detection + Alarm)", "Critical (Clean Agent + Redundant Suppression)"]
+          },
+          {
+            name: "emergencySystems", label: "Emergency Systems", type: "select", required: false, colSpan: 2,
+            options: ["Not Applicable", "Emergency Lighting Only", "Emergency Lighting + Power Backup (UPS/DG)", "Full Backup (UPS + DG + Auto-Changeover)", "Critical Redundancy (Dual UPS + DG + Island Mode)"]
+          },
+          {
+            name: "conventionalSprinkler", label: "Conventional Sprinkler System", type: "select", required: false, colSpan: 2,
+            options: ["Not Required", "Wet Pipe System", "Dry Pipe System", "Deluge System"]
+          },
+          {
+            name: "fireDetectionAlarm", label: "Pre-Action, Smoke Detector & Fire Alarm", type: "select", required: false, colSpan: 2,
+            options: ["Not Required", "Conventional (Point-Type Smoke/Heat)", "Addressable (Intelligent Detection)", "Aspirating / VESDA (Early Warning)"]
+          },
+          {
+            name: "raisedFloorDetection", label: "Fire Detection for Raised Floor Space", type: "select", required: false, colSpan: 2,
+            options: ["Not Required", "Under-Floor Point-Type Smoke Detector", "VESDA (Very Early Smoke Detection Apparatus)", "Linear Heat Detection Cable"]
+          },
+          {
+            name: "cleanGasSystem", label: "FM-200 or Other Clean Gas System", type: "select", required: false, colSpan: 2,
+            options: ["Not Required", "FM-200 (HFC-227ea)", "Novec 1230 (FK-5-1-12)", "Inergen / Argonite (Inert Gas)"]
+          },
+          {
+            name: "smokeCompartmentation", label: "Smoke Compartmentation", type: "select", required: false, colSpan: 2,
+            options: ["Not Required", "1-Hour Fire-Rated Barrier", "2-Hour Fire-Rated Barrier", "Smoke-Tight with Auto-Closing Doors"]
+          },
+          {
+            name: "fireRatedDoors", label: "Fire-Rated Doors", type: "select", required: false, colSpan: 2,
+            options: ["Not Required", "30-Min Fire-Rated (FD30)", "60-Min Fire-Rated (FD60)", "120-Min Fire-Rated (FD120)"]
+          },
+          {
+            name: "evacuationAids", label: "Emergency Evacuation Aids", type: "select", required: false, colSpan: 2,
+            options: ["Not Required", "Evacuation Chair", "Evacuation Mattress/Sled", "Horizontal Refuge Area"]
+          },
+          {
+            name: "gasLeakDetection", label: "Gas Leak Detection", type: "select", required: false, colSpan: 2,
+            options: ["Not Applicable", "Medical Gas Area Alarm", "Anaesthetic Gas Scavenging (AGSS)", "Toxic / Combustible Gas Detector"]
+          },
+          {
+            name: "fireDampers", label: "Fire Dampers / Smoke Dampers", type: "select", required: false, colSpan: 2,
+            options: ["Not Required", "Fire Damper Only", "Smoke Damper Only", "Combined Fire + Smoke Damper"]
+          }
+        ]
       },
-      { name: "fireSafety", label: "Fire Safety Provisions", type: "textarea", placeholder: "Sprinkler, suppression, detection type", required: false, colSpan: 4 },
-      { name: "emergencySystems", label: "Emergency Systems", type: "textarea", placeholder: "Code blue panel, crash cart location", required: false, colSpan: 4 }
+
+      // ─── 5. ELECTRICAL & EQUIPMENT SAFETY ────────────────────────
+      {
+        title: "Electrical & Equipment Safety",
+        description: "Anti-static, electromagnetic shielding and electrical safety classifications",
+        fields: [
+          {
+            name: "antiStaticFlooring", label: "Anti-Static / ESD Flooring", type: "select", required: false, colSpan: 2,
+            options: ["Not Required", "Anti-Static Vinyl", "Conductive Flooring (OT)", "ESD-Rated Flooring (MRI/Electronics)"]
+          },
+          {
+            name: "emiShielding", label: "Electromagnetic Shielding (EMI/RFI)", type: "select", required: false, colSpan: 2,
+            options: ["Not Required", "Basic Shielding", "RF Cage (MRI Suite)", "Full Faraday Cage"]
+          },
+          {
+            name: "electricalSafetyClass", label: "Electrical Safety Classification", type: "select", required: false, colSpan: 2,
+            options: ["General (No Patient Contact)", "Body-Protected (CF)", "Cardiac-Protected (CF)", "Wet Location Rated"]
+          }
+        ]
+      },
+
+      // ─── 6. PHYSICAL SAFETY & SECURITY ───────────────────────────
+      {
+        title: "Physical Safety & Security",
+        description: "Anti-ligature, fall prevention, nurse call, access control and surveillance provisions",
+        fields: [
+          {
+            name: "antiLigature", label: "Anti-Ligature Provisions", type: "select", required: false, colSpan: 2,
+            options: ["Not Required", "Partial (Fittings Only)", "Full (Fittings + Fixtures + Furniture)", "Forensic-Grade Anti-Ligature"]
+          },
+          {
+            name: "slipResistance", label: "Slip Resistance / Fall Prevention", type: "select", required: false, colSpan: 2,
+            options: ["Standard (R9)", "Enhanced (R10)", "High-Grip Wet Area (R11–R12)", "Anti-Fatigue + Slip-Resistant"]
+          },
+          {
+            name: "nurseCallSystem", label: "Nurse / Emergency Call System", type: "select", required: false, colSpan: 2,
+            options: ["Not Required", "Standard Call Bell", "Call + Code Blue Pull Cord", "Integrated Call + RTLS + Duress"]
+          },
+          {
+            name: "panicAlarm", label: "Panic / Duress Alarm", type: "select", required: false, colSpan: 2,
+            options: ["Not Required", "Fixed Panic Button", "Wearable Duress Alarm", "Integrated with Security Command"]
+          },
+          {
+            name: "cctvMonitoring", label: "CCTV / Security Monitoring", type: "select", required: false, colSpan: 2,
+            options: ["Not Required", "Fixed Camera", "PTZ Camera", "Integrated with Access Control"]
+          },
+          {
+            name: "accessControl", label: "Access Control", type: "select", required: false, colSpan: 2,
+            options: ["Open Access", "Swipe/RFID Card", "Biometric", "Interlock / Mantrap"]
+          },
+          {
+            name: "seismicSafety", label: "Seismic Safety Provision", type: "select", required: false, colSpan: 2,
+            options: ["Not Applicable", "Zone-II (Low)", "Zone-III (Moderate)", "Zone-IV/V (High/Very High)"]
+          },
+          {
+            name: "ppeStorage", label: "PPE Storage Provision", type: "select", required: false, colSpan: 2,
+            options: ["Not Required", "PPE Wall-Mounted Dispenser", "Dedicated PPE Donning/Doffing Area", "Full Gowning Room with Mirror & Signage"]
+          },
+          {
+            name: "spillContainment", label: "Spill Containment", type: "select", required: false, colSpan: 2,
+            options: ["Not Applicable", "Spill Kit Available", "Bunded / Contained Area", "Chemical-Resistant Sealed Floor with Drain"]
+          }
+        ]
+      },
+
+      // ─── 7. CHEMICAL & HAZARDOUS MATERIAL SAFETY ──────────────────
+      {
+        title: "Chemical & Hazardous Material Safety",
+        description: "COSHH compliance, cryogenic handling and cytotoxic drug preparation provisions",
+        fields: [
+          {
+            name: "chemicalSafetyCOSHH", label: "Chemical Safety (COSHH)", type: "select", required: false, colSpan: 2,
+            options: ["Not Applicable", "Basic (MSDS + Ventilation)", "Fume Cupboard Required", "LEV (Local Exhaust Ventilation) + Chemical Store"]
+          },
+          {
+            name: "cryogenicSafety", label: "Cryogenic Safety", type: "select", required: false, colSpan: 2,
+            options: ["Not Applicable", "LN₂ Handling Area", "Oxygen Depletion Alarm Required", "Cryogenic Store with Ventilation + Alarm"]
+          },
+          {
+            name: "cytotoxicHandling", label: "Cytotoxic Drug Handling", type: "select", required: false, colSpan: 2,
+            options: ["Not Applicable", "Class II BSC Required", "Closed-System Transfer Device (CSTD)", "Dedicated Cytotoxic Preparation Suite"]
+          }
+        ]
+      },
+
+      // ─── 8. ADDITIONAL NOTES ──────────────────────────────────────
+      {
+        title: "Additional Safety Notes",
+        description: "Any supplementary safety requirements, special compliance notes or site-specific considerations",
+        fields: [
+          { name: "safetyAdditionalNotes", label: "Additional Safety Requirements / Special Notes", type: "textarea", placeholder: "Document any site-specific safety conditions, regulatory compliance notes, special authority requirements, or other safety provisions not covered above.", required: false, colSpan: 4 }
+        ]
+      }
+
     ]
   },
   {
