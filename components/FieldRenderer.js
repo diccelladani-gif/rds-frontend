@@ -620,6 +620,142 @@ function ELVMatrixInput({ field, register, setValue, watch }) {
   );
 }
 
+// ─── IT ACCESSORY MATRIX ───────────────────────────────────
+function AccessoryMatrixInput({ field, register, setValue, watch }) {
+  const accessories = field.accessories || [];
+  const rawVal = watch?.(field.name) || "{}";
+  let data = {};
+  try { data = JSON.parse(rawVal); } catch { data = {}; }
+
+  const update = (key, enabled, qty) => {
+    const next = { ...data, [key]: { enabled, qty: Math.max(0, qty) } };
+    setValue?.(field.name, JSON.stringify(next), { shouldDirty: true });
+  };
+
+  const toggleEnabled = (key) => {
+    const cur = data[key] || { enabled: false, qty: 0 };
+    update(key, !cur.enabled, cur.enabled ? 0 : 1);
+  };
+
+  const setQty = (key, qty) => {
+    const cur = data[key] || { enabled: true, qty: 0 };
+    update(key, true, qty);
+  };
+
+  const selectedCount = accessories.filter(a => data[a.key]?.enabled).length;
+  const totalQty = accessories.reduce((sum, a) => sum + (data[a.key]?.qty || 0), 0);
+
+  return (
+    <div style={{ border: "1.5px solid #e8edf5", borderRadius: 12, overflow: "hidden", background: "#fff" }}>
+      <input type="hidden" {...register(field.name)} />
+
+      {/* Header */}
+      <div style={{ padding: "12px 16px", background: "linear-gradient(135deg,#f8fafc 0%,#f0f4ff 100%)", borderBottom: "1px solid #e8edf5", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: "#1e293b" }}>Select equipment and specify quantities</div>
+          <div style={{ fontSize: 11.5, color: "#64748b", marginTop: 2 }}>Click a card to enable, then set quantity</div>
+        </div>
+        <div style={{ display: "flex", gap: 8 }}>
+          {selectedCount > 0 && (
+            <span style={{ background: "#dbeafe", color: "#1d4ed8", fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 20 }}>
+              {selectedCount} item{selectedCount !== 1 ? "s" : ""}
+            </span>
+          )}
+          {totalQty > 0 && (
+            <span style={{ background: "#dcfce7", color: "#15803d", fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 20 }}>
+              {totalQty} total units
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Grid of accessory cards */}
+      <div style={{ padding: 16, display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 12 }}>
+        {accessories.map(({ key, label, icon }) => {
+          const item = data[key] || { enabled: false, qty: 0 };
+          const active = item.enabled;
+          return (
+            <div
+              key={key}
+              style={{
+                borderRadius: 10,
+                border: `1.5px solid ${active ? "#6366f1" : "#e2e8f0"}`,
+                background: active ? "#f5f3ff" : "#fafafa",
+                overflow: "hidden",
+                transition: "all 0.2s ease",
+                boxShadow: active ? "0 2px 8px rgba(99,102,241,0.12)" : "none"
+              }}
+            >
+              {/* Card header — click to toggle */}
+              <div
+                onClick={() => toggleEnabled(key)}
+                style={{ padding: "10px 12px", display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}
+                onMouseEnter={e => { if (!active) e.currentTarget.parentElement.style.background = "#f1f5f9"; }}
+                onMouseLeave={e => { if (!active) e.currentTarget.parentElement.style.background = "#fafafa"; }}
+              >
+                <span
+                  style={{
+                    width: 32, height: 32, borderRadius: 8, flexShrink: 0,
+                    background: active ? "#6366f1" : "#e2e8f0",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontSize: 16, transition: "all 0.2s"
+                  }}
+                >
+                  {active ? <span style={{ color: "#fff", fontSize: 14 }}>✓</span> : icon}
+                </span>
+                <span style={{ fontSize: 12.5, fontWeight: active ? 700 : 500, color: active ? "#4338ca" : "#475569", lineHeight: 1.3, flex: 1 }}>
+                  {label}
+                </span>
+              </div>
+
+              {/* Quantity row — visible only when active */}
+              {active && (
+                <div style={{ borderTop: "1px solid #e0e7ff", padding: "8px 12px", background: "#eef2ff", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <span style={{ fontSize: 11, fontWeight: 600, color: "#6366f1", letterSpacing: "0.3px" }}>QTY</span>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <button type="button"
+                      onClick={() => setQty(key, (item.qty || 0) - 1)}
+                      style={{ width: 26, height: 26, borderRadius: 6, border: "1.5px solid #c7d2fe", background: "#fff", cursor: "pointer", fontSize: 15, fontWeight: 700, color: "#6366f1", display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1 }}>
+                      −
+                    </button>
+                    <input
+                      type="number" min="0"
+                      value={item.qty || 0}
+                      onChange={e => setQty(key, parseInt(e.target.value) || 0)}
+                      style={{ width: 46, height: 26, textAlign: "center", border: "1.5px solid #c7d2fe", borderRadius: 6, fontSize: 13, fontWeight: 700, color: "#4338ca", background: "#fff", outline: "none" }}
+                      onFocus={e => e.target.style.borderColor = "#6366f1"}
+                      onBlur={e => e.target.style.borderColor = "#c7d2fe"}
+                    />
+                    <button type="button"
+                      onClick={() => setQty(key, (item.qty || 0) + 1)}
+                      style={{ width: 26, height: 26, borderRadius: 6, border: "1.5px solid #6366f1", background: "#6366f1", cursor: "pointer", fontSize: 15, fontWeight: 700, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1 }}>
+                      +
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Summary bar */}
+      {selectedCount > 0 && (
+        <div style={{ padding: "10px 16px", background: "#f0fdf4", borderTop: "1px solid #bbf7d0" }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "#15803d", marginBottom: 6 }}>SELECTED EQUIPMENT</div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+            {accessories.filter(a => data[a.key]?.enabled).map(({ key, label }) => (
+              <span key={key} style={{ background: "#dcfce7", color: "#15803d", border: "1px solid #86efac", borderRadius: 20, padding: "3px 10px", fontSize: 11.5, fontWeight: 600 }}>
+                {label} × {data[key]?.qty || 0}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── MAIN RENDERER ─────────────────────────────────────────
 export default function FieldRenderer({ field, register, errors, setValue, watch }) {
   const err = errors?.[field.name];
@@ -689,6 +825,10 @@ export default function FieldRenderer({ field, register, errors, setValue, watch
 
       {field.type === "yesno" && (
         <YesNoInput field={field} register={register} setValue={setValue} watch={watch} />
+      )}
+
+      {field.type === "accessorymatrix" && (
+        <AccessoryMatrixInput field={field} register={register} setValue={setValue} watch={watch} />
       )}
 
       {field.type === "elvmatrix" && (
