@@ -758,13 +758,29 @@ function AccessoryMatrixInput({ field, register, setValue, watch }) {
 
 // ─── MEDICAL GAS MATRIX ────────────────────────────────────
 const GAS_COLUMNS = [
-  { key: "wall",      label: "Wall",              short: "Wall"   },
-  { key: "pendant",   label: "Pendant",           short: "Pendant"},
-  { key: "bhp",       label: "Bed Head Panel",    short: "BHP"    },
-  { key: "tapoff",    label: "Tap-off (Equip.)",  short: "Tap-off"},
-  { key: "direct",    label: "Direct (Equip.)",   short: "Direct" },
-  { key: "height",    label: "Mounting Height",   short: "Height", unit: "mm", isText: true },
+  { key: "wall",    short: "Wall"    },
+  { key: "pendant", short: "Pendant" },
+  { key: "bhp",     short: "BHP"     },
+  { key: "tapoff",  short: "Tap-off" },
+  { key: "direct",  short: "Direct"  },
+  { key: "height",  short: "Height", unit: "mm", isText: true },
 ];
+
+// Muted, desaturated palette — colour only used for the symbol badge & row total
+const GAS_MUTED = {
+  vacuum:   { badge: "#92400e", bg: "#fef3c7" },
+  oxygen:   { badge: "#1e3a8a", bg: "#dbeafe" },
+  co2:      { badge: "#374151", bg: "#f3f4f6" },
+  n2o:      { badge: "#4c1d95", bg: "#ede9fe" },
+  medAir4:  { badge: "#064e3b", bg: "#d1fae5" },
+  surgAir7: { badge: "#7c2d12", bg: "#ffedd5" },
+  agss:     { badge: "#831843", bg: "#fce7f3" },
+  compAir:  { badge: "#0c4a6e", bg: "#e0f2fe" },
+  liqN2:    { badge: "#164e63", bg: "#cffafe" },
+  png:      { badge: "#365314", bg: "#ecfccb" },
+  lmo:      { badge: "#1e40af", bg: "#dbeafe" },
+  oog:      { badge: "#3b0764", bg: "#f3e8ff" },
+};
 
 function GasMatrixInput({ field, register, setValue, watch }) {
   const gases = field.gases || [];
@@ -773,10 +789,7 @@ function GasMatrixInput({ field, register, setValue, watch }) {
   try { data = JSON.parse(rawVal); } catch { data = {}; }
 
   const update = (gasKey, colKey, value) => {
-    const next = {
-      ...data,
-      [gasKey]: { ...(data[gasKey] || {}), [colKey]: value }
-    };
+    const next = { ...data, [gasKey]: { ...(data[gasKey] || {}), [colKey]: value } };
     setValue?.(field.name, JSON.stringify(next), { shouldDirty: true });
   };
 
@@ -795,139 +808,143 @@ function GasMatrixInput({ field, register, setValue, watch }) {
   const activeCount = gases.filter(g => isRowActive(g.key)).length;
   const grandTotal = gases.reduce((sum, g) => sum + getRowTotal(g.key), 0);
 
-  const [collapsed, setCollapsed] = useState(true);
-  // Show only active rows when collapsed, all when expanded
-  const visibleGases = collapsed ? gases : gases;
-
   return (
-    <div style={{ border: "1.5px solid #e8edf5", borderRadius: 12, overflow: "hidden", background: "#fff" }}>
+    <div style={{ border: "1px solid #e2e8f0", borderRadius: 10, overflow: "hidden", background: "#fff", boxShadow: "0 1px 4px rgba(15,23,42,0.06)" }}>
       <input type="hidden" {...register(field.name)} />
 
       {/* Header */}
-      <div style={{ padding: "14px 18px", background: "linear-gradient(135deg,#f0fdf4 0%,#f0f9ff 100%)", borderBottom: "1px solid #e8edf5", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <div style={{ padding: "14px 18px", background: "#f8fafc", borderBottom: "1px solid #e2e8f0", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div>
-          <div style={{ fontSize: 13, fontWeight: 700, color: "#1e293b" }}>Medical Gas Point Schedule</div>
-          <div style={{ fontSize: 11.5, color: "#64748b", marginTop: 2 }}>Enter outlet quantities per location and mounting height for each gas service</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a", letterSpacing: "-0.1px" }}>Medical Gas Point Schedule</div>
+          <div style={{ fontSize: 11.5, color: "#94a3b8", marginTop: 2 }}>Enter outlet quantities per location and mounting height for each gas service</div>
         </div>
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
           {activeCount > 0 && (
-            <span style={{ background: "#dbeafe", color: "#1d4ed8", fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 20 }}>
-              {activeCount} gas{activeCount !== 1 ? "es" : ""} configured
+            <span style={{ background: "#f1f5f9", color: "#475569", fontSize: 11, fontWeight: 600, padding: "3px 10px", borderRadius: 20, border: "1px solid #e2e8f0" }}>
+              {activeCount} configured
             </span>
           )}
           {grandTotal > 0 && (
-            <span style={{ background: "#dcfce7", color: "#15803d", fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 20 }}>
-              {grandTotal} total points
+            <span style={{ background: "#f1f5f9", color: "#334155", fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 20, border: "1px solid #e2e8f0" }}>
+              {grandTotal} pts total
             </span>
           )}
         </div>
       </div>
 
-      {/* Legend row */}
-      <div style={{ display: "grid", gridTemplateColumns: "220px repeat(5, 1fr) 130px 70px", background: "#f8fafc", borderBottom: "2px solid #e2e8f0" }}>
-        <div style={{ padding: "10px 14px", fontSize: 11, fontWeight: 700, color: "#475569", textTransform: "uppercase", letterSpacing: "0.4px" }}>Gas / Service</div>
+      {/* Column header row */}
+      <div style={{ display: "grid", gridTemplateColumns: "210px repeat(5, 1fr) 120px 64px", background: "#f8fafc", borderBottom: "1px solid #e2e8f0" }}>
+        <div style={{ padding: "9px 14px", fontSize: 10, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.6px" }}>Gas / Service</div>
         {GAS_COLUMNS.map(col => (
-          <div key={col.key} style={{ padding: "10px 6px", fontSize: 10.5, fontWeight: 700, color: "#475569", textTransform: "uppercase", letterSpacing: "0.3px", textAlign: "center", borderLeft: "1px solid #e8edf5" }}>
-            {col.short}{col.unit ? <span style={{ fontWeight: 400, color: "#94a3b8" }}> ({col.unit})</span> : ""}
+          <div key={col.key} style={{ padding: "9px 4px", fontSize: 10, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.5px", textAlign: "center", borderLeft: "1px solid #e8edf5" }}>
+            {col.short}{col.unit ? <span style={{ fontWeight: 400, opacity: 0.7 }}> ({col.unit})</span> : ""}
           </div>
         ))}
-        <div style={{ padding: "10px 6px", fontSize: 10.5, fontWeight: 700, color: "#475569", textTransform: "uppercase", letterSpacing: "0.3px", textAlign: "center", borderLeft: "1px solid #e8edf5" }}>Total Pts</div>
+        <div style={{ padding: "9px 4px", fontSize: 10, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.5px", textAlign: "center", borderLeft: "1px solid #e8edf5" }}>Pts</div>
       </div>
 
       {/* Gas rows */}
-      <div style={{ overflowX: "auto" }}>
+      <div>
         {gases.map((gas, i) => {
           const active = isRowActive(gas.key);
           const rowTotal = getRowTotal(gas.key);
+          const muted = GAS_MUTED[gas.key] || { badge: "#334155", bg: "#f1f5f9" };
           return (
             <div key={gas.key} style={{
               display: "grid",
-              gridTemplateColumns: "220px repeat(5, 1fr) 130px 70px",
+              gridTemplateColumns: "210px repeat(5, 1fr) 120px 64px",
               borderBottom: i < gases.length - 1 ? "1px solid #f1f5f9" : "none",
-              background: active ? "#fafeff" : "#fff",
+              background: active ? "#fafbfe" : "#fff",
               transition: "background 0.15s"
             }}>
               {/* Gas label */}
-              <div style={{ padding: "10px 14px", display: "flex", alignItems: "center", gap: 8 }}>
+              <div style={{ padding: "9px 14px", display: "flex", alignItems: "center", gap: 9, borderRight: "1px solid #f1f5f9" }}>
                 <span style={{
-                  flexShrink: 0, width: 36, height: 20, borderRadius: 4,
-                  background: active ? gas.color : "#e2e8f0",
-                  color: active ? "#fff" : "#94a3b8",
-                  fontSize: 9.5, fontWeight: 800, letterSpacing: "0.3px",
+                  flexShrink: 0, minWidth: 36, height: 18, borderRadius: 3,
+                  background: active ? muted.bg : "#f1f5f9",
+                  color: active ? muted.badge : "#94a3b8",
+                  border: `1px solid ${active ? muted.badge + "30" : "#e2e8f0"}`,
+                  fontSize: 9, fontWeight: 800, letterSpacing: "0.4px",
                   display: "flex", alignItems: "center", justifyContent: "center",
-                  transition: "all 0.2s"
+                  transition: "all 0.2s", paddingLeft: 3, paddingRight: 3
                 }}>{gas.symbol}</span>
-                <span style={{ fontSize: 12, fontWeight: active ? 600 : 400, color: active ? "#1e293b" : "#64748b", lineHeight: 1.3 }}>
+                <span style={{ fontSize: 11.5, fontWeight: active ? 600 : 400, color: active ? "#0f172a" : "#94a3b8", lineHeight: 1.35, transition: "all 0.15s" }}>
                   {gas.label}
                 </span>
               </div>
 
-              {/* Qty columns */}
+              {/* Qty columns — uniform slate controls, no per-gas colour */}
               {GAS_COLUMNS.filter(c => !c.isText).map(col => {
                 const v = parseInt(getVal(gas.key, col.key)) || 0;
                 return (
-                  <div key={col.key} style={{ padding: "8px 6px", display: "flex", alignItems: "center", justifyContent: "center", borderLeft: "1px solid #f1f5f9" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 3 }}>
+                  <div key={col.key} style={{ padding: "7px 4px", display: "flex", alignItems: "center", justifyContent: "center", borderLeft: "1px solid #f1f5f9" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
                       <button type="button"
                         onClick={() => update(gas.key, col.key, Math.max(0, v - 1))}
-                        style={{ width: 22, height: 22, borderRadius: 5, border: `1px solid ${v > 0 ? gas.color : "#e2e8f0"}`, background: v > 0 ? `${gas.color}15` : "#f8fafc", color: v > 0 ? gas.color : "#cbd5e1", cursor: "pointer", fontSize: 14, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1, transition: "all 0.15s" }}>−</button>
+                        style={{ width: 20, height: 20, borderRadius: 4, border: "1px solid #e2e8f0", background: "#f8fafc", color: v > 0 ? "#475569" : "#cbd5e1", cursor: "pointer", fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1, transition: "all 0.15s", flexShrink: 0 }}>−</button>
                       <input type="number" min="0"
                         value={v || ""}
-                        placeholder="0"
+                        placeholder="—"
                         onChange={e => update(gas.key, col.key, e.target.value)}
-                        style={{ width: 38, height: 26, textAlign: "center", border: `1.5px solid ${v > 0 ? gas.color : "#e2e8f0"}`, borderRadius: 6, fontSize: 12.5, fontWeight: v > 0 ? 700 : 400, color: v > 0 ? gas.color : "#94a3b8", background: "#fff", outline: "none", transition: "all 0.15s" }}
-                        onFocus={e => { e.target.style.borderColor = gas.color; e.target.style.boxShadow = `0 0 0 3px ${gas.color}20`; }}
-                        onBlur={e => { e.target.style.borderColor = v > 0 ? gas.color : "#e2e8f0"; e.target.style.boxShadow = "none"; }}
+                        style={{ width: 34, height: 26, textAlign: "center", border: `1.5px solid ${v > 0 ? "#64748b" : "#e8edf5"}`, borderRadius: 5, fontSize: 12, fontWeight: v > 0 ? 700 : 400, color: v > 0 ? "#0f172a" : "#cbd5e1", background: v > 0 ? "#f8fafc" : "#fff", outline: "none", transition: "all 0.15s" }}
+                        onFocus={e => { e.target.style.borderColor = "#64748b"; e.target.style.boxShadow = "0 0 0 3px rgba(100,116,139,0.12)"; }}
+                        onBlur={e => { e.target.style.borderColor = v > 0 ? "#64748b" : "#e8edf5"; e.target.style.boxShadow = "none"; }}
                       />
                       <button type="button"
                         onClick={() => update(gas.key, col.key, v + 1)}
-                        style={{ width: 22, height: 22, borderRadius: 5, border: `1px solid ${gas.color}`, background: gas.color, color: "#fff", cursor: "pointer", fontSize: 14, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1, transition: "all 0.15s" }}>+</button>
+                        style={{ width: 20, height: 20, borderRadius: 4, border: "1px solid #cbd5e1", background: "#334155", color: "#fff", cursor: "pointer", fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1, transition: "all 0.15s", flexShrink: 0 }}>+</button>
                     </div>
                   </div>
                 );
               })}
 
-              {/* Mounting height text input */}
-              <div style={{ padding: "8px 6px", display: "flex", alignItems: "center", justifyContent: "center", borderLeft: "1px solid #f1f5f9" }}>
+              {/* Mounting height */}
+              <div style={{ padding: "7px 6px", display: "flex", alignItems: "center", justifyContent: "center", borderLeft: "1px solid #f1f5f9" }}>
                 <input type="text"
                   value={getVal(gas.key, "height")}
-                  placeholder="e.g. 1200"
+                  placeholder="—"
                   onChange={e => update(gas.key, "height", e.target.value)}
-                  style={{ width: "100%", height: 30, padding: "0 8px", border: "1.5px solid #e2e8f0", borderRadius: 6, fontSize: 12, color: "#334155", background: "#fff", outline: "none", transition: "all 0.15s", textAlign: "center" }}
-                  onFocus={e => { e.target.style.borderColor = gas.color; e.target.style.boxShadow = `0 0 0 3px ${gas.color}20`; }}
-                  onBlur={e => { e.target.style.borderColor = "#e2e8f0"; e.target.style.boxShadow = "none"; }}
+                  style={{ width: "100%", height: 26, padding: "0 6px", border: "1.5px solid #e8edf5", borderRadius: 5, fontSize: 11.5, color: "#334155", background: "#fff", outline: "none", transition: "all 0.15s", textAlign: "center" }}
+                  onFocus={e => { e.target.style.borderColor = "#64748b"; e.target.style.boxShadow = "0 0 0 3px rgba(100,116,139,0.12)"; }}
+                  onBlur={e => { e.target.style.borderColor = "#e8edf5"; e.target.style.boxShadow = "none"; }}
                 />
               </div>
 
-              {/* Row total */}
-              <div style={{ padding: "8px 6px", display: "flex", alignItems: "center", justifyContent: "center", borderLeft: "1px solid #f1f5f9" }}>
-                <span style={{
-                  minWidth: 36, height: 26, borderRadius: 20, display: "flex", alignItems: "center", justifyContent: "center",
-                  background: rowTotal > 0 ? `${gas.color}20` : "transparent",
-                  color: rowTotal > 0 ? gas.color : "#cbd5e1",
-                  fontSize: 12.5, fontWeight: 700,
-                  transition: "all 0.2s"
-                }}>
-                  {rowTotal > 0 ? rowTotal : "—"}
-                </span>
+              {/* Row total — only here do we use the gas accent */}
+              <div style={{ padding: "7px 4px", display: "flex", alignItems: "center", justifyContent: "center", borderLeft: "1px solid #f1f5f9" }}>
+                {rowTotal > 0 ? (
+                  <span style={{
+                    minWidth: 32, height: 22, borderRadius: 4,
+                    background: muted.bg, color: muted.badge,
+                    border: `1px solid ${muted.badge}25`,
+                    fontSize: 11.5, fontWeight: 700,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    paddingLeft: 6, paddingRight: 6,
+                    transition: "all 0.2s"
+                  }}>{rowTotal}</span>
+                ) : (
+                  <span style={{ color: "#e2e8f0", fontSize: 12 }}>—</span>
+                )}
               </div>
             </div>
           );
         })}
       </div>
 
-      {/* Summary */}
+      {/* Summary footer */}
       {activeCount > 0 && (
-        <div style={{ padding: "12px 16px", background: "#f0fdf4", borderTop: "1px solid #bbf7d0" }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: "#15803d", marginBottom: 7 }}>CONFIGURED GAS SERVICES</div>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+        <div style={{ padding: "11px 16px", background: "#f8fafc", borderTop: "1px solid #e2e8f0" }}>
+          <div style={{ fontSize: 10, fontWeight: 700, color: "#94a3b8", letterSpacing: "0.6px", textTransform: "uppercase", marginBottom: 7 }}>Configured Services</div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
             {gases.filter(g => isRowActive(g.key)).map(g => {
+              const muted = GAS_MUTED[g.key] || { badge: "#334155", bg: "#f1f5f9" };
               const total = getRowTotal(g.key);
               const ht = getVal(g.key, "height");
               return (
-                <span key={g.key} style={{ background: "#fff", border: `1.5px solid ${g.color}40`, borderRadius: 20, padding: "3px 10px", fontSize: 11.5, fontWeight: 600, color: "#1e293b", display: "flex", alignItems: "center", gap: 5 }}>
-                  <span style={{ width: 8, height: 8, borderRadius: "50%", background: g.color, flexShrink: 0 }} />
-                  {g.symbol}{total > 0 ? ` — ${total} pts` : ""}{ht ? ` @ ${ht}mm` : ""}
+                <span key={g.key} style={{ background: muted.bg, border: `1px solid ${muted.badge}25`, borderRadius: 5, padding: "3px 9px", fontSize: 11, fontWeight: 600, color: muted.badge, display: "inline-flex", alignItems: "center", gap: 4 }}>
+                  <span style={{ fontWeight: 800 }}>{g.symbol}</span>
+                  {total > 0 && <span style={{ fontWeight: 400, opacity: 0.8 }}>· {total} pts</span>}
+                  {ht && <span style={{ fontWeight: 400, opacity: 0.7 }}>@ {ht}mm</span>}
                 </span>
               );
             })}
