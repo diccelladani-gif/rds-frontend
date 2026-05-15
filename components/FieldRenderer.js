@@ -756,6 +756,188 @@ function AccessoryMatrixInput({ field, register, setValue, watch }) {
   );
 }
 
+// ─── MEDICAL GAS MATRIX ────────────────────────────────────
+const GAS_COLUMNS = [
+  { key: "wall",      label: "Wall",              short: "Wall"   },
+  { key: "pendant",   label: "Pendant",           short: "Pendant"},
+  { key: "bhp",       label: "Bed Head Panel",    short: "BHP"    },
+  { key: "tapoff",    label: "Tap-off (Equip.)",  short: "Tap-off"},
+  { key: "direct",    label: "Direct (Equip.)",   short: "Direct" },
+  { key: "height",    label: "Mounting Height",   short: "Height", unit: "mm", isText: true },
+];
+
+function GasMatrixInput({ field, register, setValue, watch }) {
+  const gases = field.gases || [];
+  const rawVal = watch?.(field.name) || "{}";
+  let data = {};
+  try { data = JSON.parse(rawVal); } catch { data = {}; }
+
+  const update = (gasKey, colKey, value) => {
+    const next = {
+      ...data,
+      [gasKey]: { ...(data[gasKey] || {}), [colKey]: value }
+    };
+    setValue?.(field.name, JSON.stringify(next), { shouldDirty: true });
+  };
+
+  const getVal = (gasKey, colKey) => data[gasKey]?.[colKey] ?? "";
+
+  const getRowTotal = (gasKey) =>
+    GAS_COLUMNS.filter(c => !c.isText)
+      .reduce((sum, c) => sum + (parseInt(data[gasKey]?.[c.key]) || 0), 0);
+
+  const isRowActive = (gasKey) =>
+    GAS_COLUMNS.some(c => {
+      const v = data[gasKey]?.[c.key];
+      return c.isText ? (v && v.trim() !== "") : (parseInt(v) || 0) > 0;
+    });
+
+  const activeCount = gases.filter(g => isRowActive(g.key)).length;
+  const grandTotal = gases.reduce((sum, g) => sum + getRowTotal(g.key), 0);
+
+  const [collapsed, setCollapsed] = useState(true);
+  // Show only active rows when collapsed, all when expanded
+  const visibleGases = collapsed ? gases : gases;
+
+  return (
+    <div style={{ border: "1.5px solid #e8edf5", borderRadius: 12, overflow: "hidden", background: "#fff" }}>
+      <input type="hidden" {...register(field.name)} />
+
+      {/* Header */}
+      <div style={{ padding: "14px 18px", background: "linear-gradient(135deg,#f0fdf4 0%,#f0f9ff 100%)", borderBottom: "1px solid #e8edf5", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: "#1e293b" }}>Medical Gas Point Schedule</div>
+          <div style={{ fontSize: 11.5, color: "#64748b", marginTop: 2 }}>Enter outlet quantities per location and mounting height for each gas service</div>
+        </div>
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          {activeCount > 0 && (
+            <span style={{ background: "#dbeafe", color: "#1d4ed8", fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 20 }}>
+              {activeCount} gas{activeCount !== 1 ? "es" : ""} configured
+            </span>
+          )}
+          {grandTotal > 0 && (
+            <span style={{ background: "#dcfce7", color: "#15803d", fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 20 }}>
+              {grandTotal} total points
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Legend row */}
+      <div style={{ display: "grid", gridTemplateColumns: "220px repeat(5, 1fr) 130px 70px", background: "#f8fafc", borderBottom: "2px solid #e2e8f0" }}>
+        <div style={{ padding: "10px 14px", fontSize: 11, fontWeight: 700, color: "#475569", textTransform: "uppercase", letterSpacing: "0.4px" }}>Gas / Service</div>
+        {GAS_COLUMNS.map(col => (
+          <div key={col.key} style={{ padding: "10px 6px", fontSize: 10.5, fontWeight: 700, color: "#475569", textTransform: "uppercase", letterSpacing: "0.3px", textAlign: "center", borderLeft: "1px solid #e8edf5" }}>
+            {col.short}{col.unit ? <span style={{ fontWeight: 400, color: "#94a3b8" }}> ({col.unit})</span> : ""}
+          </div>
+        ))}
+        <div style={{ padding: "10px 6px", fontSize: 10.5, fontWeight: 700, color: "#475569", textTransform: "uppercase", letterSpacing: "0.3px", textAlign: "center", borderLeft: "1px solid #e8edf5" }}>Total Pts</div>
+      </div>
+
+      {/* Gas rows */}
+      <div style={{ overflowX: "auto" }}>
+        {gases.map((gas, i) => {
+          const active = isRowActive(gas.key);
+          const rowTotal = getRowTotal(gas.key);
+          return (
+            <div key={gas.key} style={{
+              display: "grid",
+              gridTemplateColumns: "220px repeat(5, 1fr) 130px 70px",
+              borderBottom: i < gases.length - 1 ? "1px solid #f1f5f9" : "none",
+              background: active ? "#fafeff" : "#fff",
+              transition: "background 0.15s"
+            }}>
+              {/* Gas label */}
+              <div style={{ padding: "10px 14px", display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{
+                  flexShrink: 0, width: 36, height: 20, borderRadius: 4,
+                  background: active ? gas.color : "#e2e8f0",
+                  color: active ? "#fff" : "#94a3b8",
+                  fontSize: 9.5, fontWeight: 800, letterSpacing: "0.3px",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  transition: "all 0.2s"
+                }}>{gas.symbol}</span>
+                <span style={{ fontSize: 12, fontWeight: active ? 600 : 400, color: active ? "#1e293b" : "#64748b", lineHeight: 1.3 }}>
+                  {gas.label}
+                </span>
+              </div>
+
+              {/* Qty columns */}
+              {GAS_COLUMNS.filter(c => !c.isText).map(col => {
+                const v = parseInt(getVal(gas.key, col.key)) || 0;
+                return (
+                  <div key={col.key} style={{ padding: "8px 6px", display: "flex", alignItems: "center", justifyContent: "center", borderLeft: "1px solid #f1f5f9" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 3 }}>
+                      <button type="button"
+                        onClick={() => update(gas.key, col.key, Math.max(0, v - 1))}
+                        style={{ width: 22, height: 22, borderRadius: 5, border: `1px solid ${v > 0 ? gas.color : "#e2e8f0"}`, background: v > 0 ? `${gas.color}15` : "#f8fafc", color: v > 0 ? gas.color : "#cbd5e1", cursor: "pointer", fontSize: 14, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1, transition: "all 0.15s" }}>−</button>
+                      <input type="number" min="0"
+                        value={v || ""}
+                        placeholder="0"
+                        onChange={e => update(gas.key, col.key, e.target.value)}
+                        style={{ width: 38, height: 26, textAlign: "center", border: `1.5px solid ${v > 0 ? gas.color : "#e2e8f0"}`, borderRadius: 6, fontSize: 12.5, fontWeight: v > 0 ? 700 : 400, color: v > 0 ? gas.color : "#94a3b8", background: "#fff", outline: "none", transition: "all 0.15s" }}
+                        onFocus={e => { e.target.style.borderColor = gas.color; e.target.style.boxShadow = `0 0 0 3px ${gas.color}20`; }}
+                        onBlur={e => { e.target.style.borderColor = v > 0 ? gas.color : "#e2e8f0"; e.target.style.boxShadow = "none"; }}
+                      />
+                      <button type="button"
+                        onClick={() => update(gas.key, col.key, v + 1)}
+                        style={{ width: 22, height: 22, borderRadius: 5, border: `1px solid ${gas.color}`, background: gas.color, color: "#fff", cursor: "pointer", fontSize: 14, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1, transition: "all 0.15s" }}>+</button>
+                    </div>
+                  </div>
+                );
+              })}
+
+              {/* Mounting height text input */}
+              <div style={{ padding: "8px 6px", display: "flex", alignItems: "center", justifyContent: "center", borderLeft: "1px solid #f1f5f9" }}>
+                <input type="text"
+                  value={getVal(gas.key, "height")}
+                  placeholder="e.g. 1200"
+                  onChange={e => update(gas.key, "height", e.target.value)}
+                  style={{ width: "100%", height: 30, padding: "0 8px", border: "1.5px solid #e2e8f0", borderRadius: 6, fontSize: 12, color: "#334155", background: "#fff", outline: "none", transition: "all 0.15s", textAlign: "center" }}
+                  onFocus={e => { e.target.style.borderColor = gas.color; e.target.style.boxShadow = `0 0 0 3px ${gas.color}20`; }}
+                  onBlur={e => { e.target.style.borderColor = "#e2e8f0"; e.target.style.boxShadow = "none"; }}
+                />
+              </div>
+
+              {/* Row total */}
+              <div style={{ padding: "8px 6px", display: "flex", alignItems: "center", justifyContent: "center", borderLeft: "1px solid #f1f5f9" }}>
+                <span style={{
+                  minWidth: 36, height: 26, borderRadius: 20, display: "flex", alignItems: "center", justifyContent: "center",
+                  background: rowTotal > 0 ? `${gas.color}20` : "transparent",
+                  color: rowTotal > 0 ? gas.color : "#cbd5e1",
+                  fontSize: 12.5, fontWeight: 700,
+                  transition: "all 0.2s"
+                }}>
+                  {rowTotal > 0 ? rowTotal : "—"}
+                </span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Summary */}
+      {activeCount > 0 && (
+        <div style={{ padding: "12px 16px", background: "#f0fdf4", borderTop: "1px solid #bbf7d0" }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "#15803d", marginBottom: 7 }}>CONFIGURED GAS SERVICES</div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+            {gases.filter(g => isRowActive(g.key)).map(g => {
+              const total = getRowTotal(g.key);
+              const ht = getVal(g.key, "height");
+              return (
+                <span key={g.key} style={{ background: "#fff", border: `1.5px solid ${g.color}40`, borderRadius: 20, padding: "3px 10px", fontSize: 11.5, fontWeight: 600, color: "#1e293b", display: "flex", alignItems: "center", gap: 5 }}>
+                  <span style={{ width: 8, height: 8, borderRadius: "50%", background: g.color, flexShrink: 0 }} />
+                  {g.symbol}{total > 0 ? ` — ${total} pts` : ""}{ht ? ` @ ${ht}mm` : ""}
+                </span>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── MAIN RENDERER ─────────────────────────────────────────
 export default function FieldRenderer({ field, register, errors, setValue, watch }) {
   const err = errors?.[field.name];
@@ -825,6 +1007,10 @@ export default function FieldRenderer({ field, register, errors, setValue, watch
 
       {field.type === "yesno" && (
         <YesNoInput field={field} register={register} setValue={setValue} watch={watch} />
+      )}
+
+      {field.type === "gasmatrix" && (
+        <GasMatrixInput field={field} register={register} setValue={setValue} watch={watch} />
       )}
 
       {field.type === "accessorymatrix" && (

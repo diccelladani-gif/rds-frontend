@@ -102,6 +102,33 @@ export const rdsSchema = [
           { name: "entryPoints", label: "Entry Points", type: "textarea", required: false, colSpan: 2 },
           { name: "restrictedZones", label: "Restricted Zones", type: "textarea", required: false, colSpan: 2 }
         ]
+      },
+      {
+        title: "Medical Gases & Piped Services",
+        description: "Configure outlet locations, quantities and mounting heights for each piped medical gas",
+        fields: [
+          {
+            name: "medicalGasMatrix",
+            label: "Medical Gas Point Schedule",
+            type: "gasmatrix",
+            required: false,
+            colSpan: 4,
+            gases: [
+              { key: "vacuum",   label: "Vacuum",                                    symbol: "VAC",  color: "#fbbf24" },
+              { key: "oxygen",   label: "Oxygen (O₂)",                          symbol: "O₂",  color: "#3b82f6" },
+              { key: "co2",      label: "Carbon Dioxide (CO₂)",                 symbol: "CO₂", color: "#6b7280" },
+              { key: "n2o",      label: "Nitrous Oxide (N₂O)",                  symbol: "N₂O", color: "#8b5cf6" },
+              { key: "medAir4",  label: "Medical Air (4 bar)",                       symbol: "MA4",  color: "#10b981" },
+              { key: "surgAir7", label: "Surgical Air (7 bar)",                      symbol: "SA7",  color: "#f97316" },
+              { key: "agss",     label: "AGSS (Anaesthetic Gas Scavenging System)",  symbol: "AGSS", color: "#ec4899" },
+              { key: "compAir",  label: "Compressed Air",                            symbol: "CA",   color: "#0ea5e9" },
+              { key: "liqN2",    label: "Liquid Nitrogen",                           symbol: "LN₂", color: "#06b6d4" },
+              { key: "png",      label: "PNG",                                       symbol: "PNG",  color: "#84cc16" },
+              { key: "lmo",      label: "Liquid Medical Oxygen (LMO Plant Room)",    symbol: "LMO",  color: "#2563eb" },
+              { key: "oog",      label: "Oxygen Onsite Generation (OOG Plant Room)", symbol: "OOG",  color: "#7c3aed" }
+            ]
+          }
+        ]
       }
     ]
   },
