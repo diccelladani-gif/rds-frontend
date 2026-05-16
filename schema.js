@@ -145,23 +145,504 @@ export const rdsSchema = [
   },
   {
     id: "Architectural and spatial-requirements",
-    section: "Architectural and spatial-requirements",
+    section: "Architectural & Spatial Requirements",
     icon: "📐",
     color: "#06b6d4",
-    fields: [
-      { name: "netArea", label: "Net Area (m²)", type: "number", placeholder: "e.g. 35", required: true, colSpan: 2 },
-      { name: "minimumDimensions", label: "Minimum Dimensions (L × W)", type: "text", placeholder: "e.g. 7m × 5m", required: false, colSpan: 2 },
-      { name: "clearances", label: "Clearances", type: "text", placeholder: "Around equipment/bed", required: false, colSpan: 2 },
-      { name: "ceilingHeight", label: "Ceiling Height (m)", type: "number", placeholder: "e.g. 3.0", required: false, colSpan: 2 },
+    subsections: [
+
+      // ─── 1. LIGHTING QUALITY ───────────────────────────────────────
       {
-        name: "doorType", label: "Door Type", type: "select", required: false, colSpan: 2,
-        options: ["Sliding", "Hinged (Single)", "Hinged (Double)", "Automatic Sliding", "Hermetic Sealed", "Fire-Rated", "Other"]
+        title: "Lighting Quality",
+        description: "Lux level targets, colour temperature (CCT), and lighting control strategy for clinical and patient comfort",
+        fields: [
+          {
+            name: "luxLevel",
+            label: "Lux Level",
+            type: "select",
+            required: false,
+            colSpan: 2,
+            options: [
+              "General Ambient — 100–200 lux (Corridors / Waiting / Admin)",
+              "Standard Clinical — 300–500 lux (Wards / Consultation Rooms)",
+              "Enhanced Clinical — 500–1,000 lux (Treatment / Procedure Rooms)",
+              "Surgical / High-Precision — 10,000–100,000 lux (OT / Examination)",
+              "Adjustable / Circadian — Tunable White (2,700K–6,500K)",
+              "Natural Daylight Optimised (Glare-Controlled Glazing)",
+              "Emergency / Night Mode Lighting Only"
+            ]
+          },
+          {
+            name: "cct",
+            label: "Colour Temperature (CCT)",
+            type: "select",
+            required: false,
+            colSpan: 2,
+            options: [
+              "Warm White — 2,700–3,000K (Relaxation / Patient Rooms)",
+              "Neutral White — 3,500–4,000K (General Clinical Areas)",
+              "Cool White — 4,000–5,000K (Examination / Procedure Areas)",
+              "Daylight — 5,000–6,500K (Diagnostic / Lab / OT)",
+              "Tunable CCT — 2,700K–6,500K (Human-Centric / Circadian Lighting)"
+            ]
+          },
+          {
+            name: "lightingControl",
+            label: "Lighting Control",
+            type: "select",
+            required: false,
+            colSpan: 2,
+            options: [
+              "Manual On/Off Switch Only",
+              "Dimmer Control (Manual)",
+              "Scene-Based Control — Preset Modes (Day / Night / Examination)",
+              "Automated Sensor-Based Control (Occupancy / Daylight Harvesting)",
+              "Smart / BMS-Integrated Control",
+              "Patient-Controlled Bedside Panel",
+              "Fully Integrated Smart Control — BMS + Patient Panel + Auto Sensor"
+            ]
+          },
+          {
+            name: "lightingNotes",
+            label: "Lighting Specification Notes",
+            type: "textarea",
+            required: false,
+            colSpan: 2,
+            placeholder: "e.g. Dimmer controls at bedhead, tunable CCT 3,000–5,000K, anti-glare diffusers, emergency backup circuits, UGR < 19"
+          }
+        ]
       },
-      { name: "doorSize", label: "Door Size", type: "text", placeholder: "e.g. 1200 × 2100 mm", required: false, colSpan: 2 },
+
+      // ─── 2. ACOUSTIC CONTROL ───────────────────────────────────────
       {
-        name: "accessibility", label: "Accessibility Compliance", type: "select", required: true, colSpan: 4,
-        options: ["Full Barrier-Free Compliance", "Partial Compliance", "Standard", "Not Applicable"]
+        title: "Acoustic Control",
+        description: "Ambient noise level targets (dB) and sound transmission class (STC) ratings for partitions, walls and ceilings",
+        fields: [
+          {
+            name: "dbTarget",
+            label: "Ambient Noise Target",
+            type: "select",
+            required: false,
+            colSpan: 2,
+            options: [
+              "Standard — ≤ 45 dB(A) (General Ward / Administrative Areas)",
+              "Enhanced — ≤ 40 dB(A) (Consultation / Outpatient Rooms)",
+              "Clinical Quiet — ≤ 35 dB(A) (ICU / HDU / NICU)",
+              "Critical Quiet — ≤ 30 dB(A) (Sleep Recovery / Neonatal)",
+              "Not Specified"
+            ]
+          },
+          {
+            name: "stcRating",
+            label: "STC Rating (Partition / Wall)",
+            type: "select",
+            required: false,
+            colSpan: 2,
+            options: [
+              "Standard — STC 35–40 (General Spaces)",
+              "Enhanced — STC 40–45 (Clinical / Administrative)",
+              "High Performance — STC 45–50 (Consultation / Procedure Rooms)",
+              "Premium — STC 50–55 (ICU / Critical Care / Isolation)",
+              "Maximum — STC ≥ 55 (Acoustic Isolation Suites)",
+              "Acoustic Dampening + Reverberation Control (RT60 ≤ 0.6s)"
+            ]
+          },
+          {
+            name: "acousticControlNotes",
+            label: "Acoustic Specification Notes",
+            type: "textarea",
+            required: false,
+            colSpan: 4,
+            placeholder: "e.g. Acoustic ceiling tiles (NRC ≥ 0.85), wall-mounted absorbers, STC-55 partition walls, sealed penetrations, anti-vibration mounts on MEP services"
+          }
+        ]
+      },
+
+      // ─── 3. PATIENT COMFORT ────────────────────────────────────────
+      {
+        title: "Patient Comfort",
+        description: "Visual and acoustic privacy measures, bedside amenities, and spatial comfort provisions that directly impact patient experience",
+        fields: [
+          {
+            name: "visualPrivacyComfort",
+            label: "Visual Privacy (Comfort)",
+            type: "select",
+            required: false,
+            colSpan: 2,
+            options: [
+              "None — Open Bay / Shared Space (No Screening)",
+              "Curtain Screening Only",
+              "Partial Partition — Screens / Glazed Panels",
+              "Full Visual Privacy — Solid Walls with Glazed Vision Panel & Blinds",
+              "Full Visual + Acoustic Privacy — Solid Walls + Acoustic Treatment",
+              "Single-Patient Room — Complete Visual Privacy",
+              "Ensuite Toilet / Bathroom — Full Patient Privacy Suite"
+            ]
+          },
+          {
+            name: "acousticPrivacyComfort",
+            label: "Acoustic Privacy (Comfort)",
+            type: "select",
+            required: false,
+            colSpan: 2,
+            options: [
+              "None — Open Bay (No Acoustic Separation)",
+              "Partial — Curtain / Screen with Minimal Acoustic Benefit",
+              "Moderate — Glazed Partition with STC 35–40",
+              "Good — Solid Partition STC 45–50 (Consultation / Treatment)",
+              "High — Solid Wall + Acoustic Lining STC ≥ 50 (ICU / Private Rooms)",
+              "Complete Acoustic Isolation — STC ≥ 55 (Procedure / Isolation Suites)"
+            ]
+          },
+          {
+            name: "patientComfortAmenities",
+            label: "Bedside Comfort Amenities",
+            type: "select",
+            required: false,
+            colSpan: 2,
+            options: [
+              "Basic — Bed, Overbed Table, Call Bell",
+              "Standard — Bed + Bedhead Unit + Nurse Call + Reading Light",
+              "Enhanced — Bedhead Unit + Individual Lighting + USB Charging + Storage",
+              "Advanced — Entertainment Screen + Patient Portal + Climate Control + Storage",
+              "Premium — Full Bedhead Services + Smart Controls + Entertainment + Privacy Curtain",
+              "Suite-Grade — Hotel-Standard Furniture + Smart Room + Entertainment System"
+            ]
+          },
+          {
+            name: "patientComfortNotes",
+            label: "Patient Comfort Notes",
+            type: "textarea",
+            required: false,
+            colSpan: 2,
+            placeholder: "e.g. Bedhead unit with nurse call, USB-A & USB-C charging, reading light, overbed table, wardrobe, patient entertainment tablet on articulating arm"
+          }
+        ]
+      },
+
+      // ─── 4. PRIVACY ────────────────────────────────────────────────
+      {
+        title: "Privacy",
+        description: "Overall spatial privacy classification and provisions — visual, acoustic, and clinical data confidentiality",
+        fields: [
+          {
+            name: "privacyLevel",
+            label: "Privacy Level",
+            type: "select",
+            required: false,
+            colSpan: 2,
+            options: [
+              "None — Fully Open / Shared Environment",
+              "Minimal — Curtain or Soft Screening Only",
+              "Moderate — Partial Partition / Screen + Curtain",
+              "Good — Full Visual Privacy (Solid Walls + Vision Panel)",
+              "High — Visual + Acoustic Privacy (Solid Wall + Acoustic Treatment)",
+              "Complete — Single-Patient Room (Full Visual + Acoustic + Clinical Data Privacy)",
+              "Maximum — Isolation Suite with Ante-Room / Airlock"
+            ]
+          },
+          {
+            name: "clinicalDataPrivacy",
+            label: "Clinical Data & Conversation Privacy",
+            type: "select",
+            required: false,
+            colSpan: 2,
+            options: [
+              "Not Applicable",
+              "Basic — General Awareness (No Structural Provision)",
+              "Enhanced — Private Consultation Zone within Room",
+              "Full — Dedicated Room / Space for Clinical Discussions",
+              "Maximum — Soundproofed Room + Data-Privacy Screen Positioning"
+            ]
+          },
+          {
+            name: "privacyNotes",
+            label: "Privacy Notes",
+            type: "textarea",
+            required: false,
+            colSpan: 4,
+            placeholder: "e.g. Switchable glazing at entry, vision panel with integral blind, solid gypsum partition STC 50, curtained bay within open ward"
+          }
+        ]
+      },
+
+      // ─── 5. FAMILY INTERACTION ─────────────────────────────────────
+      {
+        title: "Family Interaction",
+        description: "Spatial provisions for family presence, engagement, overnight stay, and participation in patient care",
+        fields: [
+          {
+            name: "familyInteraction",
+            label: "Family Interaction Provision",
+            type: "select",
+            required: false,
+            colSpan: 2,
+            options: [
+              "Not Applicable — No Visitor Access",
+              "Bedside Visitor Chair Only",
+              "Bedside Seating + Fold-Out Bed (Overnight Stay Provision)",
+              "Family Lounge / Waiting Area (Shared, Adjacent to Ward)",
+              "Dedicated Consultation / Family Meeting Room",
+              "Family Participation Zone — Hands-On Care Area",
+              "Full Family Accommodation Suite (Long Stay / NICU / Paediatric)"
+            ]
+          },
+          {
+            name: "familySpaceAllocation",
+            label: "Family Space Allocation",
+            type: "select",
+            required: false,
+            colSpan: 2,
+            options: [
+              "No Dedicated Space",
+              "Bedside Zone Only (≤ 1.5 m²)",
+              "Bedside Zone + Shared Waiting (1.5–3 m²)",
+              "Dedicated Family Area within Room (3–6 m²)",
+              "Family Suite / Room (> 6 m²)"
+            ]
+          },
+          {
+            name: "familyInteractionNotes",
+            label: "Family Interaction Notes",
+            type: "textarea",
+            required: false,
+            colSpan: 4,
+            placeholder: "e.g. Fold-out sleeper chair at bedside, shared family lounge at corridor end, dedicated consultation room shared between 4 bays, access to pantry and shower room"
+          }
+        ]
+      },
+
+      // ─── 6. VISUAL ENVIRONMENT ─────────────────────────────────────
+      {
+        title: "Visual Environment",
+        description: "Colour palette strategy, artwork programme, wayfinding integration, and overall aesthetic character of the space",
+        fields: [
+          {
+            name: "visualEnvironment",
+            label: "Visual Environment Strategy",
+            type: "select",
+            required: false,
+            colSpan: 2,
+            options: [
+              "Standard Clinical — Neutral Palette, Functional Only",
+              "Positive Distraction — Curated Artwork + Feature Colour",
+              "Healing Environment — Warm Tones + Nature-Inspired Palette",
+              "Wayfinding Colour Coding — Departmental Zone Identity",
+              "Paediatric — Playful Colours, Character Themes & Murals",
+              "High-End / Hotel-Grade Ambience — Premium Finishes & Artwork",
+              "Not Specified"
+            ]
+          },
+          {
+            name: "colourPalette",
+            label: "Colour Palette Approach",
+            type: "select",
+            required: false,
+            colSpan: 2,
+            options: [
+              "Standard White / Off-White (Functional)",
+              "Soft Neutrals — Warm Beiges, Light Greys",
+              "Nature-Inspired — Greens, Blues, Earthy Tones",
+              "Accent Colour Zones — Feature Wall + Neutral Base",
+              "Full Departmental Palette — Themed Colour Language",
+              "Bespoke Interior Design Scheme"
+            ]
+          },
+          {
+            name: "visualEnvironmentNotes",
+            label: "Visual Environment Notes",
+            type: "textarea",
+            required: false,
+            colSpan: 4,
+            placeholder: "e.g. External courtyard view, wall-mounted artwork programme (local artists), warm white walls RAL 9010, departmental teal wayfinding band, anti-glare window film"
+          }
+        ]
+      },
+
+      // ─── 7. THERMAL & ODOUR CONTROL ────────────────────────────────
+      {
+        title: "Thermal & Odour Control",
+        description: "Temperature regulation, humidity control, and odour extraction provisions for clinical and patient comfort",
+        fields: [
+          {
+            name: "thermalControl",
+            label: "Thermal Control",
+            type: "select",
+            required: false,
+            colSpan: 2,
+            options: [
+              "General Comfort — 22–26°C, Natural / Mixed Ventilation",
+              "Controlled Clinical — 20–24°C, Mechanical Ventilation",
+              "Precision Controlled — 18–22°C, HVAC with Humidity Control (30–60% RH)",
+              "Patient-Controlled Individual Climate Unit (FCU / Cassette)",
+              "Full Precision HVAC + Patient Climate Control"
+            ]
+          },
+          {
+            name: "odourControl",
+            label: "Odour Control",
+            type: "select",
+            required: false,
+            colSpan: 2,
+            options: [
+              "Standard Ventilation Only (No Specific Odour Control)",
+              "Odour Control — Dedicated Negative Pressure Exhaust",
+              "Carbon-Activated Air Filtration (VOC & Odour Removal)",
+              "Continuous High-Volume Exhaust (Dirty Utility / Sluice)",
+              "Full Odour Extraction + Carbon Filter + Negative Pressure"
+            ]
+          },
+          {
+            name: "thermalOdourNotes",
+            label: "Thermal & Odour Notes",
+            type: "textarea",
+            required: false,
+            colSpan: 4,
+            placeholder: "e.g. Individual FCU at each bed, continuous exhaust to prevent cross-contamination, carbon filter on exhaust for cytotoxic / procedure rooms, set-point 22°C ± 1°C"
+          }
+        ]
+      },
+
+      // ─── 8. TECHNOLOGY & INFOTAINMENT ──────────────────────────────
+      {
+        title: "Technology & Infotainment",
+        description: "Patient-facing digital technology, smart room systems, infotainment, and digital wayfinding provisions",
+        fields: [
+          {
+            name: "infotainmentSystem",
+            label: "Infotainment System",
+            type: "select",
+            required: false,
+            colSpan: 2,
+            options: [
+              "Not Required",
+              "Bedside Entertainment Screen — TV / Streaming",
+              "Patient Education & Information System",
+              "Digital Wayfinding Display (Corridor / Room Entry)",
+              "Interactive Patient Portal — Bedside Tablet / Screen",
+              "Smart Room Automation — Lighting, Climate & Blinds Control",
+              "Full Smart Room + Entertainment + Interactive Patient Portal"
+            ]
+          },
+          {
+            name: "smartRoomFeatures",
+            label: "Smart Room Features",
+            type: "select",
+            required: false,
+            colSpan: 2,
+            options: [
+              "Not Required",
+              "Digital Room ID Display at Entry",
+              "Voice-Activated Lighting / Blind Control",
+              "HIS-Integrated Patient Portal at Bedside",
+              "Environmental Sensor Monitoring (IoT-Enabled)",
+              "Full Smart Room Integration — Voice + Portal + Sensors + BMS"
+            ]
+          },
+          {
+            name: "technologyNotes",
+            label: "Technology & Infotainment Notes",
+            type: "textarea",
+            required: false,
+            colSpan: 4,
+            placeholder: "e.g. 24\" bedside touchscreen with streaming, HIS-integrated patient portal, voice-activated lighting and blind control, digital room ID display at entry, multilingual interface"
+          }
+        ]
+      },
+
+      // ─── 9. BIOPHILIA & HEALING ENVIRONMENT ───────────────────────
+      {
+        title: "Biophilia & Healing Environment",
+        description: "Integration of nature-inspired design elements — views, plants, natural materials, and biodynamic lighting — to support psychological wellbeing and recovery",
+        fields: [
+          {
+            name: "biophiliaElements",
+            label: "Biophilic Design Elements",
+            type: "select",
+            required: false,
+            colSpan: 2,
+            options: [
+              "Not Applicable — No Biophilic Elements Required",
+              "Views to Nature — External Garden, Courtyard or Sky",
+              "Indoor Plants — Potted or Planter Arrangements",
+              "Living Wall — Vertical Green Feature",
+              "Natural Materials — Timber Accents, Stone Features",
+              "Nature-Inspired Artwork & Photographic Murals",
+              "Circadian / Biodynamic Lighting (Human-Centric Lighting)",
+              "Full Biophilic Design Package — Views + Plants + Materials + Biodynamic Light"
+            ]
+          },
+          {
+            name: "healingEnvironmentStrategy",
+            label: "Healing Environment Strategy",
+            type: "select",
+            required: false,
+            colSpan: 2,
+            options: [
+              "Not Specified",
+              "Positive Distraction — Artwork + Feature Elements",
+              "Sensory Comfort — Controlled Light, Sound & Temperature",
+              "Restorative Design — Nature Views + Calm Palette + Soft Lighting",
+              "Evidence-Based Design (EBD) — Full Healing Environment Protocol",
+              "WELL Building Standard Compliant"
+            ]
+          },
+          {
+            name: "biophiliaNotes",
+            label: "Biophilia & Healing Notes",
+            type: "textarea",
+            required: false,
+            colSpan: 4,
+            placeholder: "e.g. Glazed wall facing internal healing garden, photographic nature murals in corridor, timber-laminate bedhead panel, human-centric tunable lighting matched to circadian rhythm"
+          }
+        ]
+      },
+
+      // ─── 10. INFECTION CONTROL & HYGIENE ──────────────────────────
+      {
+        title: "Infection Control & Hygiene",
+        description: "Hand hygiene provisions, antimicrobial surface materials, contactless design measures, and visible hygiene infrastructure that reinforce clinical safety and patient trust",
+        fields: [
+          {
+            name: "hygieneProvision",
+            label: "Hygiene Provision Level",
+            type: "select",
+            required: false,
+            colSpan: 2,
+            options: [
+              "Standard — ABHR Dispenser at Entry (Staff & Visitor Accessible)",
+              "Enhanced — ABHR at Entry + Bedside + Toilet",
+              "Contactless Experience — Sensor Taps, Auto Doors, Touchless Dispensers",
+              "Visible Hygiene Stations — Prominently Positioned ABHR + Signage",
+              "Antimicrobial Surface Materials (Copper, Silver-Ion Finishes)",
+              "Full Hygiene-by-Design — Contactless + Antimicrobial + Seamless Surfaces + Signage"
+            ]
+          },
+          {
+            name: "antimicrobialSurfaces",
+            label: "Antimicrobial Surface Specification",
+            type: "select",
+            required: false,
+            colSpan: 2,
+            options: [
+              "Not Required — Standard Clinical Finishes",
+              "Antimicrobial Paint on High-Touch Surfaces",
+              "Antimicrobial Laminate / Solid Surface Worktops",
+              "Copper / Copper-Alloy Touch Surfaces (Handles, Rails)",
+              "Silver-Ion Impregnated Surfaces (Beds, Fixtures)",
+              "Full Antimicrobial Specification — Surfaces + Paint + Fixtures"
+            ]
+          },
+          {
+            name: "infectionControlHygieneNotes",
+            label: "Infection Control & Hygiene Notes",
+            type: "textarea",
+            required: false,
+            colSpan: 4,
+            placeholder: "e.g. ABHR wall dispenser at room entry visible to all, sensor-operated hand basin tap, seamless coving at floor/wall junction, antimicrobial paint on high-touch surfaces, hand hygiene compliance signage"
+          }
+        ]
       }
+
     ]
   },
   {
