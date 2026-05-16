@@ -338,16 +338,175 @@ export const rdsSchema = [
   },
   {
     id: "Interior finishes and Aesthetics",
-    section: "Interior finishes and Aesthetics",
+    section: "Interior Finishes & Aesthetics",
     icon: "🎨",
     color: "#ec4899",
-    fields: [
-      { name: "floor", label: "Floor", type: "text", placeholder: "Material & specification", required: false, colSpan: 2 },
-      { name: "skirting", label: "Skirting", type: "text", placeholder: "Type & height", required: false, colSpan: 2 },
-      { name: "walls", label: "Walls", type: "text", placeholder: "Material & specification", required: false, colSpan: 2 },
-      { name: "ceiling", label: "Ceiling", type: "text", placeholder: "Material & specification", required: false, colSpan: 2 },
-      { name: "wallProtection", label: "Wall Protection", type: "text", placeholder: "Crash rails, corner guards etc.", required: false, colSpan: 2 },
-      { name: "specialFinishes", label: "Special Finishes", type: "textarea", placeholder: "Anti-microbial, lead lining, etc.", required: false, colSpan: 2 }
+    subsections: [
+
+      // ─── 1. ROOM FINISHES ──────────────────────────────────────────
+      {
+        title: "Room Finishes",
+        description: "Material and specification for every primary surface — floor, skirting, walls and ceiling",
+        fields: [
+          {
+            name: "floor",
+            label: "Floor",
+            type: "select",
+            required: false,
+            colSpan: 2,
+            options: ["Standard", "Special", "Vinyl", "Carpet", "Tiles", "Stone", "Other"]
+          },
+          {
+            name: "floorSpec",
+            label: "Floor Specification / Notes",
+            type: "text",
+            placeholder: "e.g. Heterogeneous vinyl 2mm, welded seams, coved skirting, slip-resistant R10",
+            required: false,
+            colSpan: 2
+          },
+          {
+            name: "skirting",
+            label: "Skirting",
+            type: "text",
+            placeholder: "e.g. Coved vinyl skirting 100mm, colour matched to floor",
+            required: false,
+            colSpan: 4
+          },
+          {
+            name: "walls",
+            label: "Walls",
+            type: "select",
+            required: false,
+            colSpan: 2,
+            options: ["Standard", "Special", "Dry Wall", "Blockwork / Brickwork", "AAC", "RCC"]
+          },
+          {
+            name: "wallsSpec",
+            label: "Wall Specification / Notes",
+            type: "text",
+            placeholder: "e.g. Double-layer 15mm gypsum board, taped & jointed, painted with eggshell finish",
+            required: false,
+            colSpan: 2
+          },
+          {
+            name: "ceiling",
+            label: "Ceiling",
+            type: "select",
+            required: false,
+            colSpan: 2,
+            options: ["Standard", "Special", "Ceiling Tiles / Grid Ceiling", "Seamless Ceiling", "Acoustic Ceiling", "Other (Metal ceiling, etc)"]
+          },
+          {
+            name: "ceilingSpec",
+            label: "Ceiling Specification / Notes",
+            type: "text",
+            placeholder: "e.g. 600×600 mineral fibre tile on exposed grid, NRC 0.85, washable",
+            required: false,
+            colSpan: 2
+          }
+        ]
+      },
+
+      // ─── 2. WALL PROTECTION & SURFACE FEATURES ────────────────────
+      {
+        title: "Wall Protection & Surface Features",
+        description: "Impact protection, internal glazing and hatch provisions — select all that apply",
+        fields: [
+          {
+            name: "wallProtection",
+            label: "Wall Protection Type",
+            type: "select",
+            required: false,
+            colSpan: 2,
+            options: [
+              "Bed Wall Bumper Rails",
+              "Wall Guard at 200–300 mm from Floor",
+              "Wall Guard at 900 mm from Floor",
+              "Wall Guard with Handrail at 900 mm from Floor",
+              "Rigid Vinyl Sheet",
+              "Stainless Steel Sheet",
+              "Corner Guard",
+              "Not Required"
+            ]
+          },
+          {
+            name: "wallProtectionNotes",
+            label: "Wall Protection Notes",
+            type: "text",
+            placeholder: "e.g. Full-height rigid vinyl sheet on bed wall, stainless steel corner guards at all corridor turns",
+            required: false,
+            colSpan: 2
+          },
+          {
+            name: "internalGlazing",
+            label: "Internal Glazing Required",
+            type: "yesno",
+            required: false,
+            colSpan: 2
+          },
+          {
+            name: "hatches",
+            label: "Hatches Required",
+            type: "yesno",
+            required: false,
+            colSpan: 2
+          },
+          {
+            name: "specialFinishes",
+            label: "Special Finishes",
+            type: "textarea",
+            placeholder: "e.g. Anti-microbial paint on all surfaces, lead lining on radiation walls, epoxy resin floor in wet areas, seamless coving at floor/wall junction",
+            required: false,
+            colSpan: 4
+          }
+        ]
+      },
+
+      // ─── 3. DOORS ─────────────────────────────────────────────────
+      {
+        title: "Doors",
+        description: "Complete door specification — type, dimensions, material, access control, hardware, fire rating and special features",
+        fields: [
+          {
+            name: "doorConfig",
+            label: "Door Configuration",
+            type: "doorconfig",
+            required: false,
+            colSpan: 4
+          }
+        ]
+      },
+
+      // ─── 4. WINDOWS ───────────────────────────────────────────────
+      {
+        title: "Windows",
+        description: "Exterior wall windows (A) and internal viewing windows into other rooms (B) — type, size and provisions",
+        fields: [
+          {
+            name: "windowConfig",
+            label: "Window Configuration",
+            type: "windowconfig",
+            required: false,
+            colSpan: 4
+          }
+        ]
+      },
+
+      // ─── 5. SANITARY FITTINGS ─────────────────────────────────────
+      {
+        title: "Sanitary Fittings",
+        description: "Select all sanitary fittings required in this room — grouped by category for easy reference",
+        fields: [
+          {
+            name: "sanitaryFittings",
+            label: "Sanitary Fittings Schedule",
+            type: "sanitarygrid",
+            required: false,
+            colSpan: 4
+          }
+        ]
+      }
+
     ]
   },
   {

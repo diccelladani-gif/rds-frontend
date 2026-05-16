@@ -793,6 +793,371 @@ const CM_COLUMNS = [
   { key: "notes",      label: "Notes",       placeholder: "Any additional notes or requirements" },
 ];
 
+
+// ─── SHARED CHIP-SELECT HELPER ──────────────────────────────
+function ChipSelect({ options, selected = [], onChange, multi = true, accentColor = "#ec4899", accentBg = "#fdf2f8", accentBorder = "#f9a8d4" }) {
+  const toggle = (opt) => {
+    if (multi) {
+      const next = selected.includes(opt) ? selected.filter(o => o !== opt) : [...selected, opt];
+      onChange(next);
+    } else {
+      onChange(selected.includes(opt) ? [] : [opt]);
+    }
+  };
+  return (
+    <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+      {options.map(opt => {
+        const active = selected.includes(opt);
+        return (
+          <button key={opt} type="button" onClick={() => toggle(opt)} style={{
+            padding: "5px 13px", borderRadius: 20, fontSize: 12, fontWeight: active ? 700 : 500,
+            border: `1.5px solid ${active ? accentBorder : "#e2e8f0"}`,
+            background: active ? accentBg : "#f8fafc",
+            color: active ? accentColor : "#64748b",
+            cursor: "pointer", transition: "all 0.15s", whiteSpace: "nowrap",
+            boxShadow: active ? `0 0 0 2px ${accentBorder}40` : "none"
+          }}
+            onMouseEnter={e => { if (!active) { e.currentTarget.style.borderColor = accentBorder; e.currentTarget.style.color = accentColor; } }}
+            onMouseLeave={e => { if (!active) { e.currentTarget.style.borderColor = "#e2e8f0"; e.currentTarget.style.color = "#64748b"; } }}
+          >
+            {active && <span style={{ marginRight: 4 }}>&#10003;</span>}{opt}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+// ─── DOOR CONFIGURATION INPUT ───────────────────────────────
+const DOOR_CONFIG = [
+  {
+    group: "Type & Leaf",
+    icon: "🚪",
+    fields: [
+      { key: "swingType",  label: "Swing Type",  multi: true,  options: ["Swing", "Slide", "Bi-Fold", "Others (e.g. Telescopic sliding+swing)"] },
+      { key: "leafConfig", label: "Leaf Config", multi: false, options: ["Single Leaf", "Double Leaf"] },
+    ]
+  },
+  {
+    group: "Dimensions & Operation",
+    icon: "📐",
+    fields: [
+      { key: "width",     label: "Door Width",  multi: false, options: ["0.75 m", "0.90 m", "1.0 m", "1.2 m", "1.5 m", "1.8 m"] },
+      { key: "mechanism", label: "Mechanism",   multi: false, options: ["Manual", "Auto"] },
+    ]
+  },
+  {
+    group: "Material & Glazing",
+    icon: "🧱",
+    fields: [
+      { key: "material",     label: "Door Material",  multi: false, options: ["Wooden", "Steel / Metal", "Glass", "Shielding Door (Lead Lined)", "Other"] },
+      { key: "viewingPanel", label: "Viewing Panel",  multi: false, options: ["Vertical", "Square", "Central", "Half Panel", "Quarter Panel"] },
+      { key: "entryway",     label: "Entryway",       multi: true,  options: ["Transom Window (on top of door)", "Sidelight"] },
+    ]
+  },
+  {
+    group: "Locking & Access Control",
+    icon: "🔐",
+    fields: [
+      { key: "locks",       label: "Mechanical Locks",             multi: false, options: ["Keys Outside", "Keys Both Ways", "Keys Outside + Thumb Turn Inside", "Coin Turn Outside + Thumb Turn Inside"] },
+      { key: "accessEntry", label: "Electronic Access — Entry",    multi: true,  options: ["Entry Card Reader", "Biometric Entry", "Intercom (Audio) at Entry", "Intercom (Video) at Entry"] },
+      { key: "accessExit",  label: "Electronic Access — Exit",     multi: true,  options: ["Exit Card Reader", "Biometric Exit", "Intercom (Audio) at Exit with Release Button", "Intercom (Video) at Exit with Release Button", "Intercom (Audio) at Remote Location with Release Button", "Intercom (Video) at Remote Location with Release Button"] },
+      { key: "accessEM",    label: "EM Lock & Interlocking",       multi: true,  options: ["EM Lock", "EM Lock with Relay (for Monitoring Status)", "Interlocking Relay with Other Room Doors", "Interlocking Relay with Machines"] },
+    ]
+  },
+  {
+    group: "Hardware & Finish",
+    icon: "🔧",
+    fields: [
+      { key: "closer",     label: "Door Closer",     multi: false, options: ["Normal", "Hold-Open Type"] },
+      { key: "stopper",    label: "Door Stopper",    multi: false, options: ["Normal Floor Mounted", "Normal Wall Mounted", "Magnetic Latch"] },
+      { key: "handle",     label: "Door Handle",     multi: false, options: ["Pushbar", "Pushplate", "Handle + Deadbolt", "Pull Handle", "Lever Handle", "Knob Handle"] },
+      { key: "protection", label: "Door Protection", multi: true,  options: ["Vinyl", "Steel"] },
+    ]
+  },
+  {
+    group: "Signage, Rating & Special",
+    icon: "🏷️",
+    fields: [
+      { key: "signage",         label: "Signage on Door",  multi: true,  options: ["Room Name Required", "Room No. Required", "Entry for Authorized Personnel Only"] },
+      { key: "fireRating",      label: "Fire Rating",      multi: false, options: ["0.5 Hr", "1 Hr", "1.5 Hr", "2 Hr"] },
+      { key: "specialFeatures", label: "Special Features", multi: true,  options: ["Drop-Down Acoustic Seals (Acoustic Doors)", "Hermetically Sealed Door"] },
+    ]
+  },
+];
+
+function DoorConfigInput({ field, register, setValue, watch }) {
+  const rawVal = watch?.(field.name) || "{}";
+  let data = {};
+  try { data = JSON.parse(rawVal); } catch { data = {}; }
+
+  const update = (key, val) => {
+    const next = { ...data, [key]: val };
+    setValue?.(field.name, JSON.stringify(next), { shouldDirty: true });
+  };
+
+  const [openGroup, setOpenGroup] = useState(null);
+  const groupHasData = (grp) => grp.fields.some(f => (data[f.key] || []).length > 0);
+
+  return (
+    <div style={{ width: "100%" }}>
+      <input type="hidden" {...register(field.name)} />
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        {DOOR_CONFIG.map((grp, gi) => {
+          const isOpen = openGroup === gi;
+          const hasDat = groupHasData(grp);
+          return (
+            <div key={gi} style={{ border: `1.5px solid ${isOpen ? "#f9a8d4" : hasDat ? "#fbcfe8" : "#e2e8f0"}`, borderRadius: 12, overflow: "hidden", transition: "border-color 0.2s" }}>
+              <div onClick={() => setOpenGroup(isOpen ? null : gi)} style={{
+                display: "flex", alignItems: "center", justifyContent: "space-between",
+                padding: "12px 16px", cursor: "pointer",
+                background: isOpen ? "linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%)" : hasDat ? "#fdf2f8" : "#fafafa",
+                transition: "background 0.15s"
+              }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <span style={{ fontSize: 18 }}>{grp.icon}</span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: "#be185d" }}>{grp.group}</span>
+                  {hasDat && !isOpen && (
+                    <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 12, background: "#fce7f3", color: "#ec4899" }}>
+                      {grp.fields.filter(f => (data[f.key] || []).length > 0).length} configured
+                    </span>
+                  )}
+                </div>
+                <span style={{ fontSize: 16, color: "#ec4899", fontWeight: 700, display: "inline-block", transition: "transform 0.2s", transform: isOpen ? "rotate(180deg)" : "rotate(0deg)" }}>&#8964;</span>
+              </div>
+              {isOpen && (
+                <div style={{ padding: "16px 18px 18px", background: "#fff", display: "flex", flexDirection: "column", gap: 16, borderTop: "1px solid #fce7f3" }}>
+                  {grp.fields.map(f => (
+                    <div key={f.key}>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: "#be185d", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 8 }}>{f.label}</div>
+                      <ChipSelect options={f.options} selected={data[f.key] || []} onChange={val => update(f.key, val)} multi={f.multi} accentColor="#be185d" accentBg="#fdf2f8" accentBorder="#f9a8d4" />
+                    </div>
+                  ))}
+                  <div style={{ borderTop: "1px solid #fce7f3", paddingTop: 14 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: "#be185d", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 6 }}>Other Special Requirements</div>
+                    <textarea rows={2} placeholder="Describe any additional door requirements not listed above..."
+                      value={data.otherRequirements || ""}
+                      onChange={e => update("otherRequirements", e.target.value)}
+                      style={{ width: "100%", fontSize: 12.5, padding: "8px 10px", borderRadius: 8, border: "1.5px solid #fce7f3", background: "#fdf2f8", color: "#1e3a5f", outline: "none", resize: "vertical", fontFamily: "inherit", lineHeight: 1.5, boxSizing: "border-box" }}
+                      onFocus={e => e.target.style.borderColor = "#f9a8d4"}
+                      onBlur={e => e.target.style.borderColor = "#fce7f3"} />
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+      {Object.keys(data).some(k => Array.isArray(data[k]) && data[k].length > 0) && (
+        <div style={{ marginTop: 12, padding: "10px 14px", background: "#fdf2f8", borderRadius: 10, border: "1px solid #fce7f3" }}>
+          <div style={{ fontSize: 10.5, fontWeight: 700, color: "#be185d", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 6 }}>Door Specification Summary</div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+            {DOOR_CONFIG.flatMap(grp => grp.fields).map(f =>
+              (data[f.key] || []).map(v => (
+                <span key={f.key + v} style={{ fontSize: 11, padding: "2px 10px", borderRadius: 12, background: "#fce7f3", color: "#be185d", fontWeight: 600 }}>{v}</span>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+      <div style={{ marginTop: 8, fontSize: 11, color: "#94a3b8" }}>Click each group to expand and configure. Multiple selections allowed where indicated.</div>
+    </div>
+  );
+}
+
+// ─── WINDOW CONFIGURATION INPUT ─────────────────────────────
+function WindowConfigInput({ field, register, setValue, watch }) {
+  const rawVal = watch?.(field.name) || "{}";
+  let data = {};
+  try { data = JSON.parse(rawVal); } catch { data = {}; }
+
+  const update = (section, key, val) => {
+    const next = { ...data, [section]: { ...(data[section] || {}), [key]: val } };
+    setValue?.(field.name, JSON.stringify(next), { shouldDirty: true });
+  };
+
+  return (
+    <div style={{ width: "100%", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+      <input type="hidden" {...register(field.name)} />
+      <div style={{ border: "1.5px solid #e0f2fe", borderRadius: 12, overflow: "hidden" }}>
+        <div style={{ padding: "12px 16px", background: "linear-gradient(135deg, #0e7490 0%, #0891b2 100%)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ fontSize: 18 }}>🪟</span>
+            <div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: "#fff" }}>Window (A)</div>
+              <div style={{ fontSize: 10.5, color: "#cffafe" }}>On Exterior Wall</div>
+            </div>
+          </div>
+        </div>
+        <div style={{ padding: "14px 16px", display: "flex", flexDirection: "column", gap: 14, background: "#fff" }}>
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: "#0e7490", textTransform: "uppercase", letterSpacing: "0.4px", marginBottom: 7 }}>Window Type</div>
+            <ChipSelect options={["Fixed", "Openable"]} selected={data.windowA?.type || []} onChange={v => update("windowA", "type", v)} multi={false} accentColor="#0e7490" accentBg="#ecfeff" accentBorder="#a5f3fc" />
+          </div>
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: "#0e7490", textTransform: "uppercase", letterSpacing: "0.4px", marginBottom: 6 }}>Window Size</div>
+            <input type="text" placeholder="e.g. 1200 x 900 mm" value={data.windowA?.size || ""}
+              onChange={e => update("windowA", "size", e.target.value)}
+              style={{ width: "100%", fontSize: 12.5, padding: "8px 10px", borderRadius: 8, border: "1.5px solid #a5f3fc", background: "#ecfeff", color: "#1e3a5f", outline: "none", fontFamily: "inherit", boxSizing: "border-box" }}
+              onFocus={e => e.target.style.borderColor = "#0891b2"} onBlur={e => e.target.style.borderColor = "#a5f3fc"} />
+          </div>
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: "#0e7490", textTransform: "uppercase", letterSpacing: "0.4px", marginBottom: 7 }}>Provisions</div>
+            <ChipSelect options={["Key Lock", "Blinds (Normal)", "Blinds (Blackout)", "Curtain Track"]} selected={data.windowA?.provisions || []} onChange={v => update("windowA", "provisions", v)} multi={true} accentColor="#0e7490" accentBg="#ecfeff" accentBorder="#a5f3fc" />
+          </div>
+        </div>
+      </div>
+      <div style={{ border: "1.5px solid #e9d5ff", borderRadius: 12, overflow: "hidden" }}>
+        <div style={{ padding: "12px 16px", background: "linear-gradient(135deg, #7e22ce 0%, #9333ea 100%)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ fontSize: 18 }}>🔍</span>
+            <div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: "#fff" }}>Window (B)</div>
+              <div style={{ fontSize: 10.5, color: "#e9d5ff" }}>Into Another Room</div>
+            </div>
+          </div>
+        </div>
+        <div style={{ padding: "14px 16px", display: "flex", flexDirection: "column", gap: 14, background: "#fff" }}>
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: "#7e22ce", textTransform: "uppercase", letterSpacing: "0.4px", marginBottom: 7 }}>Glass Type</div>
+            <ChipSelect options={["Ordinary Two-Way Window", "One-Way Mirror", "Switchable Smart Glass", "Lead Lined", "Tinted"]} selected={data.windowB?.type || []} onChange={v => update("windowB", "type", v)} multi={false} accentColor="#7e22ce" accentBg="#faf5ff" accentBorder="#d8b4fe" />
+          </div>
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: "#7e22ce", textTransform: "uppercase", letterSpacing: "0.4px", marginBottom: 7 }}>Window Size</div>
+            <ChipSelect options={["1000 x 800 mm", "1200 x 800 mm", "2400 x 1200 mm"]} selected={data.windowB?.size || []} onChange={v => update("windowB", "size", v)} multi={false} accentColor="#7e22ce" accentBg="#faf5ff" accentBorder="#d8b4fe" />
+          </div>
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: "#7e22ce", textTransform: "uppercase", letterSpacing: "0.4px", marginBottom: 6 }}>Special Note</div>
+            <input type="text" placeholder="e.g. No mullions along the viewing length" value={data.windowB?.note || ""}
+              onChange={e => update("windowB", "note", e.target.value)}
+              style={{ width: "100%", fontSize: 12.5, padding: "8px 10px", borderRadius: 8, border: "1.5px solid #d8b4fe", background: "#faf5ff", color: "#1e3a5f", outline: "none", fontFamily: "inherit", boxSizing: "border-box" }}
+              onFocus={e => e.target.style.borderColor = "#9333ea"} onBlur={e => e.target.style.borderColor = "#d8b4fe"} />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── SANITARY FITTINGS GRID ─────────────────────────────────
+const SANITARY_GROUPS = [
+  {
+    group: "Taps & Water Supply", icon: "🚿", color: "#0891b2", bg: "#ecfeff", border: "#a5f3fc",
+    items: [
+      { key: "tapMixer",      label: "Tap (Mixer)" },
+      { key: "tapMedical",    label: "Tap (Medical Mixer)" },
+      { key: "tapNormal",     label: "Tap (Normal)" },
+      { key: "tapSensor",     label: "Tap (Sensor)" },
+      { key: "bibTap",        label: "Bib Tap / Hose Union" },
+      { key: "drinkingFount", label: "Drinking Fountain" },
+    ]
+  },
+  {
+    group: "Hand Hygiene Station", icon: "🧼", color: "#059669", bg: "#ecfdf5", border: "#6ee7b7",
+    items: [
+      { key: "handTowelManual",  label: "Hand Towel (Manual)" },
+      { key: "handTowelPower",   label: "Hand Towel (Direct Power)" },
+      { key: "handDryer",        label: "Hand Dryer (Direct Power)" },
+      { key: "antisepticDisp",   label: "Antiseptic Dispenser" },
+      { key: "soapManual",       label: "Soap Dispenser (Manual)" },
+      { key: "soapBattery",      label: "Soap Dispenser (Battery)" },
+      { key: "soapPower",        label: "Soap Dispenser (Direct Power)" },
+    ]
+  },
+  {
+    group: "Basins & Clinical Sinks", icon: "🪣", color: "#d97706", bg: "#fffbeb", border: "#fcd34d",
+    items: [
+      { key: "basinNormal",  label: "Wash Basin (Normal)" },
+      { key: "basinMedical", label: "Wash Basin (Medical)" },
+      { key: "basinDeep",    label: "Wash Basin (Medical) — Deep Sink" },
+      { key: "hotSink",      label: "Hot Sink" },
+      { key: "sluiceSink",   label: "Sluice Sink (Slop Hopper)" },
+      { key: "scrubSink",    label: "Scrub Sink" },
+      { key: "mopSink",      label: "Mop Sink" },
+    ]
+  },
+  {
+    group: "Sanitary & Waste", icon: "🚽", color: "#7c3aed", bg: "#faf5ff", border: "#c4b5fd",
+    items: [
+      { key: "shower",     label: "Shower Facility" },
+      { key: "urinalBowl", label: "Urinal Bowl" },
+      { key: "macerator",  label: "Macerator" },
+    ]
+  },
+  {
+    group: "Accessories", icon: "🧷", color: "#be185d", bg: "#fdf2f8", border: "#f9a8d4",
+    items: [
+      { key: "clothHanger", label: "Cloth Hanger" },
+    ]
+  },
+];
+
+function SanitaryGridInput({ field, register, setValue, watch }) {
+  const rawVal = watch?.(field.name) || "{}";
+  let data = {};
+  try { data = JSON.parse(rawVal); } catch { data = {}; }
+
+  const toggle = (key) => {
+    const next = { ...data, [key]: !data[key] };
+    setValue?.(field.name, JSON.stringify(next), { shouldDirty: true });
+  };
+
+  const totalSelected = Object.values(data).filter(Boolean).length;
+
+  return (
+    <div style={{ width: "100%" }}>
+      <input type="hidden" {...register(field.name)} />
+      {totalSelected > 0 && (
+        <div style={{ marginBottom: 12 }}>
+          <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 12px", borderRadius: 20, background: "#fdf2f8", color: "#be185d", border: "1px solid #f9a8d4" }}>
+            {totalSelected} fitting{totalSelected !== 1 ? "s" : ""} selected
+          </span>
+        </div>
+      )}
+      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        {SANITARY_GROUPS.map((grp) => (
+          <div key={grp.group} style={{ border: `1.5px solid ${grp.border}`, borderRadius: 12, overflow: "hidden" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 16px", background: grp.bg, borderBottom: `1px solid ${grp.border}` }}>
+              <span style={{ fontSize: 17 }}>{grp.icon}</span>
+              <span style={{ fontSize: 12.5, fontWeight: 700, color: grp.color }}>{grp.group}</span>
+              <span style={{ fontSize: 10.5, color: grp.color, opacity: 0.7, marginLeft: "auto" }}>
+                {grp.items.filter(it => data[it.key]).length}/{grp.items.length} selected
+              </span>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", background: "#fff" }}>
+              {grp.items.map((item) => {
+                const active = !!data[item.key];
+                return (
+                  <div key={item.key} onClick={() => toggle(item.key)} style={{
+                    display: "flex", alignItems: "center", gap: 10, padding: "10px 14px",
+                    cursor: "pointer", borderRight: "1px solid #f1f5f9", borderBottom: "1px solid #f1f5f9",
+                    background: active ? grp.bg : "#fff", transition: "background 0.15s"
+                  }}
+                    onMouseEnter={e => { if (!active) e.currentTarget.style.background = "#f8fafc"; }}
+                    onMouseLeave={e => { if (!active) e.currentTarget.style.background = "#fff"; }}
+                  >
+                    <div style={{
+                      width: 20, height: 20, borderRadius: 6, flexShrink: 0,
+                      border: `2px solid ${active ? grp.color : "#cbd5e1"}`,
+                      background: active ? grp.color : "#fff",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      transition: "all 0.15s"
+                    }}>
+                      {active && <span style={{ color: "#fff", fontSize: 11, fontWeight: 800 }}>&#10003;</span>}
+                    </div>
+                    <span style={{ fontSize: 12, fontWeight: active ? 700 : 500, color: active ? grp.color : "#475569", transition: "color 0.15s" }}>{item.label}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+      <div style={{ marginTop: 8, fontSize: 11, color: "#94a3b8" }}>Click any fitting to toggle selection. All fields are optional.</div>
+    </div>
+  );
+}
+
 function ConstructionMatrixInput({ field, register, setValue, watch }) {
   const elements = field.elements || [];
   const rawVal = watch?.(field.name) || "{}";
@@ -1631,6 +1996,18 @@ export default function FieldRenderer({ field, register, errors, setValue, watch
 
       {field.type === "isolatormatrix" && (
         <IsolatorMatrixInput field={field} register={register} setValue={setValue} watch={watch} />
+      )}
+
+      {field.type === "doorconfig" && (
+        <DoorConfigInput field={field} register={register} setValue={setValue} watch={watch} />
+      )}
+
+      {field.type === "windowconfig" && (
+        <WindowConfigInput field={field} register={register} setValue={setValue} watch={watch} />
+      )}
+
+      {field.type === "sanitarygrid" && (
+        <SanitaryGridInput field={field} register={register} setValue={setValue} watch={watch} />
       )}
 
       {field.type === "computed" && (
