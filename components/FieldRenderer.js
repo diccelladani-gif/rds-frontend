@@ -782,6 +782,184 @@ const GAS_MUTED = {
   oog:      { badge: "#3b0764", bg: "#f3e8ff" },
 };
 
+// ─── CONSTRUCTION MATRIX INPUT ─────────────────────────────
+const CM_COLUMNS = [
+  { key: "type",       label: "Type",        placeholder: "e.g. Gypsum board / Glazed / Concrete" },
+  { key: "size",       label: "Size",        placeholder: "e.g. 150 mm thick / 1200 × 2100 mm" },
+  { key: "acoustic",   label: "Acoustic",    placeholder: "e.g. STC 50 / NRC 0.85 / RT60 ≤ 0.6s" },
+  { key: "thermal",    label: "Thermal",     placeholder: "e.g. U-value 0.3 W/m²K / insulated" },
+  { key: "protection", label: "Protection",  placeholder: "e.g. Crash rail / Corner guard / Lead lining" },
+  { key: "finish",     label: "Finish",      placeholder: "e.g. Vinyl wrap / Epoxy paint / Ceramic tile" },
+  { key: "notes",      label: "Notes",       placeholder: "Any additional notes or requirements" },
+];
+
+function ConstructionMatrixInput({ field, register, setValue, watch }) {
+  const elements = field.elements || [];
+  const rawVal = watch?.(field.name) || "{}";
+  let data = {};
+  try { data = JSON.parse(rawVal); } catch { data = {}; }
+
+  const update = (elemKey, colKey, val) => {
+    const next = { ...data, [elemKey]: { ...(data[elemKey] || {}), [colKey]: val } };
+    setValue?.(field.name, JSON.stringify(next), { shouldDirty: true });
+  };
+
+  const [expandedRow, setExpandedRow] = useState(null);
+
+  const hasData = (elemKey) => {
+    const row = data[elemKey] || {};
+    return CM_COLUMNS.some(c => row[c.key]?.trim());
+  };
+
+  return (
+    <div style={{ width: "100%" }}>
+      <input type="hidden" {...register(field.name)} />
+
+      {/* Header strip */}
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: "160px repeat(7, 1fr)",
+        gap: 0,
+        background: "linear-gradient(135deg, #0e7490 0%, #0891b2 100%)",
+        borderRadius: "12px 12px 0 0",
+        padding: "10px 14px",
+        alignItems: "center"
+      }}>
+        <span style={{ fontSize: 11.5, fontWeight: 700, color: "#fff", letterSpacing: "0.5px", textTransform: "uppercase" }}>Element</span>
+        {CM_COLUMNS.map(col => (
+          <span key={col.key} style={{ fontSize: 11, fontWeight: 700, color: "#cffafe", textAlign: "center", letterSpacing: "0.4px", textTransform: "uppercase" }}>
+            {col.label}
+          </span>
+        ))}
+      </div>
+
+      {/* Rows */}
+      <div style={{ border: "1.5px solid #e0f2fe", borderTop: "none", borderRadius: "0 0 12px 12px", overflow: "hidden", background: "#fff" }}>
+        {elements.map((elem, idx) => {
+          const isExpanded = expandedRow === elem.key;
+          const filled = hasData(elem.key);
+          const rowBg = idx % 2 === 0 ? "#f0f9ff" : "#ffffff";
+
+          return (
+            <div key={elem.key} style={{ borderBottom: idx < elements.length - 1 ? "1px solid #e0f2fe" : "none" }}>
+
+              {/* Collapsed summary row */}
+              <div
+                onClick={() => setExpandedRow(isExpanded ? null : elem.key)}
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "160px repeat(7, 1fr)",
+                  gap: 0,
+                  padding: "10px 14px",
+                  background: isExpanded ? "#e0f9ff" : rowBg,
+                  cursor: "pointer",
+                  alignItems: "center",
+                  transition: "background 0.15s",
+                }}
+                onMouseEnter={e => { if (!isExpanded) e.currentTarget.style.background = "#e0f2fe"; }}
+                onMouseLeave={e => { if (!isExpanded) e.currentTarget.style.background = rowBg; }}
+              >
+                {/* Element label */}
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ fontSize: 16 }}>{elem.icon}</span>
+                  <div>
+                    <div style={{ fontSize: 12.5, fontWeight: 700, color: "#0e7490" }}>{elem.label}</div>
+                    {filled && !isExpanded && (
+                      <div style={{ fontSize: 10, color: "#0891b2", fontWeight: 500, marginTop: 1 }}>● Specified</div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Compact value previews */}
+                {CM_COLUMNS.map(col => {
+                  const val = data[elem.key]?.[col.key] || "";
+                  return (
+                    <div key={col.key} style={{ fontSize: 11, color: val ? "#1e3a5f" : "#cbd5e1", textAlign: "center", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", padding: "0 4px" }}>
+                      {val ? (val.length > 14 ? val.slice(0, 12) + "…" : val) : "—"}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Expanded edit panel */}
+              {isExpanded && (
+                <div style={{ background: "#f0f9ff", borderTop: "1px solid #bae6fd", padding: "16px 18px 18px" }}>
+                  <div style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(3, 1fr)",
+                    gap: "12px 16px"
+                  }}>
+                    {CM_COLUMNS.map(col => (
+                      <div key={col.key} style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+                        <label style={{ fontSize: 11, fontWeight: 700, color: "#0e7490", textTransform: "uppercase", letterSpacing: "0.4px" }}>
+                          {col.label}
+                        </label>
+                        {col.key === "notes" ? (
+                          <textarea
+                            rows={2}
+                            placeholder={col.placeholder}
+                            value={data[elem.key]?.[col.key] || ""}
+                            onChange={e => update(elem.key, col.key, e.target.value)}
+                            style={{
+                              fontSize: 12.5, padding: "8px 10px", borderRadius: 8, resize: "vertical",
+                              border: "1.5px solid #bae6fd", background: "#fff", color: "#1e3a5f",
+                              outline: "none", lineHeight: 1.5, fontFamily: "inherit",
+                              transition: "border-color 0.15s"
+                            }}
+                            onFocus={e => e.target.style.borderColor = "#0891b2"}
+                            onBlur={e => e.target.style.borderColor = "#bae6fd"}
+                          />
+                        ) : (
+                          <input
+                            type="text"
+                            placeholder={col.placeholder}
+                            value={data[elem.key]?.[col.key] || ""}
+                            onChange={e => update(elem.key, col.key, e.target.value)}
+                            style={{
+                              fontSize: 12.5, padding: "8px 10px", borderRadius: 8,
+                              border: "1.5px solid #bae6fd", background: "#fff", color: "#1e3a5f",
+                              outline: "none", fontFamily: "inherit",
+                              transition: "border-color 0.15s"
+                            }}
+                            onFocus={e => e.target.style.borderColor = "#0891b2"}
+                            onBlur={e => e.target.style.borderColor = "#bae6fd"}
+                          />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Done button */}
+                  <div style={{ marginTop: 14, display: "flex", justifyContent: "flex-end" }}>
+                    <button
+                      type="button"
+                      onClick={() => setExpandedRow(null)}
+                      style={{
+                        padding: "7px 22px", borderRadius: 8, fontSize: 12.5, fontWeight: 700,
+                        background: "#0891b2", color: "#fff", border: "none", cursor: "pointer",
+                        letterSpacing: "0.3px", transition: "background 0.15s"
+                      }}
+                      onMouseEnter={e => e.currentTarget.style.background = "#0e7490"}
+                      onMouseLeave={e => e.currentTarget.style.background = "#0891b2"}
+                    >
+                      ✓ Done
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Legend */}
+      <div style={{ marginTop: 8, fontSize: 11, color: "#94a3b8", paddingLeft: 4 }}>
+        Click any row to expand and fill in specifications. All fields are optional.
+      </div>
+    </div>
+  );
+}
+
 function GasMatrixInput({ field, register, setValue, watch }) {
   const gases = field.gases || [];
   const rawVal = watch?.(field.name) || "{}";
@@ -1221,6 +1399,10 @@ export default function FieldRenderer({ field, register, errors, setValue, watch
 
       {field.type === "elvmatrix" && (
         <ELVMatrixInput field={field} register={register} setValue={setValue} watch={watch} />
+      )}
+
+      {field.type === "constructionmatrix" && (
+        <ConstructionMatrixInput field={field} register={register} setValue={setValue} watch={watch} />
       )}
 
       {field.type === "computed" && (

@@ -145,23 +145,195 @@ export const rdsSchema = [
   },
   {
     id: "Architectural and spatial-requirements",
-    section: "Architectural and spatial-requirements",
+    section: "Architectural & Spatial Requirements",
     icon: "📐",
     color: "#06b6d4",
-    fields: [
-      { name: "netArea", label: "Net Area (m²)", type: "number", placeholder: "e.g. 35", required: true, colSpan: 2 },
-      { name: "minimumDimensions", label: "Minimum Dimensions (L × W)", type: "text", placeholder: "e.g. 7m × 5m", required: false, colSpan: 2 },
-      { name: "clearances", label: "Clearances", type: "text", placeholder: "Around equipment/bed", required: false, colSpan: 2 },
-      { name: "ceilingHeight", label: "Ceiling Height (m)", type: "number", placeholder: "e.g. 3.0", required: false, colSpan: 2 },
+    subsections: [
+
+      // ─── 1. SPATIAL REQUIREMENTS ───────────────────────────────────
       {
-        name: "doorType", label: "Door Type", type: "select", required: false, colSpan: 2,
-        options: ["Sliding", "Hinged (Single)", "Hinged (Double)", "Automatic Sliding", "Hermetic Sealed", "Fire-Rated", "Other"]
+        title: "Spatial Requirements",
+        description: "Core dimensional and access parameters that define the physical envelope and compliance baseline of the room",
+        fields: [
+          {
+            name: "netArea",
+            label: "Net Area (m²)",
+            type: "number",
+            placeholder: "e.g. 35",
+            required: true,
+            colSpan: 2
+          },
+          {
+            name: "minimumDimension",
+            label: "Minimum Dimension (L × W)",
+            type: "text",
+            placeholder: "e.g. 7.0 m × 5.0 m",
+            required: false,
+            colSpan: 2
+          },
+          {
+            name: "clearance",
+            label: "Clearance",
+            type: "text",
+            placeholder: "e.g. 1200 mm clear around bed head & sides, 900 mm at foot",
+            required: false,
+            colSpan: 4
+          },
+          {
+            name: "floorToSoffitHeight",
+            label: "Floor to Soffit Height (m)",
+            type: "text",
+            placeholder: "e.g. 3.6 m",
+            required: false,
+            colSpan: 2
+          },
+          {
+            name: "floorToCeilingHeight",
+            label: "Floor to Ceiling Height (m)",
+            type: "text",
+            placeholder: "e.g. 3.0 m",
+            required: false,
+            colSpan: 2
+          },
+          {
+            name: "doorType",
+            label: "Door Type",
+            type: "select",
+            required: false,
+            colSpan: 2,
+            options: [
+              "Sliding",
+              "Hinged (Single)",
+              "Hinged (Double)",
+              "Automatic Sliding",
+              "Hermetic Sealed",
+              "Fire Rated",
+              "Others"
+            ]
+          },
+          {
+            name: "doorSize",
+            label: "Door Size (W × H)",
+            type: "text",
+            placeholder: "e.g. 1200 × 2100 mm",
+            required: false,
+            colSpan: 2
+          },
+          {
+            name: "accessibilityCompliance",
+            label: "Accessibility Compliance",
+            type: "select",
+            required: false,
+            colSpan: 4,
+            options: [
+              "Full Barrier-Free Compliance",
+              "Partial Compliance",
+              "Standard",
+              "Not Applicable"
+            ]
+          }
+        ]
       },
-      { name: "doorSize", label: "Door Size", type: "text", placeholder: "e.g. 1200 × 2100 mm", required: false, colSpan: 2 },
+
+      // ─── 2. SPECIAL CONSTRUCTION ───────────────────────────────────
       {
-        name: "accessibility", label: "Accessibility Compliance", type: "select", required: true, colSpan: 4,
-        options: ["Full Barrier-Free Compliance", "Partial Compliance", "Standard", "Not Applicable"]
+        title: "Special Construction",
+        description: "Structural and technical provisions beyond standard construction — indicate Yes / No for each requirement",
+        fields: [
+          {
+            name: "hazardousStorage",
+            label: "Hazardous Storage",
+            type: "yesno",
+            required: false,
+            colSpan: 2
+          },
+          {
+            name: "radiationShielding",
+            label: "Radiation Shielding",
+            type: "yesno",
+            required: false,
+            colSpan: 2
+          },
+          {
+            name: "vibrationIsolation",
+            label: "Vibration Isolation",
+            type: "yesno",
+            required: false,
+            colSpan: 2
+          },
+          {
+            name: "magneticShielding",
+            label: "Magnetic Shielding",
+            type: "yesno",
+            required: false,
+            colSpan: 2
+          },
+          {
+            name: "soundInsulation",
+            label: "Sound Insulation",
+            type: "yesno",
+            required: false,
+            colSpan: 2
+          },
+          {
+            name: "rfShielding",
+            label: "RF Shielding",
+            type: "yesno",
+            required: false,
+            colSpan: 2
+          },
+          {
+            name: "equipmentMountingSupport",
+            label: "Equipment Mounting Support in Ceiling / Unistrut",
+            type: "yesno",
+            required: false,
+            colSpan: 2
+          },
+          {
+            name: "structuralFloorDrop",
+            label: "Structural Floor Drop for Extra Screed / Equipment Casing / Conduiting",
+            type: "text",
+            placeholder: "State intended structural floor drop in mm — e.g. 150 mm",
+            required: false,
+            colSpan: 2
+          },
+          {
+            name: "otherSpecialNeeds",
+            label: "Other Special Needs",
+            type: "textarea",
+            placeholder: "Describe any additional structural, civil or specialist construction requirements not listed above",
+            required: false,
+            colSpan: 4
+          }
+        ]
+      },
+
+      // ─── 3. CONSTRUCTION DETAILS ───────────────────────────────────
+      {
+        title: "Construction Details",
+        description: "Detailed specification matrix for every building element — define Type, Size, Acoustic, Thermal, Protection, Finish and any additional notes for each surface",
+        fields: [
+          {
+            name: "constructionMatrix",
+            label: "Construction Element Schedule",
+            type: "constructionmatrix",
+            required: false,
+            colSpan: 4,
+            elements: [
+              { key: "acoustics",   label: "Acoustics",     icon: "🔊" },
+              { key: "wall1",       label: "Wall 1",         icon: "🧱" },
+              { key: "wall2",       label: "Wall 2",         icon: "🧱" },
+              { key: "wall3",       label: "Wall 3",         icon: "🧱" },
+              { key: "wall4",       label: "Wall 4",         icon: "🧱" },
+              { key: "ceiling",     label: "Ceiling",        icon: "🏛️" },
+              { key: "floor",       label: "Floor",          icon: "⬜" },
+              { key: "skirting",    label: "Skirting",       icon: "📏" },
+              { key: "visionPanel", label: "Vision Panel",   icon: "🪟" }
+            ]
+          }
+        ]
       }
+
     ]
   },
   {
