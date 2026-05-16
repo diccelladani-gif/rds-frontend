@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 // ─── USER GROUPS DATA ──────────────────────────────────────
 const USER_GROUP_CATEGORIES = [
@@ -955,6 +955,191 @@ function GasMatrixInput({ field, register, setValue, watch }) {
   );
 }
 
+// ─── COMPUTED / AUTO-FILL FIELD ────────────────────────────
+function ComputedInput({ field, register, setValue, watch }) {
+  const formulaFields = field.formula || [];
+  const separator     = field.separator || "_";
+
+  // Watch every source field so React re-renders on any change
+  const watched = formulaFields.map(f => watch?.(f) || "");
+
+  // Build computed value — only include tokens that have a non-empty value
+  const computed = watched
+    .map(v => (v || "").toString().trim())
+    .filter(Boolean)
+    .join(separator);
+
+  // Keep the hidden form field in sync
+  useEffect(() => {
+    setValue?.(field.name, computed, { shouldDirty: true });
+  }, [computed]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const isEmpty    = computed === "";
+  const partCount  = watched.filter(v => (v || "").toString().trim() !== "").length;
+  const totalParts = formulaFields.length;
+  const isComplete = partCount === totalParts;
+
+  const stripColor = isEmpty ? "#e2e8f0" : isComplete ? "#22c55e" : "#f59e0b";
+
+  return (
+    <div>
+      {/* Hidden registered field so react-hook-form tracks the value */}
+      <input type="hidden" {...register(field.name)} />
+
+      <div
+        style={{
+          position:     "relative",
+          borderRadius: 10,
+          border:       `1.5px solid ${isComplete ? "#86efac" : isEmpty ? "#e2e8f0" : "#fde68a"}`,
+          background:   isComplete ? "#f0fdf4" : isEmpty ? "#f8fafc" : "#fffbeb",
+          overflow:     "hidden",
+          transition:   "all 0.25s ease",
+        }}
+      >
+        {/* Progress strip — top edge */}
+        <div
+          style={{
+            height:     3,
+            background: `linear-gradient(to right, ${stripColor} ${(partCount / totalParts) * 100}%, #e2e8f0 ${(partCount / totalParts) * 100}%)`,
+            transition: "all 0.3s ease",
+          }}
+        />
+
+        <div style={{ padding: "12px 14px" }}>
+          {/* Formula token pills row */}
+          <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 4, marginBottom: 10 }}>
+            {formulaFields.map((fName, i) => {
+              const val      = (watched[i] || "").toString().trim();
+              const hasValue = val !== "";
+              return (
+                <span key={fName} style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+                  <span
+                    style={{
+                      display:      "inline-flex",
+                      alignItems:   "center",
+                      gap:          4,
+                      padding:      "3px 9px",
+                      borderRadius: 20,
+                      fontSize:     11,
+                      fontWeight:   700,
+                      border:       `1px solid ${hasValue ? "#86efac" : "#e2e8f0"}`,
+                      background:   hasValue ? "#dcfce7" : "#f1f5f9",
+                      color:        hasValue ? "#15803d" : "#94a3b8",
+                      transition:   "all 0.2s",
+                    }}
+                  >
+                    <span style={{ fontSize: 9 }}>{hasValue ? "✓" : "○"}</span>
+                    <span style={{ fontSize: 10.5, fontWeight: 600, color: "#64748b", marginRight: 2 }}>
+                      {field.formulaLabels?.[i] || fName}
+                    </span>
+                    {hasValue && (
+                      <span style={{ fontWeight: 700, color: "#15803d" }}>{val}</span>
+                    )}
+                  </span>
+
+                  {/* Separator between tokens */}
+                  {i < formulaFields.length - 1 && (
+                    <span
+                      style={{
+                        fontSize:   13,
+                        fontWeight: 700,
+                        color:      hasValue && (watched[i + 1] || "").trim() !== "" ? "#22c55e" : "#cbd5e1",
+                        userSelect: "none",
+                        transition: "color 0.2s",
+                      }}
+                    >
+                      {separator}
+                    </span>
+                  )}
+                </span>
+              );
+            })}
+          </div>
+
+          {/* Generated code display box */}
+          <div
+            style={{
+              display:    "flex",
+              alignItems: "center",
+              gap:        10,
+              padding:    "10px 12px",
+              borderRadius: 8,
+              background: isComplete ? "#ffffff" : "#f8fafc",
+              border:     `1px solid ${isComplete ? "#bbf7d0" : "#e2e8f0"}`,
+              minHeight:  40,
+              transition: "all 0.25s",
+            }}
+          >
+            <span style={{ fontSize: 15, flexShrink: 0 }}>{isComplete ? "🔑" : "⏳"}</span>
+
+            {computed ? (
+              <span
+                style={{
+                  fontFamily:    "'Courier New', Courier, monospace",
+                  fontSize:      13.5,
+                  fontWeight:    700,
+                  color:         "#0f172a",
+                  letterSpacing: "0.5px",
+                  flex:          1,
+                  wordBreak:     "break-all",
+                }}
+              >
+                {computed}
+              </span>
+            ) : (
+              <span style={{ fontSize: 12, color: "#94a3b8", fontStyle: "italic", flex: 1 }}>
+                Fill in the fields above to generate the Room Code
+              </span>
+            )}
+
+            {/* Copy button */}
+            {computed && (
+              <button
+                type="button"
+                title="Copy Room Code"
+                onClick={() => navigator.clipboard?.writeText(computed)}
+                style={{
+                  flexShrink:   0,
+                  padding:      "4px 10px",
+                  borderRadius: 6,
+                  border:       "1px solid #e2e8f0",
+                  background:   "#f8fafc",
+                  cursor:       "pointer",
+                  fontSize:     11,
+                  fontWeight:   600,
+                  color:        "#475569",
+                  display:      "flex",
+                  alignItems:   "center",
+                  gap:          4,
+                  transition:   "all 0.15s",
+                }}
+                onMouseEnter={e => { e.currentTarget.style.background = "#f1f5f9"; e.currentTarget.style.borderColor = "#cbd5e1"; }}
+                onMouseLeave={e => { e.currentTarget.style.background = "#f8fafc"; e.currentTarget.style.borderColor = "#e2e8f0"; }}
+                onMouseDown={e => {
+                  const btn = e.currentTarget;
+                  btn.textContent = "✓ Copied";
+                  setTimeout(() => { if (btn) btn.textContent = "⎘ Copy"; }, 1500);
+                }}
+              >
+                ⎘ Copy
+              </button>
+            )}
+          </div>
+
+          {/* Progress hint */}
+          {!isComplete && (
+            <div style={{ marginTop: 8, fontSize: 11, color: "#94a3b8", display: "flex", alignItems: "center", gap: 5 }}>
+              <span>{partCount}/{totalParts} fields filled</span>
+              {partCount > 0 && <span style={{ color: "#cbd5e1" }}>·</span>}
+              {partCount > 0 && <span>Complete all fields to generate the full code</span>}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── MAIN RENDERER ─────────────────────────────────────────
 export default function FieldRenderer({ field, register, errors, setValue, watch }) {
   const err = errors?.[field.name];
@@ -1036,6 +1221,10 @@ export default function FieldRenderer({ field, register, errors, setValue, watch
 
       {field.type === "elvmatrix" && (
         <ELVMatrixInput field={field} register={register} setValue={setValue} watch={watch} />
+      )}
+
+      {field.type === "computed" && (
+        <ComputedInput field={field} register={register} setValue={setValue} watch={watch} />
       )}
 
       {field.type === "hidden" && (

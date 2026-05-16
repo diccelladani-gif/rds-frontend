@@ -78,11 +78,13 @@ export const rdsSchema = [
           {
             name: "roomCode",
             label: "Room Code",
-            type: "text",
+            type: "computed",
             required: false,
-            colSpan: 2,
-            placeholder: "Auto-filled: <Project Code>_<Type>_<Dept Code>_<Category Code>_<Room Name>",
-            hint: "Automatically generated from: Project Code _ Type _ Department Code _ Category Code _ Room Name"
+            colSpan: 4,
+            formula: ["projectCode", "type", "departmentCode", "categoryCode", "roomName"],
+            formulaLabels: ["Project Code", "Type", "Dept Code", "Category Code", "Room Name"],
+            separator: "_",
+            hint: "Auto-generated from: Project Code _ Type _ Department Code _ Category Code _ Room Name"
           }
         ]
       },
