@@ -9,15 +9,31 @@ export const rdsSchema = [
       // ─── 1. PROJECT & ROOM IDENTIFICATION ─────────────────────────
       {
         title: "Project & Room Identification",
-        description: "Core identifiers that anchor this room across all project documents, drawings, and schedules",
+        description: "Core project references and room identifiers used across all drawings, schedules, and planning documents",
         fields: [
           {
-            name: "project",
+            name: "projectName",
             label: "Project Name",
             type: "text",
             required: true,
-            colSpan: 2,
+            colSpan: 4,
             placeholder: "e.g. Apollo Hospital — Phase III Expansion"
+          },
+          {
+            name: "projectCode",
+            label: "Project Code",
+            type: "select",
+            required: true,
+            colSpan: 2,
+            options: ["AMD1", "MUM1", "DEL1", "CHE1"]
+          },
+          {
+            name: "type",
+            label: "Type",
+            type: "select",
+            required: true,
+            colSpan: 2,
+            options: ["TH", "CH", "MC", "SH"]
           },
           {
             name: "department",
@@ -25,7 +41,31 @@ export const rdsSchema = [
             type: "text",
             required: true,
             colSpan: 2,
-            placeholder: "e.g. Critical Care / Cardiology"
+            placeholder: "e.g. Critical Care"
+          },
+          {
+            name: "departmentCode",
+            label: "Department Code",
+            type: "text",
+            required: true,
+            colSpan: 2,
+            placeholder: "e.g. CC"
+          },
+          {
+            name: "category",
+            label: "Category",
+            type: "text",
+            required: false,
+            colSpan: 2,
+            placeholder: "e.g. ICU"
+          },
+          {
+            name: "categoryCode",
+            label: "Category Code",
+            type: "text",
+            required: false,
+            colSpan: 2,
+            placeholder: "e.g. ICU"
           },
           {
             name: "roomName",
@@ -39,17 +79,10 @@ export const rdsSchema = [
             name: "roomCode",
             label: "Room Code",
             type: "text",
-            required: true,
+            required: false,
             colSpan: 2,
-            placeholder: "e.g. ICU-B04"
-          },
-          {
-            name: "location",
-            label: "Location",
-            type: "text",
-            required: true,
-            colSpan: 4,
-            placeholder: "e.g. Level 4 — North Wing, Tower B, Apollo Hospitals, Jubilee Hills"
+            placeholder: "Auto-filled: <Project Code>_<Type>_<Dept Code>_<Category Code>_<Room Name>",
+            hint: "Automatically generated from: Project Code _ Type _ Department Code _ Category Code _ Room Name"
           }
         ]
       },
@@ -57,48 +90,8 @@ export const rdsSchema = [
       // ─── 2. CLINICAL CLASSIFICATION ───────────────────────────────
       {
         title: "Clinical Classification",
-        description: "Defines the room's clinical typology, care criticality, infection risk grading, and isolation requirements",
+        description: "Defines the room's care criticality, infection risk grading, and isolation requirements",
         fields: [
-          {
-            name: "roomTypology",
-            label: "Room Typology",
-            type: "select",
-            required: true,
-            colSpan: 2,
-            options: [
-              "ICU — General",
-              "ICU — Cardiac (CCU)",
-              "ICU — Neuro",
-              "ICU — Burns / Trauma",
-              "HDU — High Dependency Unit",
-              "NICU — Level I",
-              "NICU — Level II",
-              "NICU — Level III",
-              "PICU — Paediatric ICU",
-              "Ward — General",
-              "Ward — Surgical",
-              "Ward — Paediatric",
-              "Ward — Maternity / Obstetric",
-              "Ward — Oncology",
-              "Operating Theatre — Major",
-              "Operating Theatre — Minor / Day Surgery",
-              "Emergency — Resuscitation Bay",
-              "Emergency — Triage",
-              "Emergency — Observation",
-              "Outpatient — Consultation Room",
-              "Outpatient — Procedure / Treatment Room",
-              "Diagnostic — Radiology / MRI / CT",
-              "Diagnostic — Ultrasound / Cardiology",
-              "Laboratory",
-              "Pharmacy",
-              "Endoscopy Suite",
-              "Catheterisation Laboratory",
-              "Isolation Room",
-              "Administrative",
-              "Support / Utility",
-              "Other"
-            ]
-          },
           {
             name: "criticalityLevel",
             label: "Criticality Level",
@@ -106,11 +99,11 @@ export const rdsSchema = [
             required: true,
             colSpan: 2,
             options: [
-              "Critical — Life-Sustaining (Highest Priority)",
-              "High — Clinically Sensitive",
-              "Medium — Standard Clinical",
-              "Low — Support / Administrative",
-              "Ancillary — Non-Clinical"
+              "Critical",
+              "High",
+              "Medium",
+              "Low",
+              "Ancillary"
             ]
           },
           {
@@ -120,11 +113,11 @@ export const rdsSchema = [
             required: true,
             colSpan: 2,
             options: [
-              "Very High — Immunocompromised / Transplant",
-              "High — Infectious Disease / Isolation",
-              "Medium — General Clinical Procedures",
-              "Low — Outpatient / Administrative",
-              "Minimal — Non-Clinical / Ancillary"
+              "Very High",
+              "High",
+              "Medium",
+              "Low",
+              "Minimal"
             ]
           },
           {
@@ -132,15 +125,15 @@ export const rdsSchema = [
             label: "Isolation Type",
             type: "select",
             required: false,
-            colSpan: 2,
+            colSpan: 4,
             options: [
-              "None — No Isolation Required",
-              "Contact Isolation",
-              "Droplet Isolation",
-              "Airborne Isolation (Negative Pressure)",
-              "Protective / Reverse Isolation (Positive Pressure)",
-              "Combined — Contact + Airborne",
-              "Strict / Level-4 Isolation"
+              "None",
+              "Contact",
+              "Droplet",
+              "Airborne",
+              "Protective (Reverse)",
+              "Combined",
+              "Strict Isolation"
             ]
           }
         ]
@@ -665,156 +658,16 @@ export const rdsSchema = [
   },
   {
     id: "Stakeholder experience",
-    section: "Stakeholder Experience",
+    section: "Stakeholder experience",
     icon: "✨",
     color: "#0891b2",
-    subsections: [
-
-      // ─── 1. SENSORY ENVIRONMENT ────────────────────────────────────
-      {
-        title: "Sensory Environment",
-        description: "Lighting quality, acoustic performance, and sensory comfort standards for clinical and patient wellbeing",
-        fields: [
-          {
-            name: "lightingQuality",
-            label: "Lighting Quality",
-            type: "select",
-            required: false,
-            colSpan: 2,
-            options: [
-              "General Ambient — 100–200 lux (Corridors / Waiting)",
-              "Standard Clinical — 300–500 lux (Wards / Consultation)",
-              "Enhanced Clinical — 500–1000 lux (Treatment / Procedure Rooms)",
-              "Surgical / High-Precision — 10,000–100,000 lux (OT / Examination)",
-              "Adjustable / Circadian (Tunable White — 2700K–6500K)",
-              "Natural Daylight Optimised (With Glare Control)",
-              "Emergency / Night Mode Lighting"
-            ]
-          },
-          {
-            name: "lightingNotes",
-            label: "Lighting Notes",
-            type: "textarea",
-            required: false,
-            colSpan: 2,
-            placeholder: "e.g. Dimmer controls at bedhead, CCT 3000–5000K tunable, anti-glare diffusers, emergency backup circuits"
-          },
-          {
-            name: "acousticControl",
-            label: "Acoustic Performance",
-            type: "select",
-            required: false,
-            colSpan: 2,
-            options: [
-              "Standard — ≤45 dB(A) (General Ward / Admin)",
-              "Enhanced — ≤40 dB(A) (Consultation / Outpatient)",
-              "Clinical Quiet — ≤35 dB(A) (ICU / HDU / NICU)",
-              "Critical Quiet — ≤30 dB(A) (Sleep / Neonatal Recovery)",
-              "High-Performance Acoustic Isolation (STC ≥ 55)",
-              "Acoustic Dampening + Reverberation Control",
-              "Not Specified"
-            ]
-          },
-          {
-            name: "acousticNotes",
-            label: "Acoustic Notes",
-            type: "textarea",
-            required: false,
-            colSpan: 2,
-            placeholder: "e.g. Acoustic ceiling tiles, wall-mounted sound absorbers, STC-55 partition walls, sealed penetrations, anti-vibration mounts on MEP services"
-          }
-        ]
-      },
-
-      // ─── 2. PATIENT & FAMILY EXPERIENCE ───────────────────────────
-      {
-        title: "Patient & Family Experience",
-        description: "Privacy provisions, patient comfort features, and family interaction facilities that support healing-centred design",
-        fields: [
-          {
-            name: "privacy",
-            label: "Privacy Provisions",
-            type: "select",
-            required: false,
-            colSpan: 2,
-            options: [
-              "None — Open Bay / Shared Space",
-              "Curtain Screening Only",
-              "Partial Partition (Screens / Panels)",
-              "Full Visual Privacy (Solid Walls / Glazed with Blinds)",
-              "Full Visual + Acoustic Privacy (Solid Walls + Acoustic Treatment)",
-              "Single-Patient Room — Complete Privacy",
-              "Ensuite Toilet / Bathroom Privacy"
-            ]
-          },
-          {
-            name: "patientComfort",
-            label: "Patient Comfort Provisions",
-            type: "textarea",
-            required: false,
-            colSpan: 2,
-            placeholder: "e.g. Bedhead service units, individual climate control, patient entertainment screen, nurse call within reach, reading light, USB charging points, pillow speaker, wayfinding signage"
-          },
-          {
-            name: "familyInteraction",
-            label: "Family & Visitor Interaction",
-            type: "select",
-            required: false,
-            colSpan: 2,
-            options: [
-              "Not Applicable — No Visitor Access",
-              "Bedside Visitor Chair Only",
-              "Bedside Seating + Fold-Out Bed (Overnight Stay)",
-              "Family Lounge / Waiting Area (Adjacent)",
-              "Dedicated Consultation / Family Meeting Room",
-              "Family Participation Zone (Hands-On Care)",
-              "Family Accommodation (Long Stay / NICU)"
-            ]
-          },
-          {
-            name: "familyInteractionNotes",
-            label: "Family Interaction Notes",
-            type: "textarea",
-            required: false,
-            colSpan: 2,
-            placeholder: "e.g. Dedicated visitor chair, bedside fold-out for overnight stays, access to family lounge on Level 3, consultation room shared with adjacent room"
-          }
-        ]
-      },
-
-      // ─── 3. VISUAL & SPATIAL AMBIENCE ─────────────────────────────
-      {
-        title: "Visual & Spatial Ambience",
-        description: "Biophilic design, wayfinding, artwork, and spatial cues that contribute to a positive healing environment",
-        fields: [
-          {
-            name: "visualEnvironment",
-            label: "Visual Environment Strategy",
-            type: "select",
-            required: false,
-            colSpan: 2,
-            options: [
-              "Standard Clinical — Neutral Palette, Functional",
-              "Healing Environment — Warm Tones + Nature-Inspired",
-              "Biophilic Design — Natural Materials, Plants, Views",
-              "Paediatric — Playful Colours, Character Themes, Murals",
-              "Wayfinding Colour Coding — Departmental Zones",
-              "Art Integration — Curated Artwork Programme",
-              "High-End / Hotel-Grade Ambience",
-              "Not Specified"
-            ]
-          },
-          {
-            name: "visualEnvironmentNotes",
-            label: "Visual Environment Notes",
-            type: "textarea",
-            required: false,
-            colSpan: 2,
-            placeholder: "e.g. External view to courtyard garden, wall-mounted artwork from local artists, warm white walls (RAL 9010), wayfinding colour band in departmental teal (#0891b2), anti-glare window film"
-          }
-        ]
-      }
-
+    fields: [
+      { name: "lightingQuality", label: "Lighting Quality", type: "textarea", placeholder: "Lux levels, CCT, controls", required: false, colSpan: 2 },
+      { name: "acousticControl", label: "Acoustic Control", type: "text", placeholder: "dB target, STC rating", required: false, colSpan: 2 },
+      { name: "privacy", label: "Privacy", type: "text", placeholder: "Visual & acoustic privacy measures", required: false, colSpan: 2 },
+      { name: "patientComfort", label: "Patient Comfort", type: "textarea", placeholder: "Bedhead units, entertainment, wayfinding", required: false, colSpan: 2 },
+      { name: "familyInteraction", label: "Family Interaction", type: "text", placeholder: "Visitor seating, consultation space", required: false, colSpan: 2 },
+      { name: "visualEnvironment", label: "Visual Environment", type: "text", placeholder: "Views, artwork, wayfinding colours", required: false, colSpan: 2 }
     ]
   },
   {
