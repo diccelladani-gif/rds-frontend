@@ -960,6 +960,226 @@ function ConstructionMatrixInput({ field, register, setValue, watch }) {
   );
 }
 
+// ─── SSO SOCKET OUTLET MATRIX ──────────────────────────────
+const SSO_LOCATIONS = [
+  { key: "wall",         label: "Wall",                 icon: "🧱" },
+  { key: "floor",        label: "Floor",                icon: "⬜" },
+  { key: "aboveCeiling", label: "Above Ceiling",        icon: "🏛️" },
+  { key: "desk",         label: "Desk / Table / Bench", icon: "🪑" },
+  { key: "bedHead",      label: "Bed Head Panel",       icon: "🛏️" },
+  { key: "pendant",      label: "Medical Pendant",      icon: "💡" },
+  { key: "other",        label: "Other",                icon: "📌" },
+];
+const SSO_SOURCES = [
+  { key: "normal",    label: "Normal",    color: "#16a34a", bg: "#dcfce7", border: "#86efac" },
+  { key: "emergency", label: "Emergency", color: "#dc2626", bg: "#fee2e2", border: "#fca5a5" },
+  { key: "ups",       label: "UPS",       color: "#d97706", bg: "#fef3c7", border: "#fcd34d" },
+];
+
+function SSOMatrixInput({ field, register, setValue, watch }) {
+  const rawVal = watch?.(field.name) || "{}";
+  let data = {};
+  try { data = JSON.parse(rawVal); } catch { data = {}; }
+
+  const getVal = (locKey, srcKey) => data[locKey]?.[srcKey] ?? 0;
+
+  const update = (locKey, srcKey, val) => {
+    const qty = Math.max(0, parseInt(val) || 0);
+    const next = { ...data, [locKey]: { ...(data[locKey] || {}), [srcKey]: qty } };
+    setValue?.(field.name, JSON.stringify(next), { shouldDirty: true });
+  };
+
+  const totalSockets = SSO_LOCATIONS.reduce((sum, loc) =>
+    sum + SSO_SOURCES.reduce((s2, src) => s2 + getVal(loc.key, src.key), 0), 0);
+
+  return (
+    <div style={{ width: "100%" }}>
+      <input type="hidden" {...register(field.name)} />
+
+      {/* Summary badge */}
+      {totalSockets > 0 && (
+        <div style={{ marginBottom: 10, display: "flex", gap: 8, flexWrap: "wrap" }}>
+          {SSO_SOURCES.map(src => {
+            const srcTotal = SSO_LOCATIONS.reduce((s, loc) => s + getVal(loc.key, src.key), 0);
+            if (!srcTotal) return null;
+            return (
+              <span key={src.key} style={{ fontSize: 11, fontWeight: 700, padding: "3px 12px", borderRadius: 20, background: src.bg, color: src.color, border: `1px solid ${src.border}` }}>
+                {src.label}: {srcTotal}
+              </span>
+            );
+          })}
+          <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 12px", borderRadius: 20, background: "#f1f5f9", color: "#475569" }}>
+            Total: {totalSockets} outlets
+          </span>
+        </div>
+      )}
+
+      {/* Table */}
+      <div style={{ border: "1.5px solid #fed7aa", borderRadius: 12, overflow: "hidden" }}>
+        {/* Header */}
+        <div style={{ display: "grid", gridTemplateColumns: "160px repeat(3, 1fr)", background: "linear-gradient(135deg, #ea580c 0%, #f97316 100%)", padding: "10px 14px", alignItems: "center", gap: 0 }}>
+          <span style={{ fontSize: 11, fontWeight: 700, color: "#fff", textTransform: "uppercase", letterSpacing: "0.5px" }}>Location</span>
+          {SSO_SOURCES.map(src => (
+            <span key={src.key} style={{ fontSize: 11, fontWeight: 700, color: "#fff", textAlign: "center", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+              {src.label}
+            </span>
+          ))}
+        </div>
+
+        {/* Rows */}
+        {SSO_LOCATIONS.map((loc, idx) => {
+          const rowTotal = SSO_SOURCES.reduce((s, src) => s + getVal(loc.key, src.key), 0);
+          return (
+            <div key={loc.key} style={{ display: "grid", gridTemplateColumns: "160px repeat(3, 1fr)", borderTop: idx > 0 ? "1px solid #fed7aa" : "none", background: idx % 2 === 0 ? "#fff7ed" : "#fff", alignItems: "center", padding: "10px 14px", gap: 0 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ fontSize: 15 }}>{loc.icon}</span>
+                <div>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: "#9a3412" }}>{loc.label}</div>
+                  {rowTotal > 0 && <div style={{ fontSize: 10, color: "#f97316", fontWeight: 600 }}>{rowTotal} total</div>}
+                </div>
+              </div>
+              {SSO_SOURCES.map(src => {
+                const val = getVal(loc.key, src.key);
+                return (
+                  <div key={src.key} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+                    <button type="button" onClick={() => update(loc.key, src.key, val - 1)}
+                      style={{ width: 28, height: 28, borderRadius: 8, border: `1.5px solid ${val > 0 ? src.border : "#e2e8f0"}`, background: val > 0 ? src.bg : "#f8fafc", color: val > 0 ? src.color : "#94a3b8", fontSize: 16, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1 }}>−</button>
+                    <span style={{ width: 28, textAlign: "center", fontSize: 14, fontWeight: 700, color: val > 0 ? src.color : "#cbd5e1" }}>{val}</span>
+                    <button type="button" onClick={() => update(loc.key, src.key, val + 1)}
+                      style={{ width: 28, height: 28, borderRadius: 8, border: `1.5px solid ${src.border}`, background: src.bg, color: src.color, fontSize: 16, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1 }}>+</button>
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })}
+      </div>
+      <div style={{ marginTop: 8, fontSize: 11, color: "#94a3b8" }}>Set outlet quantities per location and power source type (Normal / Emergency / UPS).</div>
+    </div>
+  );
+}
+
+// ─── POWER ISOLATOR MATRIX ──────────────────────────────────
+const ISOLATOR_LOCATIONS = ["Wall", "Above Ceiling", "Any Other (specify)"];
+const ISOLATOR_SOURCES   = ["Normal Source", "Emergency Source", "UPS Source"];
+const ISOLATOR_RATINGS   = ["20A TPN", "20A DP", "30A TPN", "30A DP", "40A TPN", "40A DP", "63A TPN"];
+const ISOLATOR_RATING_COLORS = {
+  "20A TPN": { bg: "#eff6ff", color: "#1d4ed8", border: "#bfdbfe" },
+  "20A DP":  { bg: "#f0fdf4", color: "#15803d", border: "#86efac" },
+  "30A TPN": { bg: "#fef3c7", color: "#d97706", border: "#fcd34d" },
+  "30A DP":  { bg: "#fff7ed", color: "#ea580c", border: "#fed7aa" },
+  "40A TPN": { bg: "#fdf4ff", color: "#9333ea", border: "#e9d5ff" },
+  "40A DP":  { bg: "#fff1f2", color: "#e11d48", border: "#fecdd3" },
+  "63A TPN": { bg: "#f0fdfa", color: "#0f766e", border: "#99f6e4" },
+};
+
+function IsolatorMatrixInput({ field, register, setValue, watch }) {
+  const rawVal = watch?.(field.name) || "[]";
+  let rows = [];
+  try { rows = JSON.parse(rawVal); } catch { rows = []; }
+
+  const [otherNotes, setOtherNotes] = useState({});
+
+  const addRow = () => {
+    const next = [...rows, { id: Date.now(), location: "Wall", source: "Normal Source", rating: "20A TPN", qty: 1, note: "" }];
+    setValue?.(field.name, JSON.stringify(next), { shouldDirty: true });
+  };
+
+  const updateRow = (id, key, val) => {
+    const next = rows.map(r => r.id === id ? { ...r, [key]: val } : r);
+    setValue?.(field.name, JSON.stringify(next), { shouldDirty: true });
+  };
+
+  const removeRow = (id) => {
+    const next = rows.filter(r => r.id !== id);
+    setValue?.(field.name, JSON.stringify(next), { shouldDirty: true });
+  };
+
+  return (
+    <div style={{ width: "100%" }}>
+      <input type="hidden" {...register(field.name)} />
+
+      {rows.length === 0 ? (
+        <div style={{ padding: "24px", textAlign: "center", border: "2px dashed #e0f2fe", borderRadius: 12, background: "#f0f9ff", color: "#94a3b8" }}>
+          <div style={{ fontSize: 28, marginBottom: 8 }}>⚡</div>
+          <div style={{ fontSize: 13, fontWeight: 600, color: "#64748b", marginBottom: 4 }}>No isolators configured</div>
+          <div style={{ fontSize: 11, color: "#94a3b8" }}>Click "Add Isolator" to define power isolator requirements</div>
+        </div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 8 }}>
+          {/* Column headers */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 80px 32px", gap: 8, padding: "8px 12px", background: "linear-gradient(135deg, #1e40af 0%, #2563eb 100%)", borderRadius: 10 }}>
+            {["Location", "Source", "Rating", "Qty", ""].map((h, i) => (
+              <span key={i} style={{ fontSize: 10.5, fontWeight: 700, color: i < 4 ? "#bfdbfe" : "transparent", textTransform: "uppercase", letterSpacing: "0.5px", textAlign: i === 3 ? "center" : "left" }}>{h}</span>
+            ))}
+          </div>
+
+          {rows.map((row, idx) => {
+            const ratingStyle = ISOLATOR_RATING_COLORS[row.rating] || { bg: "#f8fafc", color: "#475569", border: "#e2e8f0" };
+            return (
+              <div key={row.id} style={{ display: "flex", flexDirection: "column", gap: 6, padding: "12px", background: idx % 2 === 0 ? "#f0f9ff" : "#fff", border: "1.5px solid #e0f2fe", borderRadius: 10 }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 80px 32px", gap: 8, alignItems: "center" }}>
+                  {/* Location */}
+                  <select value={row.location} onChange={e => updateRow(row.id, "location", e.target.value)}
+                    style={{ fontSize: 12.5, padding: "7px 10px", borderRadius: 8, border: "1.5px solid #bae6fd", background: "#fff", color: "#1e3a5f", outline: "none", cursor: "pointer" }}>
+                    {ISOLATOR_LOCATIONS.map(l => <option key={l} value={l}>{l}</option>)}
+                  </select>
+
+                  {/* Source */}
+                  <select value={row.source} onChange={e => updateRow(row.id, "source", e.target.value)}
+                    style={{ fontSize: 12.5, padding: "7px 10px", borderRadius: 8, border: `1.5px solid ${row.source === "Normal Source" ? "#86efac" : row.source === "Emergency Source" ? "#fca5a5" : "#fcd34d"}`, background: row.source === "Normal Source" ? "#f0fdf4" : row.source === "Emergency Source" ? "#fff0f0" : "#fffbeb", color: "#1e3a5f", outline: "none", cursor: "pointer", fontWeight: 600 }}>
+                    {ISOLATOR_SOURCES.map(s => <option key={s} value={s}>{s}</option>)}
+                  </select>
+
+                  {/* Rating */}
+                  <select value={row.rating} onChange={e => updateRow(row.id, "rating", e.target.value)}
+                    style={{ fontSize: 12.5, padding: "7px 10px", borderRadius: 8, border: `1.5px solid ${ratingStyle.border}`, background: ratingStyle.bg, color: ratingStyle.color, outline: "none", cursor: "pointer", fontWeight: 700 }}>
+                    {ISOLATOR_RATINGS.map(r => <option key={r} value={r}>{r}</option>)}
+                  </select>
+
+                  {/* Qty */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 4, justifyContent: "center" }}>
+                    <button type="button" onClick={() => updateRow(row.id, "qty", Math.max(1, row.qty - 1))}
+                      style={{ width: 26, height: 26, borderRadius: 6, border: "1.5px solid #bae6fd", background: "#f0f9ff", color: "#0891b2", fontSize: 16, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>−</button>
+                    <span style={{ width: 24, textAlign: "center", fontSize: 13, fontWeight: 700, color: "#0e7490" }}>{row.qty}</span>
+                    <button type="button" onClick={() => updateRow(row.id, "qty", row.qty + 1)}
+                      style={{ width: 26, height: 26, borderRadius: 6, border: "1.5px solid #bae6fd", background: "#e0f2fe", color: "#0891b2", fontSize: 16, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>+</button>
+                  </div>
+
+                  {/* Delete */}
+                  <button type="button" onClick={() => removeRow(row.id)}
+                    style={{ width: 30, height: 30, borderRadius: 8, border: "1.5px solid #fecdd3", background: "#fff1f2", color: "#e11d48", fontSize: 14, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
+                </div>
+
+                {/* Conditional "Any Other" note */}
+                {row.location === "Any Other (specify)" && (
+                  <input type="text" placeholder="Describe location..." value={row.note || ""}
+                    onChange={e => updateRow(row.id, "note", e.target.value)}
+                    style={{ fontSize: 12, padding: "6px 10px", borderRadius: 8, border: "1.5px solid #bae6fd", background: "#fff", color: "#1e3a5f", outline: "none", fontFamily: "inherit" }} />
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Add button */}
+      <button type="button" onClick={addRow}
+        style={{ width: "100%", padding: "9px 0", borderRadius: 10, border: "1.5px dashed #93c5fd", background: "#eff6ff", color: "#2563eb", fontSize: 13, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, transition: "all 0.15s" }}
+        onMouseEnter={e => { e.currentTarget.style.background = "#dbeafe"; e.currentTarget.style.borderStyle = "solid"; }}
+        onMouseLeave={e => { e.currentTarget.style.background = "#eff6ff"; e.currentTarget.style.borderStyle = "dashed"; }}>
+        <span style={{ fontSize: 16 }}>+</span> Add Isolator
+      </button>
+
+      {rows.length > 0 && (
+        <div style={{ marginTop: 8, fontSize: 11, color: "#94a3b8" }}>
+          {rows.length} isolator{rows.length !== 1 ? "s" : ""} configured — {rows.reduce((s, r) => s + r.qty, 0)} total units
+        </div>
+      )}
+    </div>
+  );
+}
+
 function GasMatrixInput({ field, register, setValue, watch }) {
   const gases = field.gases || [];
   const rawVal = watch?.(field.name) || "{}";
@@ -1403,6 +1623,14 @@ export default function FieldRenderer({ field, register, errors, setValue, watch
 
       {field.type === "constructionmatrix" && (
         <ConstructionMatrixInput field={field} register={register} setValue={setValue} watch={watch} />
+      )}
+
+      {field.type === "ssomatrix" && (
+        <SSOMatrixInput field={field} register={register} setValue={setValue} watch={watch} />
+      )}
+
+      {field.type === "isolatormatrix" && (
+        <IsolatorMatrixInput field={field} register={register} setValue={setValue} watch={watch} />
       )}
 
       {field.type === "computed" && (

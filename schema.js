@@ -450,61 +450,342 @@ export const rdsSchema = [
   },
   {
     id: "MEP & engineering-systems",
-    section: "MEP & engineering-systems",
+    section: "MEP & Engineering Services",
     icon: "⚡",
     color: "#f97316",
     subsections: [
+
+      // ─── 1. HVAC ──────────────────────────────────────────────────
       {
         title: "HVAC",
+        description: "Air quality, environmental control, ventilation modes and pandemic-resilience parameters for this room",
         fields: [
-          { name: "airChangesACH", label: "Air Changes (ACH)", type: "number", placeholder: "e.g. 15", required: false, colSpan: 2 },
           {
-            name: "pressure", label: "Pressure Regime", type: "select", required: false, colSpan: 2,
+            name: "airChangesACH",
+            label: "Air Changes per Hour (ACH)",
+            type: "number",
+            placeholder: "e.g. 15",
+            required: false,
+            colSpan: 2
+          },
+          {
+            name: "pressure",
+            label: "Pressure Regime",
+            type: "select",
+            required: false,
+            colSpan: 2,
             options: ["Positive (+ve)", "Negative (-ve)", "Neutral", "Variable"]
           },
-          { name: "temperature", label: "Temperature (°C)", type: "text", placeholder: "e.g. 20–24°C", required: false, colSpan: 2 },
-          { name: "humidity", label: "Humidity (%RH)", type: "text", placeholder: "e.g. 45–60%", required: false, colSpan: 2 },
           {
-            name: "filtration", label: "Filtration", type: "select", required: false, colSpan: 2,
-            options: ["HEPA H14", "HEPA H13", "MERV-16", "MERV-13", "Standard", "ULPA", "Other"]
+            name: "temperature",
+            label: "Temperature (°C)",
+            type: "text",
+            placeholder: "e.g. 20–24°C",
+            required: false,
+            colSpan: 2
           },
-          { name: "airflowDirection", label: "Airflow Direction", type: "text", placeholder: "e.g. Top supply, Low exhaust", required: false, colSpan: 2 },
           {
-            name: "pandemicMode", label: "Pandemic Mode Capable", type: "yesno", required: false, colSpan: 4
+            name: "humidity",
+            label: "Humidity (%RH)",
+            type: "text",
+            placeholder: "e.g. 45–60%",
+            required: false,
+            colSpan: 2
+          },
+          {
+            name: "filtration",
+            label: "Filtration Grade",
+            type: "select",
+            required: false,
+            colSpan: 2,
+            options: ["HEPA H14", "HEPA H13", "MERV-16", "MERV-13", "Standard", "ULPA", "Others"]
+          },
+          {
+            name: "providedFanInRoom",
+            label: "Provided Fan in Room",
+            type: "yesno",
+            required: false,
+            colSpan: 2
+          },
+          {
+            name: "airflowDirection",
+            label: "Specific Airflow Direction Required",
+            type: "yesno",
+            required: false,
+            colSpan: 2
+          },
+          {
+            name: "naturalVentilation",
+            label: "Natural Ventilation",
+            type: "yesno",
+            required: false,
+            colSpan: 2
+          },
+          {
+            name: "mechanicalVentilation",
+            label: "Mechanical Ventilation",
+            type: "yesno",
+            required: false,
+            colSpan: 2
+          },
+          {
+            name: "smokeExtraction",
+            label: "Extraction / Smoke Extraction",
+            type: "yesno",
+            required: false,
+            colSpan: 2
+          },
+          {
+            name: "pandemicMode",
+            label: "Pandemic Mode Capable",
+            type: "yesno",
+            required: false,
+            colSpan: 2
           }
         ]
       },
+
+      // ─── 2. ELECTRICAL ────────────────────────────────────────────
       {
         title: "Electrical",
+        description: "Power supply classification, socket outlet schedule by location & source, and power isolator requirements",
         fields: [
-          { name: "powerLoad", label: "Power Load (kVA)", type: "number", placeholder: "e.g. 15", required: false, colSpan: 2 },
-          { name: "normalPower", label: "Normal Power Supply", type: "text", placeholder: "e.g. 230V/50Hz", required: false, colSpan: 2 },
-          { name: "emergencyPower", label: "Emergency Power", type: "text", placeholder: "e.g. Gen-set within 10s", required: false, colSpan: 2 },
           {
-            name: "ups", label: "UPS Required", type: "yesno", required: false, colSpan: 2
+            name: "powerLoad",
+            label: "Power Load (kVA)",
+            type: "number",
+            placeholder: "e.g. 15",
+            required: false,
+            colSpan: 2
           },
-          { name: "numberOfSockets", label: "No. of Sockets", type: "number", placeholder: "e.g. 12", required: false, colSpan: 2 },
-          { name: "specialOutlets", label: "Special Outlets", type: "text", placeholder: "e.g. IEC 60601 medical-grade", required: false, colSpan: 2 }
+          {
+            name: "normalPower",
+            label: "Normal Power Supply",
+            type: "text",
+            placeholder: "e.g. 230V / 50Hz, 3-phase",
+            required: false,
+            colSpan: 2
+          },
+          {
+            name: "emergencyPower",
+            label: "Emergency Power",
+            type: "text",
+            placeholder: "e.g. Gen-set auto-changeover within 10s",
+            required: false,
+            colSpan: 2
+          },
+          {
+            name: "ups",
+            label: "UPS Required",
+            type: "yesno",
+            required: false,
+            colSpan: 2
+          },
+          {
+            name: "numberOfSockets",
+            label: "No. of Sockets",
+            type: "number",
+            placeholder: "e.g. 12",
+            required: false,
+            colSpan: 2
+          },
+          {
+            name: "specialOutlets",
+            label: "Special Outlets",
+            type: "text",
+            placeholder: "e.g. IEC 60601 medical-grade, 5-pin 16A",
+            required: false,
+            colSpan: 2
+          },
+          {
+            name: "ssoMatrix",
+            label: "6/16A Switch Socket Outlets (SSO) — by Location & Source",
+            type: "ssomatrix",
+            required: false,
+            colSpan: 4
+          },
+          {
+            name: "isolatorMatrix",
+            label: "Power Isolators — Location, Source & Rating Schedule",
+            type: "isolatormatrix",
+            required: false,
+            colSpan: 4
+          }
         ]
       },
+
+      // ─── 3. EQUIPMENT RELATED PROVISION ──────────────────────────
+      {
+        title: "Equipment Related Provision",
+        description: "Infrastructure and engineering provisions required to support clinical equipment performance, safety, connectivity, and compliance",
+        fields: [
+          {
+            name: "equip_dedicatedCircuit",
+            label: "Requires dedicated circuit to prevent overload",
+            type: "yesno",
+            required: false,
+            colSpan: 2
+          },
+          {
+            name: "equip_upsBackup",
+            label: "Needs UPS backup for uninterrupted operation",
+            type: "yesno",
+            required: false,
+            colSpan: 2
+          },
+          {
+            name: "equip_vibrationIsolation",
+            label: "Requires vibration isolation for stable operation",
+            type: "yesno",
+            required: false,
+            colSpan: 2
+          },
+          {
+            name: "equip_bmsInterface",
+            label: "Needs BMS interface (e.g. freezer, refrigerator)",
+            type: "yesno",
+            required: false,
+            colSpan: 2
+          },
+          {
+            name: "equip_isolatedGrounding",
+            label: "Requires isolated grounding to minimise electrical interference",
+            type: "yesno",
+            required: false,
+            colSpan: 2
+          },
+          {
+            name: "equip_humidityControl",
+            label: "Needs additional humidity control for optimal performance",
+            type: "yesno",
+            required: false,
+            colSpan: 2
+          },
+          {
+            name: "equip_remoteMonitoring",
+            label: "Requires remote monitoring — status, asset wellness, cloud/web connectivity",
+            type: "yesno",
+            required: false,
+            colSpan: 2
+          },
+          {
+            name: "equip_voltageStabilizer",
+            label: "Needs voltage stabilizer to address sensitivity to fluctuations",
+            type: "yesno",
+            required: false,
+            colSpan: 2
+          },
+          {
+            name: "equip_antiStaticFlooring",
+            label: "Must comply with anti-static flooring requirements",
+            type: "yesno",
+            required: false,
+            colSpan: 2
+          },
+          {
+            name: "equip_fireRatedEnclosure",
+            label: "Requires fire-rated enclosure or protection measures",
+            type: "yesno",
+            required: false,
+            colSpan: 2
+          },
+          {
+            name: "equip_fireAlarmInterface",
+            label: "Needs interface with Fire Alarm (e.g. kitchen exhaust hood, fume hood)",
+            type: "yesno",
+            required: false,
+            colSpan: 2
+          },
+          {
+            name: "equip_gasDetection",
+            label: "Must be interfaced with gas detection system (fume hoods, chemical storage)",
+            type: "yesno",
+            required: false,
+            colSpan: 2
+          }
+        ]
+      },
+
+      // ─── 4. MEDICAL GASES ─────────────────────────────────────────
       {
         title: "Medical Gases",
+        description: "Piped medical gas outlet counts as required for this room",
         fields: [
-          { name: "oxygen", label: "Oxygen (O₂) — No. of Outlets", type: "number", placeholder: "e.g. 4", required: false, colSpan: 2 },
-          { name: "medicalAir", label: "Medical Air — No. of Outlets", type: "number", placeholder: "e.g. 2", required: false, colSpan: 2 },
-          { name: "vacuum", label: "Vacuum (AGSS) — No. of Outlets", type: "number", placeholder: "e.g. 2", required: false, colSpan: 2 },
-          { name: "nitrousOxide", label: "Nitrous Oxide — No. of Outlets", type: "number", placeholder: "e.g. 1", required: false, colSpan: 2 }
+          {
+            name: "oxygen",
+            label: "Oxygen (O₂) — No. of Outlets",
+            type: "number",
+            placeholder: "e.g. 4",
+            required: false,
+            colSpan: 2
+          },
+          {
+            name: "medicalAir",
+            label: "Medical Air — No. of Outlets",
+            type: "number",
+            placeholder: "e.g. 2",
+            required: false,
+            colSpan: 2
+          },
+          {
+            name: "vacuum",
+            label: "Vacuum / AGSS — No. of Outlets",
+            type: "number",
+            placeholder: "e.g. 2",
+            required: false,
+            colSpan: 2
+          },
+          {
+            name: "nitrousOxide",
+            label: "Nitrous Oxide (N₂O) — No. of Outlets",
+            type: "number",
+            placeholder: "e.g. 1",
+            required: false,
+            colSpan: 2
+          }
         ]
       },
+
+      // ─── 5. PLUMBING ──────────────────────────────────────────────
       {
         title: "Plumbing",
+        description: "Sanitary fixture counts and any specialist plumbing systems required",
         fields: [
-          { name: "handWash", label: "Hand Wash Basins", type: "number", placeholder: "No. of units", required: false, colSpan: 2 },
-          { name: "wc", label: "WC / Toilet", type: "number", placeholder: "No. of units", required: false, colSpan: 2 },
-          { name: "shower", label: "Shower", type: "number", placeholder: "No. of units", required: false, colSpan: 2 },
-          { name: "plumbingSpecialSystems", label: "Special Plumbing Systems", type: "text", placeholder: "e.g. Sluice, Bedpan washer", required: false, colSpan: 2 }
+          {
+            name: "handWash",
+            label: "Hand Wash Basins",
+            type: "number",
+            placeholder: "No. of units",
+            required: false,
+            colSpan: 2
+          },
+          {
+            name: "wc",
+            label: "WC / Toilet",
+            type: "number",
+            placeholder: "No. of units",
+            required: false,
+            colSpan: 2
+          },
+          {
+            name: "shower",
+            label: "Shower",
+            type: "number",
+            placeholder: "No. of units",
+            required: false,
+            colSpan: 2
+          },
+          {
+            name: "plumbingSpecialSystems",
+            label: "Special Plumbing Systems",
+            type: "text",
+            placeholder: "e.g. Sluice, Bedpan washer, Scrub sink",
+            required: false,
+            colSpan: 2
+          }
         ]
       }
+
     ]
   },
   {
