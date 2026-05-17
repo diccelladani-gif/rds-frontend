@@ -43,7 +43,7 @@ function buildFieldsManifest() {
       if (f.type === "select" && f.options?.length) {
         manifest.push({ name: f.name, label: f.label, type: "select", options: f.options });
       } else if (f.type === "yesno") {
-        manifest.push({ name: f.name, label: f.label, type: "yesno", options: ["yes", "no"] });
+        manifest.push({ name: f.name, label: f.label, type: "yesno", options: ["Yes", "No"] });
       } else if (f.type === "number") {
         manifest.push({ name: f.name, label: f.label, type: "number" });
       }
@@ -79,7 +79,7 @@ Based on this room type, recommend the best value for each field below. Return O
 
 Rules:
 - For "select" fields: the value MUST be exactly one of the listed options (copy it verbatim)
-- For "yesno" fields: value must be exactly "yes" or "no"
+- For "yesno" fields: value must be exactly "Yes" or "No" (capital first letter)
 - For "number" fields: provide a realistic numeric value as a number
 - If you are unsure about a field, omit it from the response
 - Only include fields where you have high confidence in the recommendation
@@ -383,15 +383,29 @@ export default function RdsForm({ onSectionChange, jumpToSection, editRecord, on
   }, [watchedRoomName, watchedDepartment, watchedCategory, isEditMode]);
 
   // ── Apply all AI recommendations ───────────────────────────────────────────
+  // Build a quick lookup: fieldName -> type
+  const fieldTypeMap = {};
+  for (const section of rdsSchema) {
+    const allFields = section.subsections
+      ? section.subsections.flatMap(s => s.fields)
+      : (section.fields || []);
+    for (const f of allFields) fieldTypeMap[f.name] = f.type;
+  }
+
   const handleApplyAi = useCallback(() => {
     if (!aiData?.recommendations) return;
     const { recommendations, reasons } = aiData;
     let count = 0;
     Object.entries(recommendations).forEach(([fieldName, value]) => {
-      if (value !== undefined && value !== null && value !== "") {
-        setValue(fieldName, value, { shouldDirty: true, shouldValidate: false });
-        count++;
+      if (value === undefined || value === null || value === "") return;
+      let finalValue = value;
+      // YesNo fields expect "Yes" or "No" with capital first letter
+      if (fieldTypeMap[fieldName] === "yesno") {
+        const v = String(value).toLowerCase();
+        finalValue = v === "yes" ? "Yes" : v === "no" ? "No" : value;
       }
+      setValue(fieldName, finalValue, { shouldDirty: true, shouldValidate: false });
+      count++;
     });
     setAiReasons(reasons || {});
     setAiStatus("applied");
