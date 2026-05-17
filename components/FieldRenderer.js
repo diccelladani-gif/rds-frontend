@@ -504,133 +504,107 @@ function AccessoryMatrixInput({ field, register, setValue, watch }) {
   try { data = JSON.parse(rawVal); } catch { data = {}; }
 
   const update = (key, enabled, qty) => {
-    const next = { ...data, [key]: { enabled, qty: Math.max(0, qty) } };
-    setValue?.(field.name, JSON.stringify(next), { shouldDirty: true });
+    setValue?.(field.name, JSON.stringify({ ...data, [key]: { enabled, qty: Math.max(0, qty) } }), { shouldDirty: true });
   };
-
-  const toggleEnabled = (key) => {
+  const toggle = (key) => {
     const cur = data[key] || { enabled: false, qty: 0 };
     update(key, !cur.enabled, cur.enabled ? 0 : 1);
   };
-
-  const setQty = (key, qty) => {
-    const cur = data[key] || { enabled: true, qty: 0 };
-    update(key, true, qty);
-  };
+  const setQty = (key, qty) => update(key, true, qty);
 
   const selectedCount = accessories.filter(a => data[a.key]?.enabled).length;
-  const totalQty = accessories.reduce((sum, a) => sum + (data[a.key]?.qty || 0), 0);
+  const totalQty = accessories.reduce((s, a) => s + (data[a.key]?.qty || 0), 0);
+
+  // Split into two columns
+  const half = Math.ceil(accessories.length / 2);
+  const colA = accessories.slice(0, half);
+  const colB = accessories.slice(half);
+
+  const RowItem = ({ key: k, label, icon }) => {
+    const item = data[k] || { enabled: false, qty: 0 };
+    const active = item.enabled;
+    return (
+      <div style={{ display: "flex", alignItems: "center", gap: 0, borderBottom: "1px solid #f1f5f9", minHeight: 40 }}>
+        {/* Toggle */}
+        <div onClick={() => toggle(k)}
+          style={{ width: 40, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", alignSelf: "stretch", borderRight: "1px solid #f1f5f9", background: active ? "#f5f3ff" : "#fafafa", transition: "background 0.15s", flexShrink: 0 }}>
+          <span style={{ width: 18, height: 18, borderRadius: 5, border: `2px solid ${active ? "#6366f1" : "#cbd5e1"}`, background: active ? "#6366f1" : "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, color: "#fff", fontWeight: 700, transition: "all 0.15s" }}>
+            {active && "✓"}
+          </span>
+        </div>
+        {/* Icon + Label */}
+        <div onClick={() => toggle(k)} style={{ flex: 1, padding: "8px 10px", display: "flex", alignItems: "center", gap: 8, cursor: "pointer", background: active ? "#faf9ff" : "#fff", transition: "background 0.15s" }}>
+          <span style={{ fontSize: 14, flexShrink: 0 }}>{icon}</span>
+          <span style={{ fontSize: 12, fontWeight: active ? 600 : 400, color: active ? "#4338ca" : "#475569" }}>{label}</span>
+        </div>
+        {/* Qty stepper — only when active */}
+        <div style={{ width: 100, display: "flex", alignItems: "center", justifyContent: "center", gap: 4, padding: "0 8px", borderLeft: "1px solid #f1f5f9", background: active ? "#eef2ff" : "#f8fafc", alignSelf: "stretch", flexShrink: 0 }}>
+          {active ? (
+            <>
+              <button type="button" onClick={() => setQty(k, (item.qty || 0) - 1)}
+                style={{ width: 22, height: 22, borderRadius: 5, border: "1px solid #c7d2fe", background: "#fff", cursor: "pointer", fontSize: 14, color: "#6366f1", display: "flex", alignItems: "center", justifyContent: "center" }}>−</button>
+              <input type="number" min="0" value={item.qty || 0} onChange={e => setQty(k, parseInt(e.target.value) || 0)}
+                style={{ width: 34, height: 24, textAlign: "center", border: "1px solid #c7d2fe", borderRadius: 5, fontSize: 12, fontWeight: 700, color: "#4338ca", background: "#fff", outline: "none" }} />
+              <button type="button" onClick={() => setQty(k, (item.qty || 0) + 1)}
+                style={{ width: 22, height: 22, borderRadius: 5, border: "1px solid #6366f1", background: "#6366f1", cursor: "pointer", fontSize: 14, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}>+</button>
+            </>
+          ) : (
+            <span style={{ fontSize: 11, color: "#cbd5e1" }}>—</span>
+          )}
+        </div>
+      </div>
+    );
+  };
 
   return (
-    <div style={{ border: "1.5px solid #e8edf5", borderRadius: 12, overflow: "hidden", background: "#fff" }}>
+    <div style={{ border: "1px solid #e2e8f0", borderRadius: 10, overflow: "hidden", background: "#fff", boxShadow: "0 1px 3px rgba(15,23,42,0.04)" }}>
       <input type="hidden" {...register(field.name)} />
 
       {/* Header */}
-      <div style={{ padding: "12px 16px", background: "linear-gradient(135deg,#f8fafc 0%,#f0f4ff 100%)", borderBottom: "1px solid #e8edf5", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <div>
-          <div style={{ fontSize: 13, fontWeight: 700, color: "#1e293b" }}>Select equipment and specify quantities</div>
-          <div style={{ fontSize: 11.5, color: "#64748b", marginTop: 2 }}>Click a card to enable, then set quantity</div>
-        </div>
-        <div style={{ display: "flex", gap: 8 }}>
-          {selectedCount > 0 && (
-            <span style={{ background: "#dbeafe", color: "#1d4ed8", fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 20 }}>
-              {selectedCount} item{selectedCount !== 1 ? "s" : ""}
-            </span>
-          )}
-          {totalQty > 0 && (
-            <span style={{ background: "#dcfce7", color: "#15803d", fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 20 }}>
-              {totalQty} total units
-            </span>
-          )}
+      <div style={{ padding: "9px 14px", background: "#f8fafc", borderBottom: "1px solid #e2e8f0", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <span style={{ fontSize: 10, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.6px" }}>Equipment · Toggle to select, then set quantity</span>
+        <div style={{ display: "flex", gap: 6 }}>
+          {selectedCount > 0 && <span style={{ background: "#ede9fe", color: "#4338ca", fontSize: 10, fontWeight: 700, padding: "2px 9px", borderRadius: 20 }}>{selectedCount} selected</span>}
+          {totalQty > 0 && <span style={{ background: "#dcfce7", color: "#15803d", fontSize: 10, fontWeight: 700, padding: "2px 9px", borderRadius: 20 }}>{totalQty} units</span>}
         </div>
       </div>
 
-      {/* Grid of accessory cards */}
-      <div style={{ padding: 16, display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 12 }}>
-        {accessories.map(({ key, label, icon }) => {
-          const item = data[key] || { enabled: false, qty: 0 };
-          const active = item.enabled;
-          return (
-            <div
-              key={key}
-              style={{
-                borderRadius: 10,
-                border: `1.5px solid ${active ? "#6366f1" : "#e2e8f0"}`,
-                background: active ? "#f5f3ff" : "#fafafa",
-                overflow: "hidden",
-                transition: "all 0.2s ease",
-                boxShadow: active ? "0 2px 8px rgba(99,102,241,0.12)" : "none"
-              }}
-            >
-              {/* Card header — click to toggle */}
-              <div
-                onClick={() => toggleEnabled(key)}
-                style={{ padding: "10px 12px", display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}
-                onMouseEnter={e => { if (!active) e.currentTarget.parentElement.style.background = "#f1f5f9"; }}
-                onMouseLeave={e => { if (!active) e.currentTarget.parentElement.style.background = "#fafafa"; }}
-              >
-                <span
-                  style={{
-                    width: 32, height: 32, borderRadius: 8, flexShrink: 0,
-                    background: active ? "#6366f1" : "#e2e8f0",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    fontSize: 16, transition: "all 0.2s"
-                  }}
-                >
-                  {active ? <span style={{ color: "#fff", fontSize: 14 }}>✓</span> : icon}
-                </span>
-                <span style={{ fontSize: 12.5, fontWeight: active ? 700 : 500, color: active ? "#4338ca" : "#475569", lineHeight: 1.3, flex: 1 }}>
-                  {label}
-                </span>
-              </div>
-
-              {/* Quantity row — visible only when active */}
-              {active && (
-                <div style={{ borderTop: "1px solid #e0e7ff", padding: "8px 12px", background: "#eef2ff", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                  <span style={{ fontSize: 11, fontWeight: 600, color: "#6366f1", letterSpacing: "0.3px" }}>QTY</span>
-                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                    <button type="button"
-                      onClick={() => setQty(key, (item.qty || 0) - 1)}
-                      style={{ width: 26, height: 26, borderRadius: 6, border: "1.5px solid #c7d2fe", background: "#fff", cursor: "pointer", fontSize: 15, fontWeight: 700, color: "#6366f1", display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1 }}>
-                      −
-                    </button>
-                    <input
-                      type="number" min="0"
-                      value={item.qty || 0}
-                      onChange={e => setQty(key, parseInt(e.target.value) || 0)}
-                      style={{ width: 46, height: 26, textAlign: "center", border: "1.5px solid #c7d2fe", borderRadius: 6, fontSize: 13, fontWeight: 700, color: "#4338ca", background: "#fff", outline: "none" }}
-                      onFocus={e => e.target.style.borderColor = "#6366f1"}
-                      onBlur={e => e.target.style.borderColor = "#c7d2fe"}
-                    />
-                    <button type="button"
-                      onClick={() => setQty(key, (item.qty || 0) + 1)}
-                      style={{ width: 26, height: 26, borderRadius: 6, border: "1.5px solid #6366f1", background: "#6366f1", cursor: "pointer", fontSize: 15, fontWeight: 700, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1 }}>
-                      +
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Summary bar */}
-      {selectedCount > 0 && (
-        <div style={{ padding: "10px 16px", background: "#f0fdf4", borderTop: "1px solid #bbf7d0" }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: "#15803d", marginBottom: 6 }}>SELECTED EQUIPMENT</div>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-            {accessories.filter(a => data[a.key]?.enabled).map(({ key, label }) => (
-              <span key={key} style={{ background: "#dcfce7", color: "#15803d", border: "1px solid #86efac", borderRadius: 20, padding: "3px 10px", fontSize: 11.5, fontWeight: 600 }}>
-                {label} × {data[key]?.qty || 0}
-              </span>
-            ))}
+      {/* Two-column table */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr" }}>
+        <div style={{ borderRight: "1px solid #e2e8f0" }}>
+          {/* Sub-header */}
+          <div style={{ display: "grid", gridTemplateColumns: "40px 1fr 100px", background: "#f8fafc", borderBottom: "1px solid #e2e8f0" }}>
+            <div style={{ borderRight: "1px solid #f1f5f9" }} />
+            <div style={{ padding: "5px 10px", fontSize: 9.5, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.5px" }}>Equipment</div>
+            <div style={{ padding: "5px 8px", fontSize: 9.5, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.5px", textAlign: "center", borderLeft: "1px solid #f1f5f9" }}>Qty</div>
           </div>
+          {colA.map(acc => <RowItem key={acc.key} {...acc} />)}
+        </div>
+        <div>
+          <div style={{ display: "grid", gridTemplateColumns: "40px 1fr 100px", background: "#f8fafc", borderBottom: "1px solid #e2e8f0" }}>
+            <div style={{ borderRight: "1px solid #f1f5f9" }} />
+            <div style={{ padding: "5px 10px", fontSize: 9.5, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.5px" }}>Equipment</div>
+            <div style={{ padding: "5px 8px", fontSize: 9.5, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.5px", textAlign: "center", borderLeft: "1px solid #f1f5f9" }}>Qty</div>
+          </div>
+          {colB.map(acc => <RowItem key={acc.key} {...acc} />)}
+        </div>
+      </div>
+
+      {/* Summary */}
+      {selectedCount > 0 && (
+        <div style={{ padding: "7px 14px", background: "#f5f3ff", borderTop: "1px solid #e0e7ff", display: "flex", flexWrap: "wrap", gap: 4 }}>
+          <span style={{ fontSize: 10, fontWeight: 700, color: "#6366f1", textTransform: "uppercase", letterSpacing: "0.5px", marginRight: 4 }}>Selected:</span>
+          {accessories.filter(a => data[a.key]?.enabled).map(({ key, label }) => (
+            <span key={key} style={{ background: "#ede9fe", color: "#4338ca", border: "1px solid #c7d2fe", borderRadius: 4, padding: "2px 8px", fontSize: 10.5, fontWeight: 600 }}>
+              {label} × {data[key]?.qty || 0}
+            </span>
+          ))}
         </div>
       )}
     </div>
   );
 }
+
 
 // ─── MEDICAL GAS MATRIX ────────────────────────────────────
 const GAS_COLUMNS = [
@@ -773,66 +747,62 @@ function DoorConfigInput({ field, register, setValue, watch }) {
 
   const [openGroup, setOpenGroup] = useState(null);
   const groupHasData = (grp) => grp.fields.some(f => (data[f.key] || []).length > 0);
-
-  const totalConfigured = DOOR_CONFIG.reduce((s, g) => s + g.fields.filter(f => (data[f.key] || []).length > 0).length, 0);
+  const totalConfigured = DOOR_CONFIG.reduce((s, g) => s + g.fields.filter(f => (data[f.key]||[]).length > 0).length, 0);
 
   return (
-    <div style={{ width: "100%" }}>
+    <div style={{ width: "100%", border: "1px solid #e2e8f0", borderRadius: 10, overflow: "hidden", background: "#fff" }}>
       <input type="hidden" {...register(field.name)} />
 
-      {/* 2×3 card grid — all 6 groups visible simultaneously */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, marginBottom: openGroup !== null ? 12 : 0 }}>
+      {/* 3-col group selector grid */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", borderBottom: "1px solid #e2e8f0" }}>
         {DOOR_CONFIG.map((grp, gi) => {
           const isOpen = openGroup === gi;
           const hasDat = groupHasData(grp);
-          const configCount = grp.fields.filter(f => (data[f.key] || []).length > 0).length;
+          const cnt = grp.fields.filter(f => (data[f.key]||[]).length > 0).length;
           return (
-            <div key={gi}
-              onClick={() => setOpenGroup(isOpen ? null : gi)}
+            <div key={gi} onClick={() => setOpenGroup(isOpen ? null : gi)}
               style={{
-                border: `1.5px solid ${isOpen ? "#f9a8d4" : hasDat ? "#fbcfe8" : "#e2e8f0"}`,
-                borderRadius: 10, cursor: "pointer",
-                background: isOpen ? "linear-gradient(135deg,#fdf2f8,#fce7f3)" : hasDat ? "#fdf9fb" : "#fafafa",
-                padding: "12px 14px", transition: "all 0.15s",
-                display: "flex", alignItems: "center", gap: 10
+                padding: "11px 14px", cursor: "pointer", display: "flex", alignItems: "center", gap: 10,
+                borderRight: gi % 3 !== 2 ? "1px solid #e2e8f0" : "none",
+                borderBottom: gi < 3 ? "1px solid #e2e8f0" : "none",
+                background: isOpen ? "#fdf2f8" : hasDat ? "#fffafa" : "#fff",
+                transition: "background 0.15s",
               }}
-              onMouseEnter={e => { if (!isOpen) e.currentTarget.style.background="#fdf2f8"; }}
-              onMouseLeave={e => { if (!isOpen) e.currentTarget.style.background= hasDat ? "#fdf9fb" : "#fafafa"; }}
+              onMouseEnter={e => { if (!isOpen) e.currentTarget.style.background="#fdf9fb"; }}
+              onMouseLeave={e => { if (!isOpen) e.currentTarget.style.background= isOpen ? "#fdf2f8" : hasDat ? "#fffafa" : "#fff"; }}
             >
-              <span style={{ fontSize: 20, flexShrink: 0 }}>{grp.icon}</span>
+              <span style={{ fontSize: 18, flexShrink: 0 }}>{grp.icon}</span>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 12.5, fontWeight: 700, color: isOpen ? "#be185d" : hasDat ? "#be185d" : "#475569", lineHeight: 1.2 }}>{grp.group}</div>
-                {configCount > 0 && (
-                  <div style={{ fontSize: 10, color: "#ec4899", fontWeight: 600, marginTop: 2 }}>{configCount} configured</div>
-                )}
+                <div style={{ fontSize: 12, fontWeight: 700, color: isOpen || hasDat ? "#be185d" : "#334155", lineHeight: 1.2 }}>{grp.group}</div>
+                {cnt > 0 && <div style={{ fontSize: 10, color: "#ec4899", marginTop: 1 }}>{cnt} set</div>}
               </div>
-              <span style={{ fontSize: 14, color: "#ec4899", fontWeight: 700, transform: isOpen ? "rotate(180deg)" : "none", transition: "transform 0.2s" }}>⌄</span>
+              <span style={{ fontSize: 12, color: "#f9a8d4", transform: isOpen ? "rotate(180deg)" : "none", transition: "transform 0.2s", flexShrink: 0 }}>⌄</span>
             </div>
           );
         })}
       </div>
 
-      {/* Expanded panel — full width below the grid */}
+      {/* Expanded detail — full width, inline below grid */}
       {openGroup !== null && (
-        <div style={{ border: "1.5px solid #f9a8d4", borderRadius: 10, background: "#fff", overflow: "hidden" }}>
-          <div style={{ padding: "12px 16px", background: "linear-gradient(135deg,#fdf2f8,#fce7f3)", borderBottom: "1px solid #fce7f3", display: "flex", alignItems: "center", gap: 10 }}>
-            <span style={{ fontSize: 18 }}>{DOOR_CONFIG[openGroup].icon}</span>
-            <span style={{ fontSize: 13, fontWeight: 700, color: "#be185d" }}>{DOOR_CONFIG[openGroup].group}</span>
+        <div style={{ borderBottom: "1px solid #fce7f3", background: "#fff" }}>
+          <div style={{ padding: "10px 16px", background: "linear-gradient(135deg,#fdf2f8,#fce7f3)", borderBottom: "1px solid #fce7f3", display: "flex", alignItems: "center", gap: 10 }}>
+            <span style={{ fontSize: 16 }}>{DOOR_CONFIG[openGroup].icon}</span>
+            <span style={{ fontSize: 12.5, fontWeight: 700, color: "#be185d" }}>{DOOR_CONFIG[openGroup].group}</span>
           </div>
-          <div style={{ padding: "16px 18px", display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "14px 24px" }}>
+          {/* Fields in responsive 3-col grid */}
+          <div style={{ padding: "14px 16px", display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "12px 20px" }}>
             {DOOR_CONFIG[openGroup].fields.map(f => (
               <div key={f.key}>
-                <div style={{ fontSize: 10.5, fontWeight: 700, color: "#be185d", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 7 }}>{f.label}</div>
-                <ChipSelect options={f.options} selected={data[f.key] || []} onChange={val => update(f.key, val)} multi={f.multi} accentColor="#be185d" accentBg="#fdf2f8" accentBorder="#f9a8d4" />
+                <div style={{ fontSize: 10, fontWeight: 700, color: "#be185d", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 6 }}>{f.label}</div>
+                <ChipSelect options={f.options} selected={data[f.key]||[]} onChange={val => update(f.key, val)} multi={f.multi} accentColor="#be185d" accentBg="#fdf2f8" accentBorder="#f9a8d4" />
               </div>
             ))}
           </div>
-          <div style={{ padding: "12px 18px 14px", borderTop: "1px solid #fce7f3" }}>
-            <div style={{ fontSize: 10.5, fontWeight: 700, color: "#be185d", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 6 }}>Other Requirements</div>
-            <textarea rows={2} placeholder="Describe any additional door requirements not listed above..."
-              value={data.otherRequirements || ""}
-              onChange={e => update("otherRequirements", e.target.value)}
-              style={{ width: "100%", fontSize: 12.5, padding: "8px 10px", borderRadius: 8, border: "1.5px solid #fce7f3", background: "#fdf2f8", color: "#1e3a5f", outline: "none", resize: "vertical", fontFamily: "inherit", lineHeight: 1.5, boxSizing: "border-box" }}
+          <div style={{ padding: "0 16px 14px" }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: "#be185d", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 5 }}>Other Requirements</div>
+            <textarea rows={2} placeholder="Any additional requirements..."
+              value={data.otherRequirements || ""} onChange={e => update("otherRequirements", e.target.value)}
+              style={{ width: "100%", fontSize: 12, padding: "7px 10px", borderRadius: 7, border: "1.5px solid #fce7f3", background: "#fdf2f8", color: "#1e3a5f", outline: "none", resize: "vertical", fontFamily: "inherit", boxSizing: "border-box" }}
               onFocus={e => e.target.style.borderColor="#f9a8d4"} onBlur={e => e.target.style.borderColor="#fce7f3"} />
           </div>
         </div>
@@ -840,18 +810,15 @@ function DoorConfigInput({ field, register, setValue, watch }) {
 
       {/* Summary */}
       {totalConfigured > 0 && (
-        <div style={{ marginTop: 10, padding: "9px 14px", background: "#fdf2f8", borderRadius: 8, border: "1px solid #fce7f3" }}>
-          <div style={{ fontSize: 10, fontWeight: 700, color: "#be185d", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 5 }}>Door Specification</div>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
-            {DOOR_CONFIG.flatMap(g => g.fields).map(f =>
-              (data[f.key] || []).map(v => (
-                <span key={f.key + v} style={{ fontSize: 11, padding: "2px 9px", borderRadius: 4, background: "#fce7f3", color: "#be185d", fontWeight: 600 }}>{v}</span>
-              ))
-            )}
-          </div>
+        <div style={{ padding: "8px 14px", background: "#fdf2f8", display: "flex", flexWrap: "wrap", gap: 4, alignItems: "center" }}>
+          <span style={{ fontSize: 9.5, fontWeight: 700, color: "#be185d", textTransform: "uppercase", letterSpacing: "0.5px", marginRight: 4 }}>Spec:</span>
+          {DOOR_CONFIG.flatMap(g => g.fields).map(f =>
+            (data[f.key]||[]).map(v => (
+              <span key={f.key+v} style={{ fontSize: 11, padding: "2px 8px", borderRadius: 4, background: "#fce7f3", color: "#be185d", fontWeight: 600 }}>{v}</span>
+            ))
+          )}
         </div>
       )}
-      <div style={{ marginTop: 6, fontSize: 11, color: "#94a3b8" }}>Click a group card to expand · Click again to collapse</div>
     </div>
   );
 }
@@ -864,72 +831,95 @@ function WindowConfigInput({ field, register, setValue, watch }) {
   try { data = JSON.parse(rawVal); } catch { data = {}; }
 
   const update = (section, key, val) => {
-    const next = { ...data, [section]: { ...(data[section] || {}), [key]: val } };
-    setValue?.(field.name, JSON.stringify(next), { shouldDirty: true });
+    setValue?.(field.name, JSON.stringify({ ...data, [section]: { ...(data[section]||{}), [key]: val } }), { shouldDirty: true });
   };
 
   return (
-    <div style={{ width: "100%", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+    <div style={{ width: "100%", border: "1px solid #e2e8f0", borderRadius: 10, overflow: "hidden", background: "#fff" }}>
       <input type="hidden" {...register(field.name)} />
-      <div style={{ border: "1.5px solid #e0f2fe", borderRadius: 12, overflow: "hidden" }}>
-        <div style={{ padding: "12px 16px", background: "linear-gradient(135deg, #0e7490 0%, #0891b2 100%)" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ fontSize: 18 }}>🪟</span>
+
+      {/* Side-by-side: Window A + Window B each take 50% */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr" }}>
+
+        {/* Window A */}
+        <div style={{ borderRight: "1px solid #e2e8f0" }}>
+          <div style={{ padding: "10px 16px", background: "linear-gradient(135deg,#0e7490,#0891b2)", display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ fontSize: 16 }}>🪟</span>
             <div>
               <div style={{ fontSize: 12, fontWeight: 700, color: "#fff" }}>Window (A)</div>
-              <div style={{ fontSize: 10.5, color: "#cffafe" }}>On Exterior Wall</div>
+              <div style={{ fontSize: 10, color: "#cffafe" }}>On Exterior Wall</div>
+            </div>
+          </div>
+          {/* Fields as horizontal rows */}
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            {/* Type row */}
+            <div style={{ display: "flex", alignItems: "center", borderBottom: "1px solid #f1f5f9", minHeight: 44 }}>
+              <div style={{ width: 110, flexShrink: 0, padding: "8px 12px", fontSize: 10, fontWeight: 700, color: "#0e7490", textTransform: "uppercase", letterSpacing: "0.4px", borderRight: "1px solid #f1f5f9", alignSelf: "stretch", display: "flex", alignItems: "center" }}>Type</div>
+              <div style={{ flex: 1, padding: "8px 12px", display: "flex", flexWrap: "wrap", gap: 5 }}>
+                <ChipSelect options={["Fixed", "Openable"]} selected={data.windowA?.type||[]} onChange={v => update("windowA","type",v)} multi={false} accentColor="#0e7490" accentBg="#ecfeff" accentBorder="#a5f3fc" />
+              </div>
+            </div>
+            {/* Size row */}
+            <div style={{ display: "flex", alignItems: "center", borderBottom: "1px solid #f1f5f9", minHeight: 44 }}>
+              <div style={{ width: 110, flexShrink: 0, padding: "8px 12px", fontSize: 10, fontWeight: 700, color: "#0e7490", textTransform: "uppercase", letterSpacing: "0.4px", borderRight: "1px solid #f1f5f9", alignSelf: "stretch", display: "flex", alignItems: "center" }}>Size</div>
+              <div style={{ flex: 1, padding: "8px 12px" }}>
+                <input type="text" placeholder="e.g. 1200 x 900 mm" value={data.windowA?.size||""}
+                  onChange={e => update("windowA","size",e.target.value)}
+                  style={{ width: "100%", fontSize: 12, padding: "6px 9px", borderRadius: 7, border: "1.5px solid #a5f3fc", background: "#ecfeff", color: "#1e3a5f", outline: "none", fontFamily: "inherit", boxSizing: "border-box" }}
+                  onFocus={e => e.target.style.borderColor="#0891b2"} onBlur={e => e.target.style.borderColor="#a5f3fc"} />
+              </div>
+            </div>
+            {/* Provisions row */}
+            <div style={{ display: "flex", alignItems: "flex-start", minHeight: 44 }}>
+              <div style={{ width: 110, flexShrink: 0, padding: "10px 12px", fontSize: 10, fontWeight: 700, color: "#0e7490", textTransform: "uppercase", letterSpacing: "0.4px", borderRight: "1px solid #f1f5f9" }}>Provisions</div>
+              <div style={{ flex: 1, padding: "9px 12px", display: "flex", flexWrap: "wrap", gap: 5 }}>
+                <ChipSelect options={["Key Lock","Blinds (Normal)","Blinds (Blackout)","Curtain Track"]} selected={data.windowA?.provisions||[]} onChange={v => update("windowA","provisions",v)} multi={true} accentColor="#0e7490" accentBg="#ecfeff" accentBorder="#a5f3fc" />
+              </div>
             </div>
           </div>
         </div>
-        <div style={{ padding: "14px 16px", display: "flex", flexDirection: "column", gap: 14, background: "#fff" }}>
-          <div>
-            <div style={{ fontSize: 11, fontWeight: 700, color: "#0e7490", textTransform: "uppercase", letterSpacing: "0.4px", marginBottom: 7 }}>Window Type</div>
-            <ChipSelect options={["Fixed", "Openable"]} selected={data.windowA?.type || []} onChange={v => update("windowA", "type", v)} multi={false} accentColor="#0e7490" accentBg="#ecfeff" accentBorder="#a5f3fc" />
-          </div>
-          <div>
-            <div style={{ fontSize: 11, fontWeight: 700, color: "#0e7490", textTransform: "uppercase", letterSpacing: "0.4px", marginBottom: 6 }}>Window Size</div>
-            <input type="text" placeholder="e.g. 1200 x 900 mm" value={data.windowA?.size || ""}
-              onChange={e => update("windowA", "size", e.target.value)}
-              style={{ width: "100%", fontSize: 12.5, padding: "8px 10px", borderRadius: 8, border: "1.5px solid #a5f3fc", background: "#ecfeff", color: "#1e3a5f", outline: "none", fontFamily: "inherit", boxSizing: "border-box" }}
-              onFocus={e => e.target.style.borderColor = "#0891b2"} onBlur={e => e.target.style.borderColor = "#a5f3fc"} />
-          </div>
-          <div>
-            <div style={{ fontSize: 11, fontWeight: 700, color: "#0e7490", textTransform: "uppercase", letterSpacing: "0.4px", marginBottom: 7 }}>Provisions</div>
-            <ChipSelect options={["Key Lock", "Blinds (Normal)", "Blinds (Blackout)", "Curtain Track"]} selected={data.windowA?.provisions || []} onChange={v => update("windowA", "provisions", v)} multi={true} accentColor="#0e7490" accentBg="#ecfeff" accentBorder="#a5f3fc" />
-          </div>
-        </div>
-      </div>
-      <div style={{ border: "1.5px solid #e9d5ff", borderRadius: 12, overflow: "hidden" }}>
-        <div style={{ padding: "12px 16px", background: "linear-gradient(135deg, #7e22ce 0%, #9333ea 100%)" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ fontSize: 18 }}>🔍</span>
+
+        {/* Window B */}
+        <div>
+          <div style={{ padding: "10px 16px", background: "linear-gradient(135deg,#7e22ce,#9333ea)", display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ fontSize: 16 }}>🔍</span>
             <div>
               <div style={{ fontSize: 12, fontWeight: 700, color: "#fff" }}>Window (B)</div>
-              <div style={{ fontSize: 10.5, color: "#e9d5ff" }}>Into Another Room</div>
+              <div style={{ fontSize: 10, color: "#e9d5ff" }}>Into Another Room</div>
             </div>
           </div>
-        </div>
-        <div style={{ padding: "14px 16px", display: "flex", flexDirection: "column", gap: 14, background: "#fff" }}>
-          <div>
-            <div style={{ fontSize: 11, fontWeight: 700, color: "#7e22ce", textTransform: "uppercase", letterSpacing: "0.4px", marginBottom: 7 }}>Glass Type</div>
-            <ChipSelect options={["Ordinary Two-Way Window", "One-Way Mirror", "Switchable Smart Glass", "Lead Lined", "Tinted"]} selected={data.windowB?.type || []} onChange={v => update("windowB", "type", v)} multi={false} accentColor="#7e22ce" accentBg="#faf5ff" accentBorder="#d8b4fe" />
-          </div>
-          <div>
-            <div style={{ fontSize: 11, fontWeight: 700, color: "#7e22ce", textTransform: "uppercase", letterSpacing: "0.4px", marginBottom: 7 }}>Window Size</div>
-            <ChipSelect options={["1000 x 800 mm", "1200 x 800 mm", "2400 x 1200 mm"]} selected={data.windowB?.size || []} onChange={v => update("windowB", "size", v)} multi={false} accentColor="#7e22ce" accentBg="#faf5ff" accentBorder="#d8b4fe" />
-          </div>
-          <div>
-            <div style={{ fontSize: 11, fontWeight: 700, color: "#7e22ce", textTransform: "uppercase", letterSpacing: "0.4px", marginBottom: 6 }}>Special Note</div>
-            <input type="text" placeholder="e.g. No mullions along the viewing length" value={data.windowB?.note || ""}
-              onChange={e => update("windowB", "note", e.target.value)}
-              style={{ width: "100%", fontSize: 12.5, padding: "8px 10px", borderRadius: 8, border: "1.5px solid #d8b4fe", background: "#faf5ff", color: "#1e3a5f", outline: "none", fontFamily: "inherit", boxSizing: "border-box" }}
-              onFocus={e => e.target.style.borderColor = "#9333ea"} onBlur={e => e.target.style.borderColor = "#d8b4fe"} />
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            {/* Glass Type */}
+            <div style={{ display: "flex", alignItems: "flex-start", borderBottom: "1px solid #f1f5f9", minHeight: 44 }}>
+              <div style={{ width: 110, flexShrink: 0, padding: "10px 12px", fontSize: 10, fontWeight: 700, color: "#7e22ce", textTransform: "uppercase", letterSpacing: "0.4px", borderRight: "1px solid #f1f5f9" }}>Glass Type</div>
+              <div style={{ flex: 1, padding: "9px 12px", display: "flex", flexWrap: "wrap", gap: 5 }}>
+                <ChipSelect options={["Ordinary Two-Way","One-Way Mirror","Switchable Smart Glass","Lead Lined","Tinted"]} selected={data.windowB?.type||[]} onChange={v => update("windowB","type",v)} multi={false} accentColor="#7e22ce" accentBg="#faf5ff" accentBorder="#d8b4fe" />
+              </div>
+            </div>
+            {/* Size */}
+            <div style={{ display: "flex", alignItems: "center", borderBottom: "1px solid #f1f5f9", minHeight: 44 }}>
+              <div style={{ width: 110, flexShrink: 0, padding: "8px 12px", fontSize: 10, fontWeight: 700, color: "#7e22ce", textTransform: "uppercase", letterSpacing: "0.4px", borderRight: "1px solid #f1f5f9", alignSelf: "stretch", display: "flex", alignItems: "center" }}>Size</div>
+              <div style={{ flex: 1, padding: "8px 12px", display: "flex", flexWrap: "wrap", gap: 5 }}>
+                <ChipSelect options={["1000 x 800 mm","1200 x 800 mm","2400 x 1200 mm"]} selected={data.windowB?.size||[]} onChange={v => update("windowB","size",v)} multi={false} accentColor="#7e22ce" accentBg="#faf5ff" accentBorder="#d8b4fe" />
+              </div>
+            </div>
+            {/* Special Note */}
+            <div style={{ display: "flex", alignItems: "center", minHeight: 44 }}>
+              <div style={{ width: 110, flexShrink: 0, padding: "8px 12px", fontSize: 10, fontWeight: 700, color: "#7e22ce", textTransform: "uppercase", letterSpacing: "0.4px", borderRight: "1px solid #f1f5f9", alignSelf: "stretch", display: "flex", alignItems: "center" }}>Special Note</div>
+              <div style={{ flex: 1, padding: "8px 12px" }}>
+                <input type="text" placeholder="e.g. No mullions along viewing length" value={data.windowB?.note||""}
+                  onChange={e => update("windowB","note",e.target.value)}
+                  style={{ width: "100%", fontSize: 12, padding: "6px 9px", borderRadius: 7, border: "1.5px solid #d8b4fe", background: "#faf5ff", color: "#1e3a5f", outline: "none", fontFamily: "inherit", boxSizing: "border-box" }}
+                  onFocus={e => e.target.style.borderColor="#9333ea"} onBlur={e => e.target.style.borderColor="#d8b4fe"} />
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </div>
   );
 }
+
 
 // ─── SANITARY FITTINGS GRID ─────────────────────────────────
 const SANITARY_GROUPS = [
@@ -1803,11 +1793,51 @@ function SafetyMatrixInput({ field, register, setValue, watch }) {
   try { data = JSON.parse(rawVal); } catch { data = {}; }
 
   const set = (rowKey, val) => {
-    const next = { ...data, [rowKey]: val };
-    setValue?.(field.name, JSON.stringify(next), { shouldDirty: true });
+    setValue?.(field.name, JSON.stringify({ ...data, [rowKey]: val }), { shouldDirty: true });
   };
 
   const configuredCount = rows.filter(r => data[r.key] && data[r.key] !== "").length;
+
+  // Split rows into 2 columns
+  const half = Math.ceil(rows.length / 2);
+  const colA = rows.slice(0, half);
+  const colB = rows.slice(half);
+
+  const MatrixRow = ({ row }) => {
+    const selected = data[row.key] || "";
+    const isSet = selected !== "";
+    return (
+      <div style={{ display: "flex", alignItems: "flex-start", borderBottom: "1px solid #f1f5f9", minHeight: 40 }}>
+        {/* Label */}
+        <div style={{ width: 130, flexShrink: 0, padding: "8px 10px", display: "flex", alignItems: "center", gap: 6, borderRight: "1px solid #f1f5f9", alignSelf: "stretch", background: isSet ? "#fffafa" : "#fafafa" }}>
+          <span style={{ fontSize: 13, flexShrink: 0 }}>{row.icon}</span>
+          <span style={{ fontSize: 11, fontWeight: isSet ? 600 : 400, color: isSet ? "#0f172a" : "#64748b", lineHeight: 1.25 }}>{row.label}</span>
+        </div>
+        {/* Options */}
+        <div style={{ flex: 1, padding: "7px 10px", display: "flex", flexWrap: "wrap", gap: 4, background: "#fff" }}>
+          {row.options.map(opt => {
+            const isSel = selected === opt;
+            const isNA = opt.startsWith("Not ") || opt === "Open Access";
+            return (
+              <button key={opt} type="button" onClick={() => set(row.key, isSel ? "" : opt)}
+                style={{
+                  padding: "3px 9px", borderRadius: 5, fontSize: 10.5, fontWeight: isSel ? 700 : 400,
+                  cursor: "pointer", transition: "all 0.12s", whiteSpace: "nowrap",
+                  border: isSel ? "1.5px solid #991b1b" : "1px solid #e2e8f0",
+                  background: isSel ? "#fee2e2" : "#f8fafc",
+                  color: isSel ? "#7f1d1d" : isNA ? "#94a3b8" : "#475569",
+                }}
+                onMouseEnter={e => { if (!isSel) { e.currentTarget.style.background="#f1f5f9"; e.currentTarget.style.borderColor="#cbd5e1"; e.currentTarget.style.color="#1e293b"; }}}
+                onMouseLeave={e => { if (!isSel) { e.currentTarget.style.background="#f8fafc"; e.currentTarget.style.borderColor="#e2e8f0"; e.currentTarget.style.color=isNA?"#94a3b8":"#475569"; }}}
+              >
+                {isSel && <span style={{ marginRight: 3, fontSize: 9 }}>✓</span>}{opt}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div style={{ border: "1px solid #e2e8f0", borderRadius: 10, overflow: "hidden", background: "#fff", boxShadow: "0 1px 3px rgba(15,23,42,0.04)" }}>
@@ -1822,46 +1852,15 @@ function SafetyMatrixInput({ field, register, setValue, watch }) {
         )}
       </div>
 
-      {rows.map((row, i) => {
-        const selected = data[row.key] || "";
-        const isSet = selected !== "";
-        return (
-          <div key={row.key} style={{
-            display: "flex", alignItems: "center",
-            borderBottom: i < rows.length - 1 ? "1px solid #f1f5f9" : "none",
-            background: isSet ? "#fffafa" : "#fff",
-            minHeight: 42,
-          }}>
-            {/* Label — fixed 210px */}
-            <div style={{ width: 210, flexShrink: 0, padding: "8px 12px", display: "flex", alignItems: "center", gap: 7, borderRight: "1px solid #f1f5f9", alignSelf: "stretch" }}>
-              <span style={{ fontSize: 13, flexShrink: 0 }}>{row.icon}</span>
-              <span style={{ fontSize: 11.5, fontWeight: isSet ? 600 : 400, color: isSet ? "#0f172a" : "#64748b", lineHeight: 1.3 }}>{row.label}</span>
-            </div>
-            {/* Chips — full remaining width, all horizontal */}
-            <div style={{ flex: 1, padding: "7px 12px", display: "flex", flexWrap: "wrap", gap: 5 }}>
-              {row.options.map(opt => {
-                const isSel = selected === opt;
-                const isNA = opt.startsWith("Not ") || opt === "Open Access";
-                return (
-                  <button key={opt} type="button" onClick={() => set(row.key, isSel ? "" : opt)}
-                    style={{
-                      padding: "3px 10px", borderRadius: 5, fontSize: 11, fontWeight: isSel ? 700 : 400,
-                      cursor: "pointer", transition: "all 0.12s", whiteSpace: "nowrap",
-                      border: isSel ? "1.5px solid #991b1b" : "1px solid #e2e8f0",
-                      background: isSel ? "#fee2e2" : "#f8fafc",
-                      color: isSel ? "#7f1d1d" : isNA ? "#94a3b8" : "#475569",
-                    }}
-                    onMouseEnter={e => { if (!isSel) { e.currentTarget.style.background="#f1f5f9"; e.currentTarget.style.borderColor="#cbd5e1"; e.currentTarget.style.color="#1e293b"; }}}
-                    onMouseLeave={e => { if (!isSel) { e.currentTarget.style.background="#f8fafc"; e.currentTarget.style.borderColor="#e2e8f0"; e.currentTarget.style.color=isNA?"#94a3b8":"#475569"; }}}
-                  >
-                    {isSel && <span style={{ marginRight: 3, fontSize: 9 }}>✓</span>}{opt}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        );
-      })}
+      {/* 2-column layout — each half has its own rows */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr" }}>
+        <div style={{ borderRight: "1px solid #e2e8f0" }}>
+          {colA.map(row => <MatrixRow key={row.key} row={row} />)}
+        </div>
+        <div>
+          {colB.map(row => <MatrixRow key={row.key} row={row} />)}
+        </div>
+      </div>
 
       {configuredCount > 0 && (
         <div style={{ padding: "7px 14px", background: "#f8fafc", borderTop: "1px solid #e2e8f0", display: "flex", flexWrap: "wrap", gap: 4, alignItems: "center" }}>
