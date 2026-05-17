@@ -228,10 +228,36 @@ function AiBanner({ status, count, onApply, onDismiss, roomName }) {
 function SectionFields({ section, register, errors, setValue, watch, aiReasons }) {
   if (section.subsections) {
     return (
-      <>
+      <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
         {section.subsections.map((sub, si) => (
-          <div key={si} className={si > 0 ? "rds-subsection" : ""}>
-            <div className="rds-subsection-title">{sub.title}</div>
+          <div key={si} style={{
+            marginTop: si === 0 ? 0 : 28,
+          }}>
+            {/* Subsection header */}
+            <div style={{
+              display: "flex", alignItems: "center", gap: 10,
+              marginBottom: 16, paddingBottom: 10,
+              borderBottom: "1.5px solid #f1f5f9",
+            }}>
+              <div style={{
+                width: 4, height: 20, borderRadius: 2,
+                background: `${section.color || "#6366f1"}`,
+                flexShrink: 0,
+              }} />
+              <span style={{
+                fontSize: 12, fontWeight: 700, color: "#374151",
+                textTransform: "uppercase", letterSpacing: "0.6px",
+              }}>
+                {sub.title}
+              </span>
+              {sub.description && (
+                <span style={{ fontSize: 11.5, color: "#94a3b8", fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>
+                  — {sub.description}
+                </span>
+              )}
+            </div>
+
+            {/* Fields grid */}
             <div className="form-grid">
               {sub.fields.map(field => (
                 <FieldRendererWithBadge
@@ -247,7 +273,7 @@ function SectionFields({ section, register, errors, setValue, watch, aiReasons }
             </div>
           </div>
         ))}
-      </>
+      </div>
     );
   }
   return (
