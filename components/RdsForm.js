@@ -230,28 +230,30 @@ function SectionFields({ section, register, errors, setValue, watch, aiReasons }
     return (
       <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
         {section.subsections.map((sub, si) => (
-          <div key={si} style={{
-            marginTop: si === 0 ? 0 : 28,
-          }}>
-            {/* Subsection header */}
+          <div key={si} style={{ marginTop: si === 0 ? 0 : 24 }}>
+
+            {/* Subsection header — compact, elegant */}
             <div style={{
               display: "flex", alignItems: "center", gap: 10,
-              marginBottom: 16, paddingBottom: 10,
-              borderBottom: "1.5px solid #f1f5f9",
+              marginBottom: 12, paddingBottom: 8,
+              borderBottom: "1px solid #f1f5f9",
             }}>
               <div style={{
-                width: 4, height: 20, borderRadius: 2,
-                background: `${section.color || "#6366f1"}`,
-                flexShrink: 0,
+                width: 3, height: 16, borderRadius: 2,
+                background: section.color || "#6366f1", flexShrink: 0,
               }} />
               <span style={{
-                fontSize: 12, fontWeight: 700, color: "#374151",
-                textTransform: "uppercase", letterSpacing: "0.6px",
+                fontSize: 11, fontWeight: 700, color: "#374151",
+                textTransform: "uppercase", letterSpacing: "0.7px",
               }}>
                 {sub.title}
               </span>
               {sub.description && (
-                <span style={{ fontSize: 11.5, color: "#94a3b8", fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>
+                <span style={{
+                  fontSize: 11, color: "#94a3b8", fontWeight: 400,
+                  textTransform: "none", letterSpacing: 0,
+                  overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                }}>
                   — {sub.description}
                 </span>
               )}

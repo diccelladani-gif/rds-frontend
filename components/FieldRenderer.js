@@ -160,7 +160,7 @@ function YesNoInput({ field, register, setValue, watch }) {
           onClick={() => handleYesNo(val === "Yes" ? "" : "Yes")}
           style={{
             flex: 1,
-            padding: "10px 20px",
+            padding: "8px 14px",
             borderRadius: 10,
             fontWeight: 600,
             fontSize: 13,
@@ -197,7 +197,7 @@ function YesNoInput({ field, register, setValue, watch }) {
           onClick={() => handleYesNo(val === "No" ? "" : "No")}
           style={{
             flex: 1,
-            padding: "10px 20px",
+            padding: "8px 14px",
             borderRadius: 10,
             fontWeight: 600,
             fontSize: 13,
@@ -354,110 +354,271 @@ function YesNoInput({ field, register, setValue, watch }) {
 // ─── ELV MATRIX (Dynamic Location Quantities) ──────────────────────────────
 function ELVMatrixInput({ field, register, setValue, watch }) {
   const AVAILABLE_SYSTEMS = [
-    { key: "nurseCall",    label: "Nurse Call System",              icon: "🔔" },
-    { key: "codeBlue",     label: "Code Blue System",               icon: "🚨" },
-    { key: "intercom",     label: "Intercom",                       icon: "📞" },
-    { key: "telephone",    label: "Telephone",                      icon: "☎️" },
-    { key: "ipPhone",      label: "IP Phone",                       icon: "📱" },
-    { key: "scv",          label: "SCV",                            icon: "📡" },
-    { key: "matvIptv",    label: "MATV / IPTV",                    icon: "📺" },
-    { key: "faxPrinter",  label: "Fax / Printer",                  icon: "🖨️" },
-    { key: "lan",          label: "LAN / Network Point",            icon: "🌐" },
-    { key: "wireless",     label: "Wireless Point",                 icon: "📶" },
-    { key: "masterClock",  label: "Master Clock",                   icon: "🕐" },
-    { key: "physioMon",    label: "Physiological Monitors",         icon: "💊" },
-    { key: "bedsideTerms", label: "Other Bedside Terminals",        icon: "🖥️" },
-    { key: "healthInfra",  label: "Other Healthcare Infra System",  icon: "🏥" },
+    "Nurse Call System",
+    "Code Blue System",
+    "Intercom",
+    "Telephone",
+    "IP Phone",
+    "SCV",
+    "MATV / IPTV",
+    "Fax / Printer",
+    "LAN / Network Point",
+    "Wireless Point",
+    "Master Clock",
+    "Physiological Monitors",
+    "Other Bedside Terminals",
+    "Other Healthcare Infra System"
   ];
 
-  const LOCS = [
-    { key: "W",   label: "Wall"    },
-    { key: "BHP", label: "BHP"     },
-    { key: "MP",  label: "Pendant" },
-    { key: "C",   label: "Ceiling" },
-  ];
+  const LOCATIONS = ["WALL (W)", "BEDHEAD PANEL (BHP)", "MEDICAL PENDANT (MP)", "CEILING (C)"];
 
   const rawVal = watch?.(field.name) || "{}";
-  let data = {};
-  try { data = JSON.parse(rawVal); } catch { data = {}; }
+  let matrixData = {};
+  try { 
+    matrixData = JSON.parse(rawVal);
+    if (!matrixData.selectedSystems) matrixData.selectedSystems = [];
+    if (!matrixData.quantities) matrixData.quantities = {};
+  } catch { 
+    matrixData = { selectedSystems: [], quantities: {} };
+  }
 
-  const getQty = (sysKey, locKey) => data[sysKey]?.[locKey] ?? 0;
+  const selectedSystems = matrixData.selectedSystems || [];
+  const quantities = matrixData.quantities || {};
 
-  const setQty = (sysKey, locKey, val) => {
-    const q = Math.max(0, parseInt(val) || 0);
-    const next = { ...data, [sysKey]: { ...(data[sysKey] || {}), [locKey]: q } };
-    setValue?.(field.name, JSON.stringify(next), { shouldDirty: true });
+  const updateMatrix = (newSelected, newQuantities) => {
+    const output = {
+      selectedSystems: newSelected,
+      quantities: newQuantities
+    };
+    setValue?.(field.name, JSON.stringify(output), { shouldDirty: true });
   };
 
-  const rowTotal  = (sysKey) => LOCS.reduce((s, l) => s + getQty(sysKey, l.key), 0);
-  const grandTotal = () => AVAILABLE_SYSTEMS.reduce((s, sys) => s + rowTotal(sys.key), 0);
-  const gt = grandTotal();
+  const toggleSystem = (system) => {
+    let newSelected;
+    if (selectedSystems.includes(system)) {
+      newSelected = selectedSystems.filter(s => s !== system);
+      const newQuantities = { ...quantities };
+      delete newQuantities[system];
+      updateMatrix(newSelected, newQuantities);
+    } else {
+      newSelected = [...selectedSystems, system];
+      const newQuantities = { ...quantities };
+      if (!newQuantities[system]) {
+        newQuantities[system] = {
+          "WALL (W)": 0,
+          "BEDHEAD PANEL (BHP)": 0,
+          "MEDICAL PENDANT (MP)": 0,
+          "CEILING (C)": 0
+        };
+      }
+      updateMatrix(newSelected, newQuantities);
+    }
+  };
+
+  const updateQuantity = (system, location, value) => {
+    const newQuantities = { ...quantities };
+    if (!newQuantities[system]) {
+      newQuantities[system] = {
+        "WALL (W)": 0,
+        "BEDHEAD PANEL (BHP)": 0,
+        "MEDICAL PENDANT (MP)": 0,
+        "CEILING (C)": 0
+      };
+    }
+    newQuantities[system][location] = Math.max(0, parseInt(value) || 0);
+    updateMatrix(selectedSystems, newQuantities);
+  };
+
+  const getTotalForSystem = (system) => {
+    if (!quantities[system]) return 0;
+    return Object.values(quantities[system]).reduce((sum, qty) => sum + (parseInt(qty) || 0), 0);
+  };
+
+  const getGrandTotal = () => {
+    let total = 0;
+    selectedSystems.forEach(system => {
+      total += getTotalForSystem(system);
+    });
+    return total;
+  };
+
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const filteredSystems = AVAILABLE_SYSTEMS.filter(system =>
+    system.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
-    <div style={{ width: "100%", border: "1.5px solid #e2e8f0", borderRadius: 10, overflow: "hidden" }}>
+    <div style={{ border: "1.5px solid #e8edf5", borderRadius: 12, overflow: "hidden", background: "#fff" }}>
       <input type="hidden" {...register(field.name)} />
 
-      {/* Header */}
-      <div style={{
-        display: "grid", gridTemplateColumns: "1fr repeat(4, 72px) 56px",
-        background: "linear-gradient(135deg, #1e293b 0%, #334155 100%)",
-        padding: "9px 14px", alignItems: "center", gap: 4,
-      }}>
-        <span style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.5px" }}>
-          ELV System {gt > 0 && <span style={{ marginLeft: 8, background: "#3b82f6", color: "#fff", fontSize: 10, padding: "1px 7px", borderRadius: 10 }}>{gt} pts</span>}
-        </span>
-        {LOCS.map(l => (
-          <span key={l.key} style={{ fontSize: 10.5, fontWeight: 700, color: "#94a3b8", textAlign: "center", textTransform: "uppercase", letterSpacing: "0.4px" }}>{l.label}</span>
-        ))}
-        <span style={{ fontSize: 10.5, fontWeight: 700, color: "#94a3b8", textAlign: "center", textTransform: "uppercase" }}>Total</span>
+      <div style={{ padding: "12px 16px", background: "#f8fafc", borderBottom: "1px solid #e8edf5" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: selectedSystems.length > 0 ? 10 : 0 }}>
+          <span style={{ fontSize: 13, fontWeight: 700, color: "#1e293b" }}>
+            {field.label || "ELV Systems Configuration"}
+          </span>
+          {getGrandTotal() > 0 && (
+            <span style={{ background: "#dbeafe", color: "#1d4ed8", fontSize: 11.5, fontWeight: 700, padding: "4px 12px", borderRadius: 20 }}>
+              Total: {getGrandTotal()} points
+            </span>
+          )}
+        </div>
+        
+        <div style={{ position: "relative" }}>
+          <input
+            type="text"
+            placeholder="🔍 Search systems..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            style={{
+              width: "100%",
+              padding: "8px 12px",
+              border: "1px solid #e2e8f0",
+              borderRadius: 8,
+              fontSize: 12.5,
+              outline: "none",
+              transition: "all 0.15s"
+            }}
+            onFocus={(e) => e.target.style.borderColor = "#3b82f6"}
+            onBlur={(e) => e.target.style.borderColor = "#e2e8f0"}
+          />
+        </div>
       </div>
 
-      {/* Rows */}
-      {AVAILABLE_SYSTEMS.map((sys, ri) => {
-        const total = rowTotal(sys.key);
-        const hasPts = total > 0;
-        return (
-          <div key={sys.key} style={{
-            display: "grid", gridTemplateColumns: "1fr repeat(4, 72px) 56px",
-            borderTop: "1px solid #f1f5f9", alignItems: "center", gap: 4,
-            background: hasPts ? "#f0f9ff" : ri % 2 === 0 ? "#fafafa" : "#fff",
-            padding: "6px 14px",
-            borderLeft: hasPts ? "3px solid #3b82f6" : "3px solid transparent",
-            transition: "background 0.1s",
-          }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
-              <span style={{ fontSize: 15 }}>{sys.icon}</span>
-              <span style={{ fontSize: 12, fontWeight: hasPts ? 700 : 400, color: hasPts ? "#1d4ed8" : "#374151" }}>{sys.label}</span>
-            </div>
-            {LOCS.map(l => {
-              const v = getQty(sys.key, l.key);
-              return (
-                <div key={l.key} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 3 }}>
-                  <button type="button" onClick={() => setQty(sys.key, l.key, v - 1)}
-                    style={{ width: 22, height: 22, borderRadius: 5, border: `1px solid ${v > 0 ? "#93c5fd" : "#e2e8f0"}`, background: v > 0 ? "#dbeafe" : "#f8fafc", color: v > 0 ? "#1d4ed8" : "#94a3b8", fontSize: 14, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1 }}>−</button>
-                  <span style={{ width: 20, textAlign: "center", fontSize: 12.5, fontWeight: 700, color: v > 0 ? "#1d4ed8" : "#cbd5e1" }}>{v}</span>
-                  <button type="button" onClick={() => setQty(sys.key, l.key, v + 1)}
-                    style={{ width: 22, height: 22, borderRadius: 5, border: "1px solid #93c5fd", background: "#dbeafe", color: "#1d4ed8", fontSize: 14, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1 }}>+</button>
+      <div style={{ maxHeight: 400, overflowY: "auto" }}>
+        {filteredSystems.length === 0 && (
+          <div style={{ padding: "40px 20px", textAlign: "center", color: "#94a3b8", fontSize: 12.5 }}>
+            No systems match your search
+          </div>
+        )}
+        
+        {filteredSystems.map(system => {
+          const isSelected = selectedSystems.includes(system);
+          const totalQty = getTotalForSystem(system);
+          
+          return (
+            <div key={system} style={{ borderBottom: "1px solid #f1f5f9" }}>
+              <div 
+                style={{
+                  padding: "12px 16px",
+                  background: isSelected ? "#f0f9ff" : "#fff",
+                  cursor: "pointer",
+                  transition: "all 0.15s"
+                }}
+                onClick={() => toggleSystem(system)}
+                onMouseEnter={(e) => {
+                  if (!isSelected) e.currentTarget.style.background = "#f8fafc";
+                }}
+                onMouseLeave={(e) => {
+                  if (!isSelected) e.currentTarget.style.background = "#fff";
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <span style={{ 
+                      display: "inline-flex",
+                      width: 18, height: 18,
+                      borderRadius: 4,
+                      border: `2px solid ${isSelected ? "#3b82f6" : "#cbd5e1"}`,
+                      background: isSelected ? "#3b82f6" : "#fff",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      color: "#fff",
+                      fontSize: 12,
+                      fontWeight: "bold"
+                    }}>
+                      {isSelected && "✓"}
+                    </span>
+                    <span style={{ fontSize: 13, fontWeight: 500, color: isSelected ? "#1e40af" : "#334155" }}>
+                      {system}
+                    </span>
+                  </div>
+                  {isSelected && totalQty > 0 && (
+                    <span style={{ background: "#dbeafe", color: "#1d4ed8", fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 12 }}>
+                      {totalQty} pts
+                    </span>
+                  )}
                 </div>
+              </div>
+
+              {isSelected && (
+                <div style={{ padding: "8px 16px 16px 44px", background: "#fafcff" }}>
+                  <div style={{ 
+                    display: "grid", 
+                    gridTemplateColumns: "repeat(4, 1fr)", 
+                    gap: 10,
+                    background: "#fff",
+                    border: "1px solid #e8edf5",
+                    borderRadius: 10,
+                    overflow: "hidden"
+                  }}>
+                    {LOCATIONS.map(location => {
+                      const qty = quantities[system]?.[location] || 0;
+                      return (
+                        <div key={location} style={{ padding: "10px", textAlign: "center" }}>
+                          <div style={{ fontSize: 11, fontWeight: 600, color: "#64748b", marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.3px" }}>
+                            {location.replace(/[()]/g, '')}
+                          </div>
+                          <div className="qty-input-wrap" style={{ justifyContent: "center" }}>
+                            <button
+                              type="button"
+                              className="qty-btn"
+                              onClick={() => updateQuantity(system, location, qty - 1)}
+                            >
+                              −
+                            </button>
+                            <input
+                              type="number"
+                              className="qty-input"
+                              min="0"
+                              value={qty}
+                              onChange={(e) => updateQuantity(system, location, e.target.value)}
+                              style={{ width: 50, textAlign: "center" }}
+                            />
+                            <button
+                              type="button"
+                              className="qty-btn"
+                              onClick={() => updateQuantity(system, location, qty + 1)}
+                            >
+                              +
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {selectedSystems.length > 0 && getGrandTotal() > 0 && (
+        <div style={{ padding: "12px 16px", background: "#f0fdf4", borderTop: "1px solid #bbf7d0" }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "#15803d", marginBottom: 8 }}>
+            CONFIGURATION SUMMARY
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+            {selectedSystems.map(system => {
+              const total = getTotalForSystem(system);
+              if (total === 0) return null;
+              const details = LOCATIONS.map(loc => {
+                const qty = quantities[system]?.[loc] || 0;
+                return qty > 0 ? `${loc.replace(/[()]/g, '')}: ${qty}` : null;
+              }).filter(Boolean).join(", ");
+              return (
+                <span key={system} style={{ background: "#dcfce7", color: "#15803d", border: "1px solid #86efac", borderRadius: 20, padding: "4px 12px", fontSize: 11.5, fontWeight: 600 }}>
+                  {system}: {details}
+                </span>
               );
             })}
-            <div style={{ textAlign: "center" }}>
-              {total > 0
-                ? <span style={{ fontSize: 11.5, fontWeight: 800, color: "#1d4ed8", background: "#dbeafe", padding: "2px 8px", borderRadius: 10 }}>{total}</span>
-                : <span style={{ fontSize: 11.5, color: "#cbd5e1" }}>—</span>
-              }
-            </div>
           </div>
-        );
-      })}
-
-      <div style={{ padding: "7px 14px", background: "#f8fafc", borderTop: "1px solid #e2e8f0", fontSize: 10.5, color: "#94a3b8" }}>
-        Set quantity per location (Wall / BHP / Pendant / Ceiling). Zero means not required.
-      </div>
+        </div>
+      )}
     </div>
   );
 }
-
 
 // ─── IT ACCESSORY MATRIX ───────────────────────────────────
 function AccessoryMatrixInput({ field, register, setValue, watch }) {
@@ -466,110 +627,134 @@ function AccessoryMatrixInput({ field, register, setValue, watch }) {
   let data = {};
   try { data = JSON.parse(rawVal); } catch { data = {}; }
 
+  const update = (key, enabled, qty) => {
+    const next = { ...data, [key]: { enabled, qty: Math.max(0, qty) } };
+    setValue?.(field.name, JSON.stringify(next), { shouldDirty: true });
+  };
+
   const toggleEnabled = (key) => {
     const cur = data[key] || { enabled: false, qty: 0 };
-    const next = { ...data, [key]: { enabled: !cur.enabled, qty: cur.enabled ? 0 : 1 } };
-    setValue?.(field.name, JSON.stringify(next), { shouldDirty: true });
+    update(key, !cur.enabled, cur.enabled ? 0 : 1);
   };
 
   const setQty = (key, qty) => {
-    const q = Math.max(0, parseInt(qty) || 0);
-    const next = { ...data, [key]: { enabled: q > 0, qty: q } };
-    setValue?.(field.name, JSON.stringify(next), { shouldDirty: true });
+    const cur = data[key] || { enabled: true, qty: 0 };
+    update(key, true, qty);
   };
 
   const selectedCount = accessories.filter(a => data[a.key]?.enabled).length;
-  const totalQty      = accessories.reduce((sum, a) => sum + (data[a.key]?.qty || 0), 0);
+  const totalQty = accessories.reduce((sum, a) => sum + (data[a.key]?.qty || 0), 0);
 
   return (
-    <div style={{ width: "100%", border: "1.5px solid #e2e8f0", borderRadius: 10, overflow: "hidden" }}>
+    <div style={{ border: "1.5px solid #e8edf5", borderRadius: 12, overflow: "hidden", background: "#fff" }}>
       <input type="hidden" {...register(field.name)} />
 
       {/* Header */}
-      <div style={{
-        display: "grid", gridTemplateColumns: "1fr 120px",
-        background: "linear-gradient(135deg, #1e293b 0%, #334155 100%)",
-        padding: "9px 14px", alignItems: "center",
-      }}>
-        <span style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.5px" }}>
-          Equipment / Accessory
-          {selectedCount > 0 && <span style={{ marginLeft: 8, background: "#6366f1", color: "#fff", fontSize: 10, padding: "1px 7px", borderRadius: 10 }}>{selectedCount} selected</span>}
-          {totalQty > 0 && <span style={{ marginLeft: 6, background: "#15803d", color: "#fff", fontSize: 10, padding: "1px 7px", borderRadius: 10 }}>{totalQty} units</span>}
-        </span>
-        <span style={{ fontSize: 10.5, fontWeight: 700, color: "#94a3b8", textAlign: "center", textTransform: "uppercase", letterSpacing: "0.4px" }}>Quantity</span>
+      <div style={{ padding: "12px 16px", background: "linear-gradient(135deg,#f8fafc 0%,#f0f4ff 100%)", borderBottom: "1px solid #e8edf5", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: "#1e293b" }}>Select equipment and specify quantities</div>
+          <div style={{ fontSize: 11.5, color: "#64748b", marginTop: 2 }}>Click a card to enable, then set quantity</div>
+        </div>
+        <div style={{ display: "flex", gap: 8 }}>
+          {selectedCount > 0 && (
+            <span style={{ background: "#dbeafe", color: "#1d4ed8", fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 20 }}>
+              {selectedCount} item{selectedCount !== 1 ? "s" : ""}
+            </span>
+          )}
+          {totalQty > 0 && (
+            <span style={{ background: "#dcfce7", color: "#15803d", fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 20 }}>
+              {totalQty} total units
+            </span>
+          )}
+        </div>
       </div>
 
-      {/* Rows — 2-column grid for compact layout */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr" }}>
-        {accessories.map(({ key, label, icon }, ri) => {
-          const item   = data[key] || { enabled: false, qty: 0 };
+      {/* Grid of accessory cards */}
+      <div style={{ padding: 16, display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 12 }}>
+        {accessories.map(({ key, label, icon }) => {
+          const item = data[key] || { enabled: false, qty: 0 };
           const active = item.enabled;
-          const isRight = ri % 2 === 1;
           return (
-            <div key={key} style={{
-              display: "grid", gridTemplateColumns: "1fr 120px",
-              borderTop: ri >= 2 ? "1px solid #f1f5f9" : "none",
-              borderLeft: isRight ? "1px solid #f1f5f9" : "none",
-              background: active ? "#f5f3ff" : ri % 4 < 2 ? "#fafafa" : "#fff",
-              borderLeftColor: active ? "#6366f1" : undefined,
-              transition: "background 0.12s",
-              ...(active ? { borderLeft: isRight ? "1px solid #c4b5fd" : "none" } : {}),
-            }}>
-              {/* Label cell */}
-              <div onClick={() => toggleEnabled(key)} style={{
-                display: "flex", alignItems: "center", gap: 8,
-                padding: "9px 12px", cursor: "pointer",
-                borderLeft: !isRight && active ? "3px solid #6366f1" : !isRight ? "3px solid transparent" : "none",
+            <div
+              key={key}
+              style={{
+                borderRadius: 10,
+                border: `1.5px solid ${active ? "#6366f1" : "#e2e8f0"}`,
+                background: active ? "#f5f3ff" : "#fafafa",
+                overflow: "hidden",
+                transition: "all 0.2s ease",
+                boxShadow: active ? "0 2px 8px rgba(99,102,241,0.12)" : "none"
               }}
-                onMouseEnter={e => { if (!active) e.currentTarget.style.background = "#f8fafc"; }}
-                onMouseLeave={e => { if (!active) e.currentTarget.style.background = "transparent"; }}
+            >
+              {/* Card header — click to toggle */}
+              <div
+                onClick={() => toggleEnabled(key)}
+                style={{ padding: "10px 12px", display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}
+                onMouseEnter={e => { if (!active) e.currentTarget.parentElement.style.background = "#f1f5f9"; }}
+                onMouseLeave={e => { if (!active) e.currentTarget.parentElement.style.background = "#fafafa"; }}
               >
-                <div style={{
-                  width: 20, height: 20, borderRadius: 5, flexShrink: 0,
-                  border: `2px solid ${active ? "#6366f1" : "#cbd5e1"}`,
-                  background: active ? "#6366f1" : "#fff",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  transition: "all 0.15s", fontSize: 12,
-                }}>
-                  {active && <span style={{ color: "#fff", fontWeight: 800 }}>✓</span>}
-                </div>
-                <span style={{ fontSize: 15 }}>{icon}</span>
-                <span style={{ fontSize: 12, fontWeight: active ? 700 : 400, color: active ? "#4338ca" : "#374151", lineHeight: 1.3 }}>{label}</span>
+                <span
+                  style={{
+                    width: 32, height: 32, borderRadius: 8, flexShrink: 0,
+                    background: active ? "#6366f1" : "#e2e8f0",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontSize: 16, transition: "all 0.2s"
+                  }}
+                >
+                  {active ? <span style={{ color: "#fff", fontSize: 14 }}>✓</span> : icon}
+                </span>
+                <span style={{ fontSize: 12.5, fontWeight: active ? 700 : 500, color: active ? "#4338ca" : "#475569", lineHeight: 1.3, flex: 1 }}>
+                  {label}
+                </span>
               </div>
 
-              {/* Qty cell */}
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "6px 8px", borderLeft: "1px solid #f1f5f9", background: active ? "#ede9fe" : "transparent" }}>
-                {active ? (
-                  <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                    <button type="button" onClick={() => setQty(key, (item.qty || 0) - 1)}
-                      style={{ width: 24, height: 24, borderRadius: 6, border: "1.5px solid #c4b5fd", background: "#fff", cursor: "pointer", fontSize: 14, fontWeight: 700, color: "#6366f1", display: "flex", alignItems: "center", justifyContent: "center" }}>−</button>
-                    <span style={{ width: 28, textAlign: "center", fontSize: 13, fontWeight: 800, color: "#4338ca" }}>{item.qty || 0}</span>
-                    <button type="button" onClick={() => setQty(key, (item.qty || 0) + 1)}
-                      style={{ width: 24, height: 24, borderRadius: 6, border: "1.5px solid #6366f1", background: "#6366f1", cursor: "pointer", fontSize: 14, fontWeight: 700, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}>+</button>
+              {/* Quantity row — visible only when active */}
+              {active && (
+                <div style={{ borderTop: "1px solid #e0e7ff", padding: "8px 12px", background: "#eef2ff", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <span style={{ fontSize: 11, fontWeight: 600, color: "#6366f1", letterSpacing: "0.3px" }}>QTY</span>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <button type="button"
+                      onClick={() => setQty(key, (item.qty || 0) - 1)}
+                      style={{ width: 26, height: 26, borderRadius: 6, border: "1.5px solid #c7d2fe", background: "#fff", cursor: "pointer", fontSize: 15, fontWeight: 700, color: "#6366f1", display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1 }}>
+                      −
+                    </button>
+                    <input
+                      type="number" min="0"
+                      value={item.qty || 0}
+                      onChange={e => setQty(key, parseInt(e.target.value) || 0)}
+                      style={{ width: 46, height: 26, textAlign: "center", border: "1.5px solid #c7d2fe", borderRadius: 6, fontSize: 13, fontWeight: 700, color: "#4338ca", background: "#fff", outline: "none" }}
+                      onFocus={e => e.target.style.borderColor = "#6366f1"}
+                      onBlur={e => e.target.style.borderColor = "#c7d2fe"}
+                    />
+                    <button type="button"
+                      onClick={() => setQty(key, (item.qty || 0) + 1)}
+                      style={{ width: 26, height: 26, borderRadius: 6, border: "1.5px solid #6366f1", background: "#6366f1", cursor: "pointer", fontSize: 15, fontWeight: 700, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1 }}>
+                      +
+                    </button>
                   </div>
-                ) : (
-                  <span style={{ fontSize: 11.5, color: "#cbd5e1" }}>—</span>
-                )}
-              </div>
+                </div>
+              )}
             </div>
           );
         })}
       </div>
 
+      {/* Summary bar */}
       {selectedCount > 0 && (
-        <div style={{ padding: "8px 14px", background: "#f0fdf4", borderTop: "1px solid #bbf7d0", display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center" }}>
-          <span style={{ fontSize: 10.5, fontWeight: 700, color: "#15803d", textTransform: "uppercase", letterSpacing: "0.4px", marginRight: 4 }}>Selected:</span>
-          {accessories.filter(a => data[a.key]?.enabled).map(({ key, label }) => (
-            <span key={key} style={{ background: "#dcfce7", color: "#15803d", border: "1px solid #86efac", borderRadius: 20, padding: "2px 9px", fontSize: 11, fontWeight: 600 }}>
-              {label} × {data[key]?.qty || 0}
-            </span>
-          ))}
+        <div style={{ padding: "10px 16px", background: "#f0fdf4", borderTop: "1px solid #bbf7d0" }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "#15803d", marginBottom: 6 }}>SELECTED EQUIPMENT</div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+            {accessories.filter(a => data[a.key]?.enabled).map(({ key, label }) => (
+              <span key={key} style={{ background: "#dcfce7", color: "#15803d", border: "1px solid #86efac", borderRadius: 20, padding: "3px 10px", fontSize: 11.5, fontWeight: 600 }}>
+                {label} × {data[key]?.qty || 0}
+              </span>
+            ))}
+          </div>
         </div>
       )}
     </div>
   );
 }
-
 
 // ─── MEDICAL GAS MATRIX ────────────────────────────────────
 const GAS_COLUMNS = [
@@ -717,65 +902,82 @@ function DoorConfigInput({ field, register, setValue, watch }) {
   return (
     <div style={{ width: "100%" }}>
       <input type="hidden" {...register(field.name)} />
-      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+
+      {/* 2-column accordion grid — uses full width */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
         {DOOR_CONFIG.map((grp, gi) => {
           const isOpen = openGroup === gi;
           const hasDat = groupHasData(grp);
+          const configuredCount = grp.fields.filter(f => (data[f.key] || []).length > 0).length;
           return (
-            <div key={gi} style={{ border: `1.5px solid ${isOpen ? "#f9a8d4" : hasDat ? "#fbcfe8" : "#e2e8f0"}`, borderRadius: 12, overflow: "hidden", transition: "border-color 0.2s" }}>
+            <div key={gi} style={{
+              border: `1.5px solid ${isOpen ? "#f9a8d4" : hasDat ? "#fbcfe8" : "#e8edf5"}`,
+              borderRadius: 10, overflow: "hidden", transition: "border-color 0.2s",
+              gridColumn: isOpen ? "1 / -1" : "auto",  /* expand open group to full width */
+            }}>
+              {/* Group header */}
               <div onClick={() => setOpenGroup(isOpen ? null : gi)} style={{
                 display: "flex", alignItems: "center", justifyContent: "space-between",
-                padding: "12px 16px", cursor: "pointer",
-                background: isOpen ? "linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%)" : hasDat ? "#fdf2f8" : "#fafafa",
-                transition: "background 0.15s"
+                padding: "10px 14px", cursor: "pointer",
+                background: isOpen
+                  ? "linear-gradient(135deg,#fdf2f8,#fce7f3)"
+                  : hasDat ? "#fdf2f8" : "#fafafa",
+                transition: "background 0.15s",
               }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <span style={{ fontSize: 18 }}>{grp.icon}</span>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: "#be185d" }}>{grp.group}</span>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ fontSize: 16 }}>{grp.icon}</span>
+                  <span style={{ fontSize: 12.5, fontWeight: 700, color: "#be185d" }}>{grp.group}</span>
                   {hasDat && !isOpen && (
-                    <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 12, background: "#fce7f3", color: "#ec4899" }}>
-                      {grp.fields.filter(f => (data[f.key] || []).length > 0).length} configured
+                    <span style={{ fontSize: 10, fontWeight: 700, padding: "1px 7px", borderRadius: 10, background: "#fce7f3", color: "#ec4899" }}>
+                      {configuredCount} set
                     </span>
                   )}
                 </div>
-                <span style={{ fontSize: 16, color: "#ec4899", fontWeight: 700, display: "inline-block", transition: "transform 0.2s", transform: isOpen ? "rotate(180deg)" : "rotate(0deg)" }}>&#8964;</span>
+                <span style={{ fontSize: 14, color: "#ec4899", fontWeight: 700, transform: isOpen ? "rotate(180deg)" : "none", display: "inline-block", transition: "transform 0.2s" }}>&#8964;</span>
               </div>
+
+              {/* Expanded body — 2-col chip grid inside */}
               {isOpen && (
-                <div style={{ padding: "16px 18px 18px", background: "#fff", display: "flex", flexDirection: "column", gap: 16, borderTop: "1px solid #fce7f3" }}>
-                  {grp.fields.map(f => (
-                    <div key={f.key}>
-                      <div style={{ fontSize: 11, fontWeight: 700, color: "#be185d", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 8 }}>{f.label}</div>
-                      <ChipSelect options={f.options} selected={data[f.key] || []} onChange={val => update(f.key, val)} multi={f.multi} accentColor="#be185d" accentBg="#fdf2f8" accentBorder="#f9a8d4" />
-                    </div>
-                  ))}
-                  <div style={{ borderTop: "1px solid #fce7f3", paddingTop: 14 }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: "#be185d", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 6 }}>Other Special Requirements</div>
-                    <textarea rows={2} placeholder="Describe any additional door requirements not listed above..."
-                      value={data.otherRequirements || ""}
-                      onChange={e => update("otherRequirements", e.target.value)}
-                      style={{ width: "100%", fontSize: 12.5, padding: "8px 10px", borderRadius: 8, border: "1.5px solid #fce7f3", background: "#fdf2f8", color: "#1e3a5f", outline: "none", resize: "vertical", fontFamily: "inherit", lineHeight: 1.5, boxSizing: "border-box" }}
-                      onFocus={e => e.target.style.borderColor = "#f9a8d4"}
-                      onBlur={e => e.target.style.borderColor = "#fce7f3"} />
+                <div style={{ padding: "14px 16px 16px", background: "#fff", borderTop: "1px solid #fce7f3" }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+                    {grp.fields.map(f => (
+                      <div key={f.key}>
+                        <div style={{ fontSize: 10.5, fontWeight: 700, color: "#be185d", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 7 }}>{f.label}</div>
+                        <ChipSelect options={f.options} selected={data[f.key] || []} onChange={val => update(f.key, val)} multi={f.multi} accentColor="#be185d" accentBg="#fdf2f8" accentBorder="#f9a8d4" />
+                      </div>
+                    ))}
                   </div>
+                  {/* Other notes — last group only */}
+                  {gi === DOOR_CONFIG.length - 1 && (
+                    <div style={{ marginTop: 14, paddingTop: 12, borderTop: "1px solid #fce7f3" }}>
+                      <div style={{ fontSize: 10.5, fontWeight: 700, color: "#be185d", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 6 }}>Other Special Requirements</div>
+                      <textarea rows={2} placeholder="Describe any additional requirements..."
+                        value={data.otherRequirements || ""}
+                        onChange={e => update("otherRequirements", e.target.value)}
+                        style={{ width: "100%", fontSize: 12.5, padding: "7px 10px", borderRadius: 8, border: "1.5px solid #fce7f3", background: "#fdf2f8", color: "#1e3a5f", outline: "none", resize: "vertical", fontFamily: "inherit", lineHeight: 1.5, boxSizing: "border-box" }}
+                        onFocus={e => e.target.style.borderColor = "#f9a8d4"}
+                        onBlur={e => e.target.style.borderColor = "#fce7f3"} />
+                    </div>
+                  )}
                 </div>
               )}
             </div>
           );
         })}
       </div>
+
+      {/* Summary strip */}
       {Object.keys(data).some(k => Array.isArray(data[k]) && data[k].length > 0) && (
-        <div style={{ marginTop: 12, padding: "10px 14px", background: "#fdf2f8", borderRadius: 10, border: "1px solid #fce7f3" }}>
-          <div style={{ fontSize: 10.5, fontWeight: 700, color: "#be185d", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 6 }}>Door Specification Summary</div>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
-            {DOOR_CONFIG.flatMap(grp => grp.fields).map(f =>
-              (data[f.key] || []).map(v => (
-                <span key={f.key + v} style={{ fontSize: 11, padding: "2px 10px", borderRadius: 12, background: "#fce7f3", color: "#be185d", fontWeight: 600 }}>{v}</span>
-              ))
-            )}
-          </div>
+        <div style={{ marginTop: 10, padding: "8px 12px", background: "#fdf2f8", borderRadius: 8, border: "1px solid #fce7f3", display: "flex", flexWrap: "wrap", gap: 5, alignItems: "center" }}>
+          <span style={{ fontSize: 10, fontWeight: 700, color: "#be185d", textTransform: "uppercase", letterSpacing: "0.4px", marginRight: 4 }}>Selected:</span>
+          {DOOR_CONFIG.flatMap(grp => grp.fields).flatMap(f =>
+            (data[f.key] || []).map(v => (
+              <span key={f.key + v} style={{ fontSize: 10.5, padding: "2px 8px", borderRadius: 10, background: "#fce7f3", color: "#be185d", fontWeight: 600 }}>{v}</span>
+            ))
+          )}
         </div>
       )}
-      <div style={{ marginTop: 8, fontSize: 11, color: "#94a3b8" }}>Click each group to expand and configure. Multiple selections allowed where indicated.</div>
+      <div style={{ marginTop: 6, fontSize: 10.5, color: "#94a3b8" }}>Click group to expand · open group spans full width</div>
     </div>
   );
 }
@@ -792,7 +994,7 @@ function WindowConfigInput({ field, register, setValue, watch }) {
   };
 
   return (
-    <div style={{ width: "100%", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+    <div style={{ width: "100%", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
       <input type="hidden" {...register(field.name)} />
       <div style={{ border: "1.5px solid #e0f2fe", borderRadius: 12, overflow: "hidden" }}>
         <div style={{ padding: "12px 16px", background: "linear-gradient(135deg, #0e7490 0%, #0891b2 100%)" }}>
@@ -939,7 +1141,7 @@ function SanitaryGridInput({ field, register, setValue, watch }) {
                 {grp.items.filter(it => data[it.key]).length}/{grp.items.length} selected
               </span>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", background: "#fff" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", background: "#fff" }}>
               {grp.items.map((item) => {
                 const active = !!data[item.key];
                 return (
@@ -977,11 +1179,17 @@ function SanitaryGridInput({ field, register, setValue, watch }) {
 // ─── SAFETY MATRIX INPUT ─────────────────────────────────────
 // Each row = one parameter (e.g. Pressure Regime)
 // Each row has N option chips — user picks exactly one
-// ─── SAFETY MATRIX INPUT — full-width horizontal specification table ──────────
-// Each row = one parameter rendered as a compact horizontal strip
-// Label (fixed 200px) | chips flowing right — minimal vertical footprint
+// Premium card-based layout with icon, label, selected chip highlighted
 
-const SM_ACCENT = "#dc2626"; // red — matches safety section color
+const SAFETY_ROW_COLORS = [
+  { bg: "#eff6ff", border: "#bfdbfe", active: "#2563eb", activeText: "#fff", activeBorder: "#1d4ed8" },
+  { bg: "#fdf4ff", border: "#e9d5ff", active: "#9333ea", activeText: "#fff", activeBorder: "#7e22ce" },
+  { bg: "#fff7ed", border: "#fed7aa", active: "#ea580c", activeText: "#fff", activeBorder: "#c2410c" },
+  { bg: "#f0fdf4", border: "#bbf7d0", active: "#16a34a", activeText: "#fff", activeBorder: "#15803d" },
+  { bg: "#fef9c3", border: "#fde68a", active: "#d97706", activeText: "#fff", activeBorder: "#b45309" },
+  { bg: "#fff1f2", border: "#fecdd3", active: "#e11d48", activeText: "#fff", activeBorder: "#be123c" },
+  { bg: "#f0fdfa", border: "#99f6e4", active: "#0d9488", activeText: "#fff", activeBorder: "#0f766e" },
+];
 
 function SafetyMatrixInput({ field, register, setValue, watch }) {
   const rows = field.rows || [];
@@ -1004,65 +1212,64 @@ function SafetyMatrixInput({ field, register, setValue, watch }) {
     <div style={{ width: "100%" }}>
       <input type="hidden" {...register(field.name)} />
 
-      {/* Header bar */}
+      {/* Slim header */}
       <div style={{
-        display: "grid", gridTemplateColumns: "220px 1fr",
-        background: "linear-gradient(135deg, #1e293b 0%, #334155 100%)",
-        borderRadius: "10px 10px 0 0", padding: "9px 16px", alignItems: "center",
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        padding: "8px 14px",
+        background: "linear-gradient(135deg,#1e293b,#334155)",
+        borderRadius: "10px 10px 0 0",
       }}>
-        <span style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.6px" }}>Parameter</span>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <span style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.6px" }}>Specification Options</span>
-          {filledCount > 0 && (
-            <span style={{ fontSize: 10.5, fontWeight: 700, padding: "2px 10px", borderRadius: 20, background: "#dc2626", color: "#fff" }}>
-              {filledCount}/{rows.length} specified
-            </span>
-          )}
-        </div>
+        <span style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+          Parameter &amp; Options
+        </span>
+        {filledCount > 0 && (
+          <span style={{ fontSize: 10.5, fontWeight: 700, padding: "2px 10px", borderRadius: 20, background: "#dc2626", color: "#fff" }}>
+            {filledCount}/{rows.length} specified
+          </span>
+        )}
       </div>
 
-      {/* Rows */}
+      {/* Full-width table rows */}
       <div style={{ border: "1.5px solid #e2e8f0", borderTop: "none", borderRadius: "0 0 10px 10px", overflow: "hidden" }}>
         {rows.map((row, ri) => {
           const selected = data[row.key] || "";
-          const isEven = ri % 2 === 0;
           return (
             <div key={row.key} style={{
-              display: "grid", gridTemplateColumns: "220px 1fr",
+              display: "grid", gridTemplateColumns: "190px 1fr",
               borderTop: ri > 0 ? "1px solid #f1f5f9" : "none",
-              background: selected ? "#fff7f7" : isEven ? "#fafafa" : "#fff",
-              transition: "background 0.15s", minHeight: 48,
+              background: selected ? "#fff7f7" : ri % 2 === 0 ? "#fafafa" : "#fff",
               borderLeft: selected ? "3px solid #dc2626" : "3px solid transparent",
+              transition: "all 0.12s",
             }}>
-              {/* Label cell */}
+              {/* Label */}
               <div style={{
-                display: "flex", alignItems: "center", gap: 8,
-                padding: "10px 14px", borderRight: "1px solid #f1f5f9",
+                display: "flex", alignItems: "center", gap: 7,
+                padding: "9px 12px", borderRight: "1px solid #f1f5f9",
                 background: selected ? "#fff0f0" : "transparent",
               }}>
-                <span style={{ fontSize: 16, flexShrink: 0, lineHeight: 1 }}>{row.icon}</span>
-                <span style={{ fontSize: 12, fontWeight: 600, color: selected ? "#dc2626" : "#374151", lineHeight: 1.3 }}>
+                <span style={{ fontSize: 15, flexShrink: 0 }}>{row.icon}</span>
+                <span style={{ fontSize: 11.5, fontWeight: 600, color: selected ? "#dc2626" : "#374151", lineHeight: 1.3 }}>
                   {row.label}
                 </span>
               </div>
 
-              {/* Chips cell */}
-              <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 5, padding: "8px 12px" }}>
+              {/* Chips — full remaining width */}
+              <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 4, padding: "7px 10px" }}>
                 {row.options.map(opt => {
                   const isActive = selected === opt;
                   const isMuted = isNA(opt) && !isActive;
                   return (
                     <button key={opt} type="button" onClick={() => select(row.key, opt)} style={{
-                      padding: "4px 11px", borderRadius: 6, fontSize: 11.5,
+                      padding: "3px 10px", borderRadius: 5, fontSize: 11,
                       fontWeight: isActive ? 700 : 400,
                       border: `1.5px solid ${isActive ? "#dc2626" : isMuted ? "#e2e8f0" : "#d1d5db"}`,
                       background: isActive ? "#dc2626" : isMuted ? "#f8fafc" : "#fff",
                       color: isActive ? "#fff" : isMuted ? "#94a3b8" : "#374151",
                       cursor: "pointer", transition: "all 0.12s", whiteSpace: "nowrap",
-                      boxShadow: isActive ? "0 1px 4px rgba(220,38,38,0.3)" : "none",
+                      boxShadow: isActive ? "0 1px 4px rgba(220,38,38,0.25)" : "none",
                     }}
-                      onMouseEnter={e => { if (!isActive) { e.currentTarget.style.borderColor = "#dc2626"; e.currentTarget.style.color = "#dc2626"; e.currentTarget.style.background = "#fff7f7"; } }}
-                      onMouseLeave={e => { if (!isActive) { e.currentTarget.style.borderColor = isMuted ? "#e2e8f0" : "#d1d5db"; e.currentTarget.style.color = isMuted ? "#94a3b8" : "#374151"; e.currentTarget.style.background = isMuted ? "#f8fafc" : "#fff"; } }}
+                      onMouseEnter={e => { if (!isActive) { e.currentTarget.style.borderColor = "#dc2626"; e.currentTarget.style.color = "#dc2626"; e.currentTarget.style.background = "#fff7f7"; }}}
+                      onMouseLeave={e => { if (!isActive) { e.currentTarget.style.borderColor = isMuted ? "#e2e8f0" : "#d1d5db"; e.currentTarget.style.color = isMuted ? "#94a3b8" : "#374151"; e.currentTarget.style.background = isMuted ? "#f8fafc" : "#fff"; }}}
                     >
                       {isActive ? "✓ " : ""}{opt}
                     </button>
@@ -1073,10 +1280,7 @@ function SafetyMatrixInput({ field, register, setValue, watch }) {
           );
         })}
       </div>
-
-      <div style={{ marginTop: 6, fontSize: 10.5, color: "#94a3b8" }}>
-        Click any option to select · click again to clear · all parameters are optional
-      </div>
+      <div style={{ marginTop: 5, fontSize: 10.5, color: "#94a3b8" }}>Click to select · click again to clear</div>
     </div>
   );
 }
@@ -1174,7 +1378,7 @@ function ConstructionMatrixInput({ field, register, setValue, watch }) {
                 <div style={{ background: "#f0f9ff", borderTop: "1px solid #bae6fd", padding: "16px 18px 18px" }}>
                   <div style={{
                     display: "grid",
-                    gridTemplateColumns: "repeat(3, 1fr)",
+                    gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
                     gap: "12px 16px"
                   }}>
                     {CM_COLUMNS.map(col => (
