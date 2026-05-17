@@ -160,7 +160,7 @@ function YesNoInput({ field, register, setValue, watch }) {
           onClick={() => handleYesNo(val === "Yes" ? "" : "Yes")}
           style={{
             flex: 1,
-            padding: "8px 14px",
+            padding: "10px 20px",
             borderRadius: 10,
             fontWeight: 600,
             fontSize: 13,
@@ -197,7 +197,7 @@ function YesNoInput({ field, register, setValue, watch }) {
           onClick={() => handleYesNo(val === "No" ? "" : "No")}
           style={{
             flex: 1,
-            padding: "8px 14px",
+            padding: "10px 20px",
             borderRadius: 10,
             fontWeight: 600,
             fontSize: 13,
@@ -354,271 +354,147 @@ function YesNoInput({ field, register, setValue, watch }) {
 // ─── ELV MATRIX (Dynamic Location Quantities) ──────────────────────────────
 function ELVMatrixInput({ field, register, setValue, watch }) {
   const AVAILABLE_SYSTEMS = [
-    "Nurse Call System",
-    "Code Blue System",
-    "Intercom",
-    "Telephone",
-    "IP Phone",
-    "SCV",
-    "MATV / IPTV",
-    "Fax / Printer",
-    "LAN / Network Point",
-    "Wireless Point",
-    "Master Clock",
-    "Physiological Monitors",
-    "Other Bedside Terminals",
-    "Other Healthcare Infra System"
+    "Nurse Call System","Code Blue System","Intercom","Telephone","IP Phone","SCV",
+    "MATV / IPTV","Fax / Printer","LAN / Network Point","Wireless Point",
+    "Master Clock","Physiological Monitors","Other Bedside Terminals","Other Healthcare Infra System"
   ];
-
   const LOCATIONS = ["WALL (W)", "BEDHEAD PANEL (BHP)", "MEDICAL PENDANT (MP)", "CEILING (C)"];
 
   const rawVal = watch?.(field.name) || "{}";
   let matrixData = {};
-  try { 
+  try {
     matrixData = JSON.parse(rawVal);
     if (!matrixData.selectedSystems) matrixData.selectedSystems = [];
     if (!matrixData.quantities) matrixData.quantities = {};
-  } catch { 
-    matrixData = { selectedSystems: [], quantities: {} };
-  }
+  } catch { matrixData = { selectedSystems: [], quantities: {} }; }
 
-  const selectedSystems = matrixData.selectedSystems || [];
-  const quantities = matrixData.quantities || {};
+  const { selectedSystems = [], quantities = {} } = matrixData;
 
-  const updateMatrix = (newSelected, newQuantities) => {
-    const output = {
-      selectedSystems: newSelected,
-      quantities: newQuantities
-    };
-    setValue?.(field.name, JSON.stringify(output), { shouldDirty: true });
+  const updateMatrix = (sel, qty) => {
+    setValue?.(field.name, JSON.stringify({ selectedSystems: sel, quantities: qty }), { shouldDirty: true });
   };
 
-  const toggleSystem = (system) => {
-    let newSelected;
-    if (selectedSystems.includes(system)) {
-      newSelected = selectedSystems.filter(s => s !== system);
-      const newQuantities = { ...quantities };
-      delete newQuantities[system];
-      updateMatrix(newSelected, newQuantities);
+  const toggleSystem = (sys) => {
+    if (selectedSystems.includes(sys)) {
+      const nq = { ...quantities }; delete nq[sys];
+      updateMatrix(selectedSystems.filter(s => s !== sys), nq);
     } else {
-      newSelected = [...selectedSystems, system];
-      const newQuantities = { ...quantities };
-      if (!newQuantities[system]) {
-        newQuantities[system] = {
-          "WALL (W)": 0,
-          "BEDHEAD PANEL (BHP)": 0,
-          "MEDICAL PENDANT (MP)": 0,
-          "CEILING (C)": 0
-        };
-      }
-      updateMatrix(newSelected, newQuantities);
+      const nq = { ...quantities, [sys]: { "WALL (W)": 0, "BEDHEAD PANEL (BHP)": 0, "MEDICAL PENDANT (MP)": 0, "CEILING (C)": 0 } };
+      updateMatrix([...selectedSystems, sys], nq);
     }
   };
 
-  const updateQuantity = (system, location, value) => {
-    const newQuantities = { ...quantities };
-    if (!newQuantities[system]) {
-      newQuantities[system] = {
-        "WALL (W)": 0,
-        "BEDHEAD PANEL (BHP)": 0,
-        "MEDICAL PENDANT (MP)": 0,
-        "CEILING (C)": 0
-      };
-    }
-    newQuantities[system][location] = Math.max(0, parseInt(value) || 0);
-    updateMatrix(selectedSystems, newQuantities);
+  const updateQty = (sys, loc, val) => {
+    const nq = { ...quantities, [sys]: { ...(quantities[sys] || {}), [loc]: Math.max(0, parseInt(val) || 0) } };
+    updateMatrix(selectedSystems, nq);
   };
 
-  const getTotalForSystem = (system) => {
-    if (!quantities[system]) return 0;
-    return Object.values(quantities[system]).reduce((sum, qty) => sum + (parseInt(qty) || 0), 0);
-  };
+  const sysTotal = sys => quantities[sys] ? Object.values(quantities[sys]).reduce((s, v) => s + (parseInt(v) || 0), 0) : 0;
+  const grandTotal = selectedSystems.reduce((s, sys) => s + sysTotal(sys), 0);
 
-  const getGrandTotal = () => {
-    let total = 0;
-    selectedSystems.forEach(system => {
-      total += getTotalForSystem(system);
-    });
-    return total;
-  };
-
-  const [searchTerm, setSearchTerm] = useState("");
-
-  const filteredSystems = AVAILABLE_SYSTEMS.filter(system =>
-    system.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const [search, setSearch] = useState("");
+  const filtered = AVAILABLE_SYSTEMS.filter(s => s.toLowerCase().includes(search.toLowerCase()));
 
   return (
-    <div style={{ border: "1.5px solid #e8edf5", borderRadius: 12, overflow: "hidden", background: "#fff" }}>
+    <div style={{ border: "1px solid #e2e8f0", borderRadius: 10, overflow: "hidden", background: "#fff", boxShadow: "0 1px 3px rgba(15,23,42,0.04)" }}>
       <input type="hidden" {...register(field.name)} />
 
-      <div style={{ padding: "12px 16px", background: "#f8fafc", borderBottom: "1px solid #e8edf5" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: selectedSystems.length > 0 ? 10 : 0 }}>
-          <span style={{ fontSize: 13, fontWeight: 700, color: "#1e293b" }}>
-            {field.label || "ELV Systems Configuration"}
-          </span>
-          {getGrandTotal() > 0 && (
-            <span style={{ background: "#dbeafe", color: "#1d4ed8", fontSize: 11.5, fontWeight: 700, padding: "4px 12px", borderRadius: 20 }}>
-              Total: {getGrandTotal()} points
-            </span>
-          )}
-        </div>
-        
-        <div style={{ position: "relative" }}>
-          <input
-            type="text"
-            placeholder="🔍 Search systems..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            style={{
-              width: "100%",
-              padding: "8px 12px",
-              border: "1px solid #e2e8f0",
-              borderRadius: 8,
-              fontSize: 12.5,
-              outline: "none",
-              transition: "all 0.15s"
-            }}
-            onFocus={(e) => e.target.style.borderColor = "#3b82f6"}
-            onBlur={(e) => e.target.style.borderColor = "#e2e8f0"}
-          />
-        </div>
+      {/* Header */}
+      <div style={{ padding: "10px 14px", background: "#f8fafc", borderBottom: "1px solid #e2e8f0", display: "flex", alignItems: "center", gap: 12 }}>
+        <input type="text" placeholder="🔍 Search systems..." value={search} onChange={e => setSearch(e.target.value)}
+          style={{ flex: 1, maxWidth: 260, padding: "6px 10px", border: "1px solid #e2e8f0", borderRadius: 7, fontSize: 12, outline: "none" }}
+          onFocus={e => e.target.style.borderColor="#3b82f6"} onBlur={e => e.target.style.borderColor="#e2e8f0"} />
+        {grandTotal > 0 && <span style={{ background: "#dbeafe", color: "#1d4ed8", fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 20 }}>Total: {grandTotal} pts</span>}
       </div>
 
-      <div style={{ maxHeight: 400, overflowY: "auto" }}>
-        {filteredSystems.length === 0 && (
-          <div style={{ padding: "40px 20px", textAlign: "center", color: "#94a3b8", fontSize: 12.5 }}>
-            No systems match your search
+      <div style={{ display: "grid", gridTemplateColumns: "240px 1fr" }}>
+        {/* Left: system selector — 2-column checkbox grid */}
+        <div style={{ borderRight: "1px solid #e2e8f0", maxHeight: 380, overflowY: "auto" }}>
+          <div style={{ padding: "6px 10px", background: "#f8fafc", borderBottom: "1px solid #f1f5f9" }}>
+            <span style={{ fontSize: 10, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.5px" }}>Select Systems</span>
           </div>
-        )}
-        
-        {filteredSystems.map(system => {
-          const isSelected = selectedSystems.includes(system);
-          const totalQty = getTotalForSystem(system);
-          
-          return (
-            <div key={system} style={{ borderBottom: "1px solid #f1f5f9" }}>
-              <div 
-                style={{
-                  padding: "12px 16px",
-                  background: isSelected ? "#f0f9ff" : "#fff",
-                  cursor: "pointer",
-                  transition: "all 0.15s"
-                }}
-                onClick={() => toggleSystem(system)}
-                onMouseEnter={(e) => {
-                  if (!isSelected) e.currentTarget.style.background = "#f8fafc";
-                }}
-                onMouseLeave={(e) => {
-                  if (!isSelected) e.currentTarget.style.background = "#fff";
-                }}
-              >
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <span style={{ 
-                      display: "inline-flex",
-                      width: 18, height: 18,
-                      borderRadius: 4,
-                      border: `2px solid ${isSelected ? "#3b82f6" : "#cbd5e1"}`,
-                      background: isSelected ? "#3b82f6" : "#fff",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      color: "#fff",
-                      fontSize: 12,
-                      fontWeight: "bold"
-                    }}>
-                      {isSelected && "✓"}
-                    </span>
-                    <span style={{ fontSize: 13, fontWeight: 500, color: isSelected ? "#1e40af" : "#334155" }}>
-                      {system}
-                    </span>
-                  </div>
-                  {isSelected && totalQty > 0 && (
-                    <span style={{ background: "#dbeafe", color: "#1d4ed8", fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 12 }}>
-                      {totalQty} pts
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              {isSelected && (
-                <div style={{ padding: "8px 16px 16px 44px", background: "#fafcff" }}>
-                  <div style={{ 
-                    display: "grid", 
-                    gridTemplateColumns: "repeat(4, 1fr)", 
-                    gap: 10,
-                    background: "#fff",
-                    border: "1px solid #e8edf5",
-                    borderRadius: 10,
-                    overflow: "hidden"
-                  }}>
-                    {LOCATIONS.map(location => {
-                      const qty = quantities[system]?.[location] || 0;
-                      return (
-                        <div key={location} style={{ padding: "10px", textAlign: "center" }}>
-                          <div style={{ fontSize: 11, fontWeight: 600, color: "#64748b", marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.3px" }}>
-                            {location.replace(/[()]/g, '')}
-                          </div>
-                          <div className="qty-input-wrap" style={{ justifyContent: "center" }}>
-                            <button
-                              type="button"
-                              className="qty-btn"
-                              onClick={() => updateQuantity(system, location, qty - 1)}
-                            >
-                              −
-                            </button>
-                            <input
-                              type="number"
-                              className="qty-input"
-                              min="0"
-                              value={qty}
-                              onChange={(e) => updateQuantity(system, location, e.target.value)}
-                              style={{ width: 50, textAlign: "center" }}
-                            />
-                            <button
-                              type="button"
-                              className="qty-btn"
-                              onClick={() => updateQuantity(system, location, qty + 1)}
-                            >
-                              +
-                            </button>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-
-      {selectedSystems.length > 0 && getGrandTotal() > 0 && (
-        <div style={{ padding: "12px 16px", background: "#f0fdf4", borderTop: "1px solid #bbf7d0" }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: "#15803d", marginBottom: 8 }}>
-            CONFIGURATION SUMMARY
-          </div>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-            {selectedSystems.map(system => {
-              const total = getTotalForSystem(system);
-              if (total === 0) return null;
-              const details = LOCATIONS.map(loc => {
-                const qty = quantities[system]?.[loc] || 0;
-                return qty > 0 ? `${loc.replace(/[()]/g, '')}: ${qty}` : null;
-              }).filter(Boolean).join(", ");
+          <div style={{ padding: "6px" }}>
+            {filtered.length === 0 && (
+              <div style={{ padding: "20px", textAlign: "center", color: "#94a3b8", fontSize: 12 }}>No match</div>
+            )}
+            {filtered.map(sys => {
+              const isSel = selectedSystems.includes(sys);
+              const tot = sysTotal(sys);
               return (
-                <span key={system} style={{ background: "#dcfce7", color: "#15803d", border: "1px solid #86efac", borderRadius: 20, padding: "4px 12px", fontSize: 11.5, fontWeight: 600 }}>
-                  {system}: {details}
-                </span>
+                <div key={sys} onClick={() => toggleSystem(sys)}
+                  style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 8px", borderRadius: 7, cursor: "pointer", background: isSel ? "#eff6ff" : "transparent", marginBottom: 2, transition: "background 0.12s" }}
+                  onMouseEnter={e => { if (!isSel) e.currentTarget.style.background="#f8fafc"; }}
+                  onMouseLeave={e => { if (!isSel) e.currentTarget.style.background="transparent"; }}
+                >
+                  <span style={{ width: 16, height: 16, borderRadius: 4, border: `2px solid ${isSel ? "#3b82f6" : "#cbd5e1"}`, background: isSel ? "#3b82f6" : "#fff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 10, color: "#fff", fontWeight: "bold" }}>
+                    {isSel && "✓"}
+                  </span>
+                  <span style={{ fontSize: 12, color: isSel ? "#1e40af" : "#334155", fontWeight: isSel ? 600 : 400, flex: 1, lineHeight: 1.3 }}>{sys}</span>
+                  {isSel && tot > 0 && <span style={{ background: "#dbeafe", color: "#1d4ed8", fontSize: 10, fontWeight: 700, padding: "1px 6px", borderRadius: 10 }}>{tot}</span>}
+                </div>
               );
             })}
           </div>
+        </div>
+
+        {/* Right: quantity grid for selected systems */}
+        <div style={{ maxHeight: 380, overflowY: "auto" }}>
+          {selectedSystems.length === 0 ? (
+            <div style={{ padding: "60px 20px", textAlign: "center", color: "#94a3b8", fontSize: 12 }}>
+              Select systems from the left panel to configure quantities
+            </div>
+          ) : (
+            <div>
+              {/* Column headers */}
+              <div style={{ display: "grid", gridTemplateColumns: "140px repeat(4, 1fr)", background: "#f8fafc", borderBottom: "1px solid #e2e8f0", padding: "0" }}>
+                <div style={{ padding: "7px 10px", fontSize: 10, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.4px" }}>System</div>
+                {LOCATIONS.map(loc => (
+                  <div key={loc} style={{ padding: "7px 6px", fontSize: 10, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.3px", textAlign: "center", borderLeft: "1px solid #e8edf5" }}>
+                    {loc.replace(/[()]/g, '').trim()}
+                  </div>
+                ))}
+              </div>
+              {selectedSystems.map((sys, i) => (
+                <div key={sys} style={{ display: "grid", gridTemplateColumns: "140px repeat(4, 1fr)", borderBottom: i < selectedSystems.length - 1 ? "1px solid #f1f5f9" : "none" }}>
+                  <div style={{ padding: "8px 10px", fontSize: 11.5, fontWeight: 600, color: "#1e293b", display: "flex", alignItems: "center", borderRight: "1px solid #f1f5f9" }}>{sys}</div>
+                  {LOCATIONS.map(loc => {
+                    const qty = quantities[sys]?.[loc] || 0;
+                    return (
+                      <div key={loc} style={{ padding: "6px 4px", display: "flex", alignItems: "center", justifyContent: "center", borderLeft: "1px solid #f1f5f9" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
+                          <button type="button" onClick={() => updateQty(sys, loc, qty - 1)}
+                            style={{ width: 20, height: 20, borderRadius: 4, border: "1px solid #e2e8f0", background: "#f8fafc", color: qty > 0 ? "#475569" : "#cbd5e1", cursor: "pointer", fontSize: 13, display: "flex", alignItems: "center", justifyContent: "center" }}>−</button>
+                          <input type="number" min="0" value={qty || ""} placeholder="0"
+                            onChange={e => updateQty(sys, loc, e.target.value)}
+                            style={{ width: 32, height: 24, textAlign: "center", border: `1.5px solid ${qty > 0 ? "#64748b" : "#e8edf5"}`, borderRadius: 5, fontSize: 12, fontWeight: qty > 0 ? 700 : 400, color: qty > 0 ? "#0f172a" : "#cbd5e1", background: "#fff", outline: "none" }} />
+                          <button type="button" onClick={() => updateQty(sys, loc, qty + 1)}
+                            style={{ width: 20, height: 20, borderRadius: 4, border: "1px solid #cbd5e1", background: "#334155", color: "#fff", cursor: "pointer", fontSize: 13, display: "flex", alignItems: "center", justifyContent: "center" }}>+</button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Summary */}
+      {selectedSystems.length > 0 && grandTotal > 0 && (
+        <div style={{ padding: "8px 14px", background: "#f0fdf4", borderTop: "1px solid #bbf7d0", display: "flex", flexWrap: "wrap", gap: 5 }}>
+          <span style={{ fontSize: 10, fontWeight: 700, color: "#15803d", textTransform: "uppercase", letterSpacing: "0.5px", marginRight: 4 }}>Points:</span>
+          {selectedSystems.filter(s => sysTotal(s) > 0).map(sys => (
+            <span key={sys} style={{ background: "#dcfce7", color: "#15803d", border: "1px solid #86efac", borderRadius: 4, padding: "2px 8px", fontSize: 10.5, fontWeight: 600 }}>
+              {sys}: {sysTotal(sys)}
+            </span>
+          ))}
         </div>
       )}
     </div>
   );
 }
+
 
 // ─── IT ACCESSORY MATRIX ───────────────────────────────────
 function AccessoryMatrixInput({ field, register, setValue, watch }) {
@@ -892,95 +768,94 @@ function DoorConfigInput({ field, register, setValue, watch }) {
   try { data = JSON.parse(rawVal); } catch { data = {}; }
 
   const update = (key, val) => {
-    const next = { ...data, [key]: val };
-    setValue?.(field.name, JSON.stringify(next), { shouldDirty: true });
+    setValue?.(field.name, JSON.stringify({ ...data, [key]: val }), { shouldDirty: true });
   };
 
   const [openGroup, setOpenGroup] = useState(null);
   const groupHasData = (grp) => grp.fields.some(f => (data[f.key] || []).length > 0);
 
+  const totalConfigured = DOOR_CONFIG.reduce((s, g) => s + g.fields.filter(f => (data[f.key] || []).length > 0).length, 0);
+
   return (
     <div style={{ width: "100%" }}>
       <input type="hidden" {...register(field.name)} />
 
-      {/* 2-column accordion grid — uses full width */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+      {/* 2×3 card grid — all 6 groups visible simultaneously */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, marginBottom: openGroup !== null ? 12 : 0 }}>
         {DOOR_CONFIG.map((grp, gi) => {
           const isOpen = openGroup === gi;
           const hasDat = groupHasData(grp);
-          const configuredCount = grp.fields.filter(f => (data[f.key] || []).length > 0).length;
+          const configCount = grp.fields.filter(f => (data[f.key] || []).length > 0).length;
           return (
-            <div key={gi} style={{
-              border: `1.5px solid ${isOpen ? "#f9a8d4" : hasDat ? "#fbcfe8" : "#e8edf5"}`,
-              borderRadius: 10, overflow: "hidden", transition: "border-color 0.2s",
-              gridColumn: isOpen ? "1 / -1" : "auto",  /* expand open group to full width */
-            }}>
-              {/* Group header */}
-              <div onClick={() => setOpenGroup(isOpen ? null : gi)} style={{
-                display: "flex", alignItems: "center", justifyContent: "space-between",
-                padding: "10px 14px", cursor: "pointer",
-                background: isOpen
-                  ? "linear-gradient(135deg,#fdf2f8,#fce7f3)"
-                  : hasDat ? "#fdf2f8" : "#fafafa",
-                transition: "background 0.15s",
-              }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <span style={{ fontSize: 16 }}>{grp.icon}</span>
-                  <span style={{ fontSize: 12.5, fontWeight: 700, color: "#be185d" }}>{grp.group}</span>
-                  {hasDat && !isOpen && (
-                    <span style={{ fontSize: 10, fontWeight: 700, padding: "1px 7px", borderRadius: 10, background: "#fce7f3", color: "#ec4899" }}>
-                      {configuredCount} set
-                    </span>
-                  )}
-                </div>
-                <span style={{ fontSize: 14, color: "#ec4899", fontWeight: 700, transform: isOpen ? "rotate(180deg)" : "none", display: "inline-block", transition: "transform 0.2s" }}>&#8964;</span>
+            <div key={gi}
+              onClick={() => setOpenGroup(isOpen ? null : gi)}
+              style={{
+                border: `1.5px solid ${isOpen ? "#f9a8d4" : hasDat ? "#fbcfe8" : "#e2e8f0"}`,
+                borderRadius: 10, cursor: "pointer",
+                background: isOpen ? "linear-gradient(135deg,#fdf2f8,#fce7f3)" : hasDat ? "#fdf9fb" : "#fafafa",
+                padding: "12px 14px", transition: "all 0.15s",
+                display: "flex", alignItems: "center", gap: 10
+              }}
+              onMouseEnter={e => { if (!isOpen) e.currentTarget.style.background="#fdf2f8"; }}
+              onMouseLeave={e => { if (!isOpen) e.currentTarget.style.background= hasDat ? "#fdf9fb" : "#fafafa"; }}
+            >
+              <span style={{ fontSize: 20, flexShrink: 0 }}>{grp.icon}</span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 12.5, fontWeight: 700, color: isOpen ? "#be185d" : hasDat ? "#be185d" : "#475569", lineHeight: 1.2 }}>{grp.group}</div>
+                {configCount > 0 && (
+                  <div style={{ fontSize: 10, color: "#ec4899", fontWeight: 600, marginTop: 2 }}>{configCount} configured</div>
+                )}
               </div>
-
-              {/* Expanded body — 2-col chip grid inside */}
-              {isOpen && (
-                <div style={{ padding: "14px 16px 16px", background: "#fff", borderTop: "1px solid #fce7f3" }}>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-                    {grp.fields.map(f => (
-                      <div key={f.key}>
-                        <div style={{ fontSize: 10.5, fontWeight: 700, color: "#be185d", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 7 }}>{f.label}</div>
-                        <ChipSelect options={f.options} selected={data[f.key] || []} onChange={val => update(f.key, val)} multi={f.multi} accentColor="#be185d" accentBg="#fdf2f8" accentBorder="#f9a8d4" />
-                      </div>
-                    ))}
-                  </div>
-                  {/* Other notes — last group only */}
-                  {gi === DOOR_CONFIG.length - 1 && (
-                    <div style={{ marginTop: 14, paddingTop: 12, borderTop: "1px solid #fce7f3" }}>
-                      <div style={{ fontSize: 10.5, fontWeight: 700, color: "#be185d", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 6 }}>Other Special Requirements</div>
-                      <textarea rows={2} placeholder="Describe any additional requirements..."
-                        value={data.otherRequirements || ""}
-                        onChange={e => update("otherRequirements", e.target.value)}
-                        style={{ width: "100%", fontSize: 12.5, padding: "7px 10px", borderRadius: 8, border: "1.5px solid #fce7f3", background: "#fdf2f8", color: "#1e3a5f", outline: "none", resize: "vertical", fontFamily: "inherit", lineHeight: 1.5, boxSizing: "border-box" }}
-                        onFocus={e => e.target.style.borderColor = "#f9a8d4"}
-                        onBlur={e => e.target.style.borderColor = "#fce7f3"} />
-                    </div>
-                  )}
-                </div>
-              )}
+              <span style={{ fontSize: 14, color: "#ec4899", fontWeight: 700, transform: isOpen ? "rotate(180deg)" : "none", transition: "transform 0.2s" }}>⌄</span>
             </div>
           );
         })}
       </div>
 
-      {/* Summary strip */}
-      {Object.keys(data).some(k => Array.isArray(data[k]) && data[k].length > 0) && (
-        <div style={{ marginTop: 10, padding: "8px 12px", background: "#fdf2f8", borderRadius: 8, border: "1px solid #fce7f3", display: "flex", flexWrap: "wrap", gap: 5, alignItems: "center" }}>
-          <span style={{ fontSize: 10, fontWeight: 700, color: "#be185d", textTransform: "uppercase", letterSpacing: "0.4px", marginRight: 4 }}>Selected:</span>
-          {DOOR_CONFIG.flatMap(grp => grp.fields).flatMap(f =>
-            (data[f.key] || []).map(v => (
-              <span key={f.key + v} style={{ fontSize: 10.5, padding: "2px 8px", borderRadius: 10, background: "#fce7f3", color: "#be185d", fontWeight: 600 }}>{v}</span>
-            ))
-          )}
+      {/* Expanded panel — full width below the grid */}
+      {openGroup !== null && (
+        <div style={{ border: "1.5px solid #f9a8d4", borderRadius: 10, background: "#fff", overflow: "hidden" }}>
+          <div style={{ padding: "12px 16px", background: "linear-gradient(135deg,#fdf2f8,#fce7f3)", borderBottom: "1px solid #fce7f3", display: "flex", alignItems: "center", gap: 10 }}>
+            <span style={{ fontSize: 18 }}>{DOOR_CONFIG[openGroup].icon}</span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: "#be185d" }}>{DOOR_CONFIG[openGroup].group}</span>
+          </div>
+          <div style={{ padding: "16px 18px", display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "14px 24px" }}>
+            {DOOR_CONFIG[openGroup].fields.map(f => (
+              <div key={f.key}>
+                <div style={{ fontSize: 10.5, fontWeight: 700, color: "#be185d", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 7 }}>{f.label}</div>
+                <ChipSelect options={f.options} selected={data[f.key] || []} onChange={val => update(f.key, val)} multi={f.multi} accentColor="#be185d" accentBg="#fdf2f8" accentBorder="#f9a8d4" />
+              </div>
+            ))}
+          </div>
+          <div style={{ padding: "12px 18px 14px", borderTop: "1px solid #fce7f3" }}>
+            <div style={{ fontSize: 10.5, fontWeight: 700, color: "#be185d", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 6 }}>Other Requirements</div>
+            <textarea rows={2} placeholder="Describe any additional door requirements not listed above..."
+              value={data.otherRequirements || ""}
+              onChange={e => update("otherRequirements", e.target.value)}
+              style={{ width: "100%", fontSize: 12.5, padding: "8px 10px", borderRadius: 8, border: "1.5px solid #fce7f3", background: "#fdf2f8", color: "#1e3a5f", outline: "none", resize: "vertical", fontFamily: "inherit", lineHeight: 1.5, boxSizing: "border-box" }}
+              onFocus={e => e.target.style.borderColor="#f9a8d4"} onBlur={e => e.target.style.borderColor="#fce7f3"} />
+          </div>
         </div>
       )}
-      <div style={{ marginTop: 6, fontSize: 10.5, color: "#94a3b8" }}>Click group to expand · open group spans full width</div>
+
+      {/* Summary */}
+      {totalConfigured > 0 && (
+        <div style={{ marginTop: 10, padding: "9px 14px", background: "#fdf2f8", borderRadius: 8, border: "1px solid #fce7f3" }}>
+          <div style={{ fontSize: 10, fontWeight: 700, color: "#be185d", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 5 }}>Door Specification</div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+            {DOOR_CONFIG.flatMap(g => g.fields).map(f =>
+              (data[f.key] || []).map(v => (
+                <span key={f.key + v} style={{ fontSize: 11, padding: "2px 9px", borderRadius: 4, background: "#fce7f3", color: "#be185d", fontWeight: 600 }}>{v}</span>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+      <div style={{ marginTop: 6, fontSize: 11, color: "#94a3b8" }}>Click a group card to expand · Click again to collapse</div>
     </div>
   );
 }
+
 
 // ─── WINDOW CONFIGURATION INPUT ─────────────────────────────
 function WindowConfigInput({ field, register, setValue, watch }) {
@@ -994,7 +869,7 @@ function WindowConfigInput({ field, register, setValue, watch }) {
   };
 
   return (
-    <div style={{ width: "100%", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+    <div style={{ width: "100%", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
       <input type="hidden" {...register(field.name)} />
       <div style={{ border: "1.5px solid #e0f2fe", borderRadius: 12, overflow: "hidden" }}>
         <div style={{ padding: "12px 16px", background: "linear-gradient(135deg, #0e7490 0%, #0891b2 100%)" }}>
@@ -1141,7 +1016,7 @@ function SanitaryGridInput({ field, register, setValue, watch }) {
                 {grp.items.filter(it => data[it.key]).length}/{grp.items.length} selected
               </span>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", background: "#fff" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", background: "#fff" }}>
               {grp.items.map((item) => {
                 const active = !!data[item.key];
                 return (
@@ -1171,116 +1046,6 @@ function SanitaryGridInput({ field, register, setValue, watch }) {
         ))}
       </div>
       <div style={{ marginTop: 8, fontSize: 11, color: "#94a3b8" }}>Click any fitting to toggle selection. All fields are optional.</div>
-    </div>
-  );
-}
-
-
-// ─── SAFETY MATRIX INPUT ─────────────────────────────────────
-// Each row = one parameter (e.g. Pressure Regime)
-// Each row has N option chips — user picks exactly one
-// Premium card-based layout with icon, label, selected chip highlighted
-
-const SAFETY_ROW_COLORS = [
-  { bg: "#eff6ff", border: "#bfdbfe", active: "#2563eb", activeText: "#fff", activeBorder: "#1d4ed8" },
-  { bg: "#fdf4ff", border: "#e9d5ff", active: "#9333ea", activeText: "#fff", activeBorder: "#7e22ce" },
-  { bg: "#fff7ed", border: "#fed7aa", active: "#ea580c", activeText: "#fff", activeBorder: "#c2410c" },
-  { bg: "#f0fdf4", border: "#bbf7d0", active: "#16a34a", activeText: "#fff", activeBorder: "#15803d" },
-  { bg: "#fef9c3", border: "#fde68a", active: "#d97706", activeText: "#fff", activeBorder: "#b45309" },
-  { bg: "#fff1f2", border: "#fecdd3", active: "#e11d48", activeText: "#fff", activeBorder: "#be123c" },
-  { bg: "#f0fdfa", border: "#99f6e4", active: "#0d9488", activeText: "#fff", activeBorder: "#0f766e" },
-];
-
-function SafetyMatrixInput({ field, register, setValue, watch }) {
-  const rows = field.rows || [];
-  const rawVal = watch?.(field.name) || "{}";
-  let data = {};
-  try { data = JSON.parse(rawVal); } catch { data = {}; }
-
-  const select = (rowKey, option) => {
-    const next = { ...data, [rowKey]: data[rowKey] === option ? "" : option };
-    setValue?.(field.name, JSON.stringify(next), { shouldDirty: true });
-  };
-
-  const filledCount = rows.filter(r => data[r.key] && data[r.key] !== "").length;
-
-  const isNA = (opt) => opt.startsWith("Not ") || opt === "Standard (R9)" ||
-    opt === "General (No Patient Contact)" || opt === "Standard (6 ACH)" ||
-    opt === "General Comfort (22–26°C)" || opt === "Open Access";
-
-  return (
-    <div style={{ width: "100%" }}>
-      <input type="hidden" {...register(field.name)} />
-
-      {/* Slim header */}
-      <div style={{
-        display: "flex", alignItems: "center", justifyContent: "space-between",
-        padding: "8px 14px",
-        background: "linear-gradient(135deg,#1e293b,#334155)",
-        borderRadius: "10px 10px 0 0",
-      }}>
-        <span style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.5px" }}>
-          Parameter &amp; Options
-        </span>
-        {filledCount > 0 && (
-          <span style={{ fontSize: 10.5, fontWeight: 700, padding: "2px 10px", borderRadius: 20, background: "#dc2626", color: "#fff" }}>
-            {filledCount}/{rows.length} specified
-          </span>
-        )}
-      </div>
-
-      {/* Full-width table rows */}
-      <div style={{ border: "1.5px solid #e2e8f0", borderTop: "none", borderRadius: "0 0 10px 10px", overflow: "hidden" }}>
-        {rows.map((row, ri) => {
-          const selected = data[row.key] || "";
-          return (
-            <div key={row.key} style={{
-              display: "grid", gridTemplateColumns: "190px 1fr",
-              borderTop: ri > 0 ? "1px solid #f1f5f9" : "none",
-              background: selected ? "#fff7f7" : ri % 2 === 0 ? "#fafafa" : "#fff",
-              borderLeft: selected ? "3px solid #dc2626" : "3px solid transparent",
-              transition: "all 0.12s",
-            }}>
-              {/* Label */}
-              <div style={{
-                display: "flex", alignItems: "center", gap: 7,
-                padding: "9px 12px", borderRight: "1px solid #f1f5f9",
-                background: selected ? "#fff0f0" : "transparent",
-              }}>
-                <span style={{ fontSize: 15, flexShrink: 0 }}>{row.icon}</span>
-                <span style={{ fontSize: 11.5, fontWeight: 600, color: selected ? "#dc2626" : "#374151", lineHeight: 1.3 }}>
-                  {row.label}
-                </span>
-              </div>
-
-              {/* Chips — full remaining width */}
-              <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 4, padding: "7px 10px" }}>
-                {row.options.map(opt => {
-                  const isActive = selected === opt;
-                  const isMuted = isNA(opt) && !isActive;
-                  return (
-                    <button key={opt} type="button" onClick={() => select(row.key, opt)} style={{
-                      padding: "3px 10px", borderRadius: 5, fontSize: 11,
-                      fontWeight: isActive ? 700 : 400,
-                      border: `1.5px solid ${isActive ? "#dc2626" : isMuted ? "#e2e8f0" : "#d1d5db"}`,
-                      background: isActive ? "#dc2626" : isMuted ? "#f8fafc" : "#fff",
-                      color: isActive ? "#fff" : isMuted ? "#94a3b8" : "#374151",
-                      cursor: "pointer", transition: "all 0.12s", whiteSpace: "nowrap",
-                      boxShadow: isActive ? "0 1px 4px rgba(220,38,38,0.25)" : "none",
-                    }}
-                      onMouseEnter={e => { if (!isActive) { e.currentTarget.style.borderColor = "#dc2626"; e.currentTarget.style.color = "#dc2626"; e.currentTarget.style.background = "#fff7f7"; }}}
-                      onMouseLeave={e => { if (!isActive) { e.currentTarget.style.borderColor = isMuted ? "#e2e8f0" : "#d1d5db"; e.currentTarget.style.color = isMuted ? "#94a3b8" : "#374151"; e.currentTarget.style.background = isMuted ? "#f8fafc" : "#fff"; }}}
-                    >
-                      {isActive ? "✓ " : ""}{opt}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-      <div style={{ marginTop: 5, fontSize: 10.5, color: "#94a3b8" }}>Click to select · click again to clear</div>
     </div>
   );
 }
@@ -1378,7 +1143,7 @@ function ConstructionMatrixInput({ field, register, setValue, watch }) {
                 <div style={{ background: "#f0f9ff", borderTop: "1px solid #bae6fd", padding: "16px 18px 18px" }}>
                   <div style={{
                     display: "grid",
-                    gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
+                    gridTemplateColumns: "repeat(3, 1fr)",
                     gap: "12px 16px"
                   }}>
                     {CM_COLUMNS.map(col => (
@@ -2030,6 +1795,89 @@ function ComputedInput({ field, register, setValue, watch }) {
   );
 }
 
+// ─── SAFETY MATRIX ─────────────────────────────────────────
+function SafetyMatrixInput({ field, register, setValue, watch }) {
+  const rows = field.rows || [];
+  const rawVal = watch?.(field.name) || "{}";
+  let data = {};
+  try { data = JSON.parse(rawVal); } catch { data = {}; }
+
+  const set = (rowKey, val) => {
+    const next = { ...data, [rowKey]: val };
+    setValue?.(field.name, JSON.stringify(next), { shouldDirty: true });
+  };
+
+  const configuredCount = rows.filter(r => data[r.key] && data[r.key] !== "").length;
+
+  return (
+    <div style={{ border: "1px solid #e2e8f0", borderRadius: 10, overflow: "hidden", background: "#fff", boxShadow: "0 1px 3px rgba(15,23,42,0.04)" }}>
+      <input type="hidden" {...register(field.name)} />
+
+      <div style={{ padding: "8px 14px", background: "#f8fafc", borderBottom: "1px solid #e2e8f0", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <span style={{ fontSize: 10, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.6px" }}>Parameter · Specification</span>
+        {configuredCount > 0 && (
+          <span style={{ background: "#fee2e2", color: "#991b1b", fontSize: 10, fontWeight: 700, padding: "2px 9px", borderRadius: 20, border: "1px solid #fecaca" }}>
+            {configuredCount}/{rows.length} set
+          </span>
+        )}
+      </div>
+
+      {rows.map((row, i) => {
+        const selected = data[row.key] || "";
+        const isSet = selected !== "";
+        return (
+          <div key={row.key} style={{
+            display: "flex", alignItems: "center",
+            borderBottom: i < rows.length - 1 ? "1px solid #f1f5f9" : "none",
+            background: isSet ? "#fffafa" : "#fff",
+            minHeight: 42,
+          }}>
+            {/* Label — fixed 210px */}
+            <div style={{ width: 210, flexShrink: 0, padding: "8px 12px", display: "flex", alignItems: "center", gap: 7, borderRight: "1px solid #f1f5f9", alignSelf: "stretch" }}>
+              <span style={{ fontSize: 13, flexShrink: 0 }}>{row.icon}</span>
+              <span style={{ fontSize: 11.5, fontWeight: isSet ? 600 : 400, color: isSet ? "#0f172a" : "#64748b", lineHeight: 1.3 }}>{row.label}</span>
+            </div>
+            {/* Chips — full remaining width, all horizontal */}
+            <div style={{ flex: 1, padding: "7px 12px", display: "flex", flexWrap: "wrap", gap: 5 }}>
+              {row.options.map(opt => {
+                const isSel = selected === opt;
+                const isNA = opt.startsWith("Not ") || opt === "Open Access";
+                return (
+                  <button key={opt} type="button" onClick={() => set(row.key, isSel ? "" : opt)}
+                    style={{
+                      padding: "3px 10px", borderRadius: 5, fontSize: 11, fontWeight: isSel ? 700 : 400,
+                      cursor: "pointer", transition: "all 0.12s", whiteSpace: "nowrap",
+                      border: isSel ? "1.5px solid #991b1b" : "1px solid #e2e8f0",
+                      background: isSel ? "#fee2e2" : "#f8fafc",
+                      color: isSel ? "#7f1d1d" : isNA ? "#94a3b8" : "#475569",
+                    }}
+                    onMouseEnter={e => { if (!isSel) { e.currentTarget.style.background="#f1f5f9"; e.currentTarget.style.borderColor="#cbd5e1"; e.currentTarget.style.color="#1e293b"; }}}
+                    onMouseLeave={e => { if (!isSel) { e.currentTarget.style.background="#f8fafc"; e.currentTarget.style.borderColor="#e2e8f0"; e.currentTarget.style.color=isNA?"#94a3b8":"#475569"; }}}
+                  >
+                    {isSel && <span style={{ marginRight: 3, fontSize: 9 }}>✓</span>}{opt}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
+
+      {configuredCount > 0 && (
+        <div style={{ padding: "7px 14px", background: "#f8fafc", borderTop: "1px solid #e2e8f0", display: "flex", flexWrap: "wrap", gap: 4, alignItems: "center" }}>
+          <span style={{ fontSize: 10, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.5px", marginRight: 4 }}>Set:</span>
+          {rows.filter(r => data[r.key] && data[r.key] !== "").map(r => (
+            <span key={r.key} style={{ background: "#fee2e2", border: "1px solid #fecaca", borderRadius: 4, padding: "2px 8px", fontSize: 10.5, fontWeight: 600, color: "#991b1b" }}>
+              {r.icon} {r.label}: <span style={{ fontWeight: 400 }}>{data[r.key]}</span>
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+
 // ─── MAIN RENDERER ─────────────────────────────────────────
 export default function FieldRenderer({ field, register, errors, setValue, watch }) {
   const err = errors?.[field.name];
@@ -2101,6 +1949,10 @@ export default function FieldRenderer({ field, register, errors, setValue, watch
         <YesNoInput field={field} register={register} setValue={setValue} watch={watch} />
       )}
 
+      {field.type === "safetymatrix" && (
+        <SafetyMatrixInput field={field} register={register} setValue={setValue} watch={watch} />
+      )}
+
       {field.type === "gasmatrix" && (
         <GasMatrixInput field={field} register={register} setValue={setValue} watch={watch} />
       )}
@@ -2111,10 +1963,6 @@ export default function FieldRenderer({ field, register, errors, setValue, watch
 
       {field.type === "elvmatrix" && (
         <ELVMatrixInput field={field} register={register} setValue={setValue} watch={watch} />
-      )}
-
-      {field.type === "safetymatrix" && (
-        <SafetyMatrixInput field={field} register={register} setValue={setValue} watch={watch} />
       )}
 
       {field.type === "constructionmatrix" && (
