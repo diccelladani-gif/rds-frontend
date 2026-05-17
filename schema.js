@@ -715,7 +715,7 @@ export const rdsSchema = [
             type: "number",
             placeholder: "e.g. 15",
             required: false,
-            colSpan: 2
+            colSpan: 1
           },
           {
             name: "normalPower",
@@ -723,7 +723,7 @@ export const rdsSchema = [
             type: "text",
             placeholder: "e.g. 230V / 50Hz, 3-phase",
             required: false,
-            colSpan: 2
+            colSpan: 1
           },
           {
             name: "emergencyPower",
@@ -731,14 +731,14 @@ export const rdsSchema = [
             type: "text",
             placeholder: "e.g. Gen-set auto-changeover within 10s",
             required: false,
-            colSpan: 2
+            colSpan: 1
           },
           {
             name: "ups",
             label: "UPS Required",
             type: "yesno",
             required: false,
-            colSpan: 2
+            colSpan: 1
           },
           {
             name: "numberOfSockets",
@@ -746,7 +746,7 @@ export const rdsSchema = [
             type: "number",
             placeholder: "e.g. 12",
             required: false,
-            colSpan: 2
+            colSpan: 1
           },
           {
             name: "specialOutlets",
@@ -754,21 +754,23 @@ export const rdsSchema = [
             type: "text",
             placeholder: "e.g. IEC 60601 medical-grade, 5-pin 16A",
             required: false,
-            colSpan: 2
+            colSpan: 3
           },
           {
             name: "ssoMatrix",
             label: "6/16A Switch Socket Outlets (SSO) — by Location & Source",
             type: "ssomatrix",
             required: false,
-            colSpan: 4
+            colSpan: 4,
+            sideBySide: true
           },
           {
             name: "isolatorMatrix",
             label: "Power Isolators — Location, Source & Rating Schedule",
             type: "isolatormatrix",
             required: false,
-            colSpan: 4
+            colSpan: 4,
+            sideBySide: true
           }
         ]
       },

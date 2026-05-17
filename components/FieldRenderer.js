@@ -1902,9 +1902,7 @@ export default function FieldRenderer({ field, register, errors, setValue, watch
         />
       )}
 
-      {field.type === "number" && field.colSpan === 1 ? (
-        <QtyInput field={field} register={register} setValue={setValue} watch={watch} />
-      ) : field.type === "number" ? (
+      {field.type === "number" && (
         <input
           type="number"
           className={`rds-input ${baseClass}`}
@@ -1914,7 +1912,7 @@ export default function FieldRenderer({ field, register, errors, setValue, watch
             valueAsNumber: true
           })}
         />
-      ) : null}
+      )}
 
       {field.type === "textarea" && (
         <textarea
