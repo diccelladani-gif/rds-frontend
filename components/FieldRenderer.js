@@ -1158,6 +1158,119 @@ function SanitaryGridInput({ field, register, setValue, watch }) {
   );
 }
 
+
+// ─── SAFETY MATRIX INPUT ─────────────────────────────────────
+// Each row = one parameter (e.g. Pressure Regime)
+// Each row has N option chips — user picks exactly one
+// Premium card-based layout with icon, label, selected chip highlighted
+
+const SAFETY_ROW_COLORS = [
+  { bg: "#eff6ff", border: "#bfdbfe", active: "#2563eb", activeText: "#fff", activeBorder: "#1d4ed8" },
+  { bg: "#fdf4ff", border: "#e9d5ff", active: "#9333ea", activeText: "#fff", activeBorder: "#7e22ce" },
+  { bg: "#fff7ed", border: "#fed7aa", active: "#ea580c", activeText: "#fff", activeBorder: "#c2410c" },
+  { bg: "#f0fdf4", border: "#bbf7d0", active: "#16a34a", activeText: "#fff", activeBorder: "#15803d" },
+  { bg: "#fef9c3", border: "#fde68a", active: "#d97706", activeText: "#fff", activeBorder: "#b45309" },
+  { bg: "#fff1f2", border: "#fecdd3", active: "#e11d48", activeText: "#fff", activeBorder: "#be123c" },
+  { bg: "#f0fdfa", border: "#99f6e4", active: "#0d9488", activeText: "#fff", activeBorder: "#0f766e" },
+];
+
+function SafetyMatrixInput({ field, register, setValue, watch }) {
+  const rows = field.rows || [];
+  const rawVal = watch?.(field.name) || "{}";
+  let data = {};
+  try { data = JSON.parse(rawVal); } catch { data = {}; }
+
+  const select = (rowKey, option) => {
+    const current = data[rowKey];
+    const next = { ...data, [rowKey]: current === option ? "" : option };
+    setValue?.(field.name, JSON.stringify(next), { shouldDirty: true });
+  };
+
+  const filledCount = rows.filter(r => data[r.key] && data[r.key] !== "").length;
+
+  return (
+    <div style={{ width: "100%" }}>
+      <input type="hidden" {...register(field.name)} />
+
+      {/* Progress strip */}
+      {filledCount > 0 && (
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+          <div style={{ flex: 1, height: 4, borderRadius: 4, background: "#f1f5f9", overflow: "hidden" }}>
+            <div style={{ height: "100%", borderRadius: 4, background: "linear-gradient(90deg, #6366f1, #8b5cf6)", width: `${(filledCount / rows.length) * 100}%`, transition: "width 0.3s" }} />
+          </div>
+          <span style={{ fontSize: 11, color: "#6366f1", fontWeight: 700, whiteSpace: "nowrap" }}>
+            {filledCount}/{rows.length} specified
+          </span>
+        </div>
+      )}
+
+      {/* Parameter rows */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        {rows.map((row, ri) => {
+          const selected = data[row.key] || "";
+          const clr = SAFETY_ROW_COLORS[ri % SAFETY_ROW_COLORS.length];
+          const isFirst = row.options[0];
+          const isNAorNR = (opt) => opt.startsWith("Not ") || opt === "Standard (R9)" || opt === "General (No Patient Contact)" || opt === "Standard (6 ACH)" || opt === "General Comfort (22–26°C)" || opt === "Open Access";
+
+          return (
+            <div key={row.key} style={{
+              background: selected ? clr.bg : "#fafafa",
+              border: `1.5px solid ${selected ? clr.border : "#e2e8f0"}`,
+              borderRadius: 12, padding: "12px 14px",
+              transition: "all 0.15s",
+            }}>
+              {/* Row header */}
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                <span style={{ fontSize: 17, lineHeight: 1 }}>{row.icon}</span>
+                <span style={{ fontSize: 12.5, fontWeight: 700, color: selected ? clr.active : "#374151", letterSpacing: "0.1px" }}>
+                  {row.label}
+                </span>
+                {selected && (
+                  <span style={{
+                    marginLeft: "auto", fontSize: 10.5, fontWeight: 700,
+                    padding: "2px 10px", borderRadius: 20,
+                    background: clr.active, color: clr.activeText,
+                  }}>
+                    {selected}
+                  </span>
+                )}
+              </div>
+
+              {/* Option chips */}
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                {row.options.map(opt => {
+                  const isActive = selected === opt;
+                  const isMuted = isNAorNR(opt) && !isActive;
+                  return (
+                    <button key={opt} type="button" onClick={() => select(row.key, opt)} style={{
+                      padding: "5px 13px", borderRadius: 20, fontSize: 11.5,
+                      fontWeight: isActive ? 700 : 500,
+                      border: `1.5px solid ${isActive ? clr.activeBorder : isMuted ? "#e2e8f0" : "#d1d5db"}`,
+                      background: isActive ? clr.active : isMuted ? "#f8fafc" : "#fff",
+                      color: isActive ? clr.activeText : isMuted ? "#94a3b8" : "#374151",
+                      cursor: "pointer", transition: "all 0.15s", whiteSpace: "nowrap",
+                      boxShadow: isActive ? `0 1px 6px ${clr.active}40` : "none",
+                    }}
+                      onMouseEnter={e => { if (!isActive) { e.currentTarget.style.borderColor = clr.activeBorder; e.currentTarget.style.color = clr.active; } }}
+                      onMouseLeave={e => { if (!isActive) { e.currentTarget.style.borderColor = isMuted ? "#e2e8f0" : "#d1d5db"; e.currentTarget.style.color = isMuted ? "#94a3b8" : "#374151"; } }}
+                    >
+                      {isActive && <span style={{ marginRight: 4 }}>&#10003;</span>}{opt}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div style={{ marginTop: 10, fontSize: 11, color: "#94a3b8" }}>
+        Click an option to select. Click again to deselect. All parameters are optional.
+      </div>
+    </div>
+  );
+}
+
 function ConstructionMatrixInput({ field, register, setValue, watch }) {
   const elements = field.elements || [];
   const rawVal = watch?.(field.name) || "{}";
@@ -1903,132 +2016,6 @@ function ComputedInput({ field, register, setValue, watch }) {
   );
 }
 
-// ─── SAFETY MATRIX ─────────────────────────────────────────
-// Colour palette per subsection theme — used only for the selected chip & row accent
-const SAFETY_THEME = {
-  red:    { badge: "#991b1b", bg: "#fef2f2", border: "#fecaca", chip: "#fee2e2", text: "#7f1d1d" },
-  slate:  { badge: "#1e293b", bg: "#f8fafc", border: "#e2e8f0", chip: "#f1f5f9", text: "#334155" },
-};
-
-function SafetyMatrixInput({ field, register, setValue, watch }) {
-  const rows = field.rows || [];
-  const rawVal = watch?.(field.name) || "{}";
-  let data = {};
-  try { data = JSON.parse(rawVal); } catch { data = {}; }
-
-  const set = (rowKey, val) => {
-    const next = { ...data, [rowKey]: val };
-    setValue?.(field.name, JSON.stringify(next), { shouldDirty: true });
-  };
-
-  const configuredCount = rows.filter(r => data[r.key] && data[r.key] !== "").length;
-
-  return (
-    <div style={{ border: "1px solid #e2e8f0", borderRadius: 10, overflow: "hidden", background: "#fff", boxShadow: "0 1px 4px rgba(15,23,42,0.05)" }}>
-      <input type="hidden" {...register(field.name)} />
-
-      {/* Column header */}
-      <div style={{ display: "grid", gridTemplateColumns: "220px 1fr", background: "#f8fafc", borderBottom: "1px solid #e2e8f0", alignItems: "center" }}>
-        <div style={{ padding: "9px 14px", fontSize: 10, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.6px" }}>
-          Parameter
-        </div>
-        <div style={{ padding: "9px 14px", fontSize: 10, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.6px", borderLeft: "1px solid #e8edf5" }}>
-          Specification
-          {configuredCount > 0 && (
-            <span style={{ marginLeft: 10, background: "#f1f5f9", color: "#475569", fontSize: 10, fontWeight: 600, padding: "2px 8px", borderRadius: 20, border: "1px solid #e2e8f0", textTransform: "none", letterSpacing: 0 }}>
-              {configuredCount}/{rows.length} set
-            </span>
-          )}
-        </div>
-      </div>
-
-      {/* Rows */}
-      {rows.map((row, i) => {
-        const selected = data[row.key] || "";
-        const isSet = selected !== "";
-        return (
-          <div key={row.key} style={{
-            display: "grid",
-            gridTemplateColumns: "220px 1fr",
-            borderBottom: i < rows.length - 1 ? "1px solid #f1f5f9" : "none",
-            background: isSet ? "#fafbfe" : "#fff",
-            transition: "background 0.15s",
-          }}>
-            {/* Parameter label */}
-            <div style={{ padding: "11px 14px", display: "flex", alignItems: "center", gap: 9, borderRight: "1px solid #f1f5f9" }}>
-              <span style={{
-                flexShrink: 0, width: 26, height: 26, borderRadius: 6,
-                background: isSet ? "#fee2e2" : "#f1f5f9",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: 13, transition: "all 0.2s"
-              }}>{row.icon}</span>
-              <span style={{ fontSize: 12, fontWeight: isSet ? 600 : 400, color: isSet ? "#0f172a" : "#64748b", lineHeight: 1.3, transition: "all 0.15s" }}>
-                {row.label}
-              </span>
-            </div>
-
-            {/* Option chips */}
-            <div style={{ padding: "9px 12px", display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center", borderLeft: "1px solid #f1f5f9" }}>
-              {row.options.map(opt => {
-                const isSelected = selected === opt;
-                const isNA = opt.startsWith("Not ") || opt === "Open Access" || opt.startsWith("General (");
-                return (
-                  <button
-                    key={opt}
-                    type="button"
-                    onClick={() => set(row.key, isSelected ? "" : opt)}
-                    style={{
-                      padding: "4px 11px",
-                      borderRadius: 6,
-                      fontSize: 11.5,
-                      fontWeight: isSelected ? 700 : 400,
-                      cursor: "pointer",
-                      transition: "all 0.15s",
-                      border: isSelected
-                        ? "1.5px solid #991b1b"
-                        : "1px solid #e2e8f0",
-                      background: isSelected
-                        ? "#fee2e2"
-                        : "#f8fafc",
-                      color: isSelected
-                        ? "#7f1d1d"
-                        : isNA ? "#94a3b8" : "#475569",
-                      letterSpacing: "0.1px",
-                      lineHeight: 1.4,
-                      textAlign: "left",
-                    }}
-                    onMouseEnter={e => { if (!isSelected) { e.currentTarget.style.background = "#f1f5f9"; e.currentTarget.style.borderColor = "#cbd5e1"; e.currentTarget.style.color = "#1e293b"; } }}
-                    onMouseLeave={e => { if (!isSelected) { e.currentTarget.style.background = "#f8fafc"; e.currentTarget.style.borderColor = "#e2e8f0"; e.currentTarget.style.color = isNA ? "#94a3b8" : "#475569"; } }}
-                  >
-                    {isSelected && <span style={{ marginRight: 4, fontSize: 10 }}>✓</span>}
-                    {opt}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        );
-      })}
-
-      {/* Summary footer */}
-      {configuredCount > 0 && (
-        <div style={{ padding: "10px 14px", background: "#f8fafc", borderTop: "1px solid #e2e8f0" }}>
-          <div style={{ fontSize: 10, fontWeight: 700, color: "#94a3b8", letterSpacing: "0.6px", textTransform: "uppercase", marginBottom: 7 }}>Configured</div>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
-            {rows.filter(r => data[r.key] && data[r.key] !== "").map(r => (
-              <span key={r.key} style={{ background: "#fee2e2", border: "1px solid #fecaca", borderRadius: 5, padding: "3px 9px", fontSize: 11, fontWeight: 600, color: "#991b1b", display: "inline-flex", alignItems: "center", gap: 5 }}>
-                <span style={{ opacity: 0.7, fontSize: 11 }}>{r.icon}</span>
-                <span style={{ color: "#64748b", fontWeight: 400 }}>{r.label}:</span>
-                {data[r.key]}
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
 // ─── MAIN RENDERER ─────────────────────────────────────────
 export default function FieldRenderer({ field, register, errors, setValue, watch }) {
   const err = errors?.[field.name];
@@ -2100,10 +2087,6 @@ export default function FieldRenderer({ field, register, errors, setValue, watch
         <YesNoInput field={field} register={register} setValue={setValue} watch={watch} />
       )}
 
-      {field.type === "safetymatrix" && (
-        <SafetyMatrixInput field={field} register={register} setValue={setValue} watch={watch} />
-      )}
-
       {field.type === "gasmatrix" && (
         <GasMatrixInput field={field} register={register} setValue={setValue} watch={watch} />
       )}
@@ -2114,6 +2097,10 @@ export default function FieldRenderer({ field, register, errors, setValue, watch
 
       {field.type === "elvmatrix" && (
         <ELVMatrixInput field={field} register={register} setValue={setValue} watch={watch} />
+      )}
+
+      {field.type === "safetymatrix" && (
+        <SafetyMatrixInput field={field} register={register} setValue={setValue} watch={watch} />
       )}
 
       {field.type === "constructionmatrix" && (
