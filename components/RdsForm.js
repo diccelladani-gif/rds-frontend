@@ -1,7 +1,7 @@
 "use client";
 
 import { useForm, useWatch } from "react-hook-form";
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { rdsSchema } from "../schema";
 import SectionCard from "./SectionCard";
@@ -11,12 +11,8 @@ import SuccessOverlay from "./SuccessOverlay";
 
 const DRAFT_KEY = "rds_draft_v2";
 const API = process.env.NEXT_PUBLIC_API_URL || "";
-const GROQ_API_KEY = process.env.NEXT_PUBLIC_GROQ_API_KEY || "";
-const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
-const GROQ_MODEL = "llama3-70b-8192";
 
 if (!API) console.error("API URL missing");
-if (!GROQ_API_KEY) console.warn("GROQ_API_KEY missing — AI suggestions disabled");
 
 const sectionDesc = {
   "Room identity and General Information":          "Basic identification and classification of this room",
@@ -32,96 +28,6 @@ const sectionDesc = {
   "fittings-fixtures-and-equipment":                "Fixed/loose furniture, and clinical equipment & services",
 };
 
-// ─── Extract all select + yesno fields from schema for Groq prompt ──────────
-function buildFieldsManifest() {
-  const manifest = [];
-  for (const section of rdsSchema) {
-    const allFields = section.subsections
-      ? section.subsections.flatMap(s => s.fields)
-      : (section.fields || []);
-    for (const f of allFields) {
-      if (f.type === "select" && f.options?.length) {
-        manifest.push({ name: f.name, label: f.label, type: "select", options: f.options });
-      } else if (f.type === "yesno") {
-        manifest.push({ name: f.name, label: f.label, type: "yesno", options: ["yes", "no"] });
-      } else if (f.type === "number") {
-        manifest.push({ name: f.name, label: f.label, type: "number" });
-      }
-    }
-  }
-  return manifest;
-}
-
-const FIELDS_MANIFEST = buildFieldsManifest();
-
-// ─── Call Groq to get recommendations ───────────────────────────────────────
-async function fetchGroqRecommendations(roomName, department, category) {
-  if (!GROQ_API_KEY) return null;
-
-  const fieldsJson = JSON.stringify(
-    FIELDS_MANIFEST.map(f => ({
-      name: f.name,
-      label: f.label,
-      ...(f.options ? { options: f.options } : {}),
-      ...(f.type === "number" ? { type: "number" } : {}),
-    })),
-    null, 2
-  );
-
-  const prompt = `You are an expert healthcare facility planner with deep knowledge of hospital design standards (HTM, HBN, ASHRAE, FGI Guidelines).
-
-A user is configuring a Room Data Sheet for:
-- Room Name: ${roomName}
-- Department: ${department || "Not specified"}
-- Category: ${category || "Not specified"}
-
-Based on this room type, recommend the best value for each field below. Return ONLY a valid JSON object — no explanation, no markdown, no extra text.
-
-Rules:
-- For "select" fields: the value MUST be exactly one of the listed options (copy it verbatim)
-- For "yesno" fields: value must be exactly "yes" or "no"
-- For "number" fields: provide a realistic numeric value as a number
-- If you are unsure about a field, omit it from the response
-- Only include fields where you have high confidence in the recommendation
-
-Fields:
-${fieldsJson}
-
-Respond with ONLY this JSON structure (no code block, no explanation):
-{
-  "recommendations": {
-    "fieldName": "recommended value",
-    ...
-  },
-  "reasons": {
-    "fieldName": "one-line clinical reason why",
-    ...
-  }
-}`;
-
-  const response = await axios.post(
-    GROQ_URL,
-    {
-      model: GROQ_MODEL,
-      messages: [{ role: "user", content: prompt }],
-      temperature: 0.2,
-      max_tokens: 3000,
-    },
-    {
-      headers: {
-        Authorization: `Bearer ${GROQ_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-    }
-  );
-
-  const raw = response.data.choices[0].message.content.trim();
-  // Strip any accidental markdown fences
-  const cleaned = raw.replace(/^```json\n?/, "").replace(/^```\n?/, "").replace(/\n?```$/, "");
-  return JSON.parse(cleaned);
-}
-
-// ─── Toast hook ──────────────────────────────────────────────────────────────
 function useToast() {
   const [toasts, setToasts] = useState([]);
   const addToast = (msg, type = "success") => {
@@ -132,100 +38,7 @@ function useToast() {
   return { toasts, addToast };
 }
 
-// ─── AI Suggestion Banner ────────────────────────────────────────────────────
-function AiBanner({ status, count, onApply, onDismiss, roomName }) {
-  if (status === "idle") return null;
-
-  if (status === "loading") return (
-    <div style={{
-      display: "flex", alignItems: "center", gap: 12,
-      padding: "13px 18px", marginBottom: 16,
-      background: "#f5f3ff", border: "1.5px solid #c4b5fd",
-      borderRadius: 12,
-    }}>
-      <div style={{
-        width: 18, height: 18, borderRadius: "50%",
-        border: "2.5px solid #c4b5fd", borderTopColor: "#7c3aed",
-        animation: "rds-spin 0.7s linear infinite", flexShrink: 0,
-      }} />
-      <span style={{ fontSize: 13, color: "#5b21b6", fontWeight: 500 }}>
-        Analysing <strong>{roomName}</strong> — fetching AI recommendations…
-      </span>
-    </div>
-  );
-
-  if (status === "error") return (
-    <div style={{
-      display: "flex", alignItems: "center", gap: 10,
-      padding: "12px 16px", marginBottom: 16,
-      background: "#fff1f2", border: "1.5px solid #fecdd3", borderRadius: 12,
-    }}>
-      <span style={{ fontSize: 16 }}>⚠️</span>
-      <span style={{ fontSize: 12.5, color: "#be123c" }}>
-        AI suggestions unavailable — check your Groq API key in .env
-      </span>
-      <button onClick={onDismiss} style={{ marginLeft: "auto", background: "none", border: "none", cursor: "pointer", color: "#be123c", fontSize: 18, lineHeight: 1 }}>×</button>
-    </div>
-  );
-
-  if (status === "ready") return (
-    <div style={{
-      padding: "14px 18px", marginBottom: 16,
-      background: "linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%)",
-      border: "1.5px solid #a78bfa", borderRadius: 12,
-    }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
-        <span style={{ fontSize: 18 }}>✦</span>
-        <div style={{ flex: 1 }}>
-          <span style={{ fontSize: 13, fontWeight: 700, color: "#4c1d95" }}>
-            AI found {count} recommendations for <em>{roomName}</em>
-          </span>
-          <span style={{ fontSize: 11.5, color: "#6d28d9", marginLeft: 6 }}>
-            — powered by Groq · Llama 3 70B
-          </span>
-        </div>
-        <button onClick={onDismiss} style={{ background: "none", border: "none", cursor: "pointer", color: "#7c3aed", fontSize: 20, lineHeight: 1, padding: 0 }}>×</button>
-      </div>
-      <div style={{ display: "flex", gap: 8 }}>
-        <button onClick={onApply} style={{
-          padding: "8px 18px", borderRadius: 8, fontSize: 12.5, fontWeight: 700,
-          background: "#7c3aed", color: "#fff", border: "none", cursor: "pointer",
-          transition: "background 0.15s",
-        }}
-          onMouseEnter={e => e.currentTarget.style.background = "#6d28d9"}
-          onMouseLeave={e => e.currentTarget.style.background = "#7c3aed"}
-        >
-          ✓ Apply All Suggestions
-        </button>
-        <button onClick={onDismiss} style={{
-          padding: "8px 16px", borderRadius: 8, fontSize: 12.5, fontWeight: 600,
-          background: "#ede9fe", color: "#5b21b6", border: "1px solid #c4b5fd", cursor: "pointer",
-        }}>
-          Dismiss
-        </button>
-      </div>
-    </div>
-  );
-
-  if (status === "applied") return (
-    <div style={{
-      display: "flex", alignItems: "center", gap: 10,
-      padding: "11px 16px", marginBottom: 16,
-      background: "#f0fdf4", border: "1.5px solid #86efac", borderRadius: 12,
-    }}>
-      <span style={{ fontSize: 15 }}>✅</span>
-      <span style={{ fontSize: 13, color: "#15803d", fontWeight: 500 }}>
-        {count} AI suggestions applied — you can override any field freely
-      </span>
-      <button onClick={onDismiss} style={{ marginLeft: "auto", background: "none", border: "none", cursor: "pointer", color: "#15803d", fontSize: 18, lineHeight: 1 }}>×</button>
-    </div>
-  );
-
-  return null;
-}
-
-// ─── SectionFields renderer ──────────────────────────────────────────────────
-function SectionFields({ section, register, errors, setValue, watch, aiReasons }) {
+function SectionFields({ section, register, errors, setValue, watch }) {
   if (section.subsections) {
     return (
       <>
@@ -234,15 +47,8 @@ function SectionFields({ section, register, errors, setValue, watch, aiReasons }
             <div className="rds-subsection-title">{sub.title}</div>
             <div className="form-grid">
               {sub.fields.map(field => (
-                <FieldRendererWithBadge
-                  key={field.name}
-                  field={field}
-                  register={register}
-                  errors={errors}
-                  setValue={setValue}
-                  watch={watch}
-                  aiReason={aiReasons?.[field.name]}
-                />
+                <FieldRenderer key={field.name} field={field}
+                  register={register} errors={errors} setValue={setValue} watch={watch} />
               ))}
             </div>
           </div>
@@ -252,73 +58,18 @@ function SectionFields({ section, register, errors, setValue, watch, aiReasons }
   }
   return (
     <div className="form-grid">
-      {(section.fields || []).map(field => (
-        <FieldRendererWithBadge
-          key={field.name}
-          field={field}
-          register={register}
-          errors={errors}
-          setValue={setValue}
-          watch={watch}
-          aiReason={aiReasons?.[field.name]}
-        />
+      {section.fields.map(field => (
+        <FieldRenderer key={field.name} field={field}
+          register={register} errors={errors} setValue={setValue} watch={watch} />
       ))}
     </div>
   );
 }
 
-// ─── Wraps FieldRenderer with AI badge + tooltip ─────────────────────────────
-function FieldRendererWithBadge({ field, register, errors, setValue, watch, aiReason }) {
-  const [showTip, setShowTip] = useState(false);
-  return (
-    <div style={{ position: "relative" }}>
-      <FieldRenderer
-        field={field}
-        register={register}
-        errors={errors}
-        setValue={setValue}
-        watch={watch}
-      />
-      {aiReason && (
-        <div style={{ position: "absolute", top: 2, right: 2, zIndex: 10 }}>
-          <div
-            onMouseEnter={() => setShowTip(true)}
-            onMouseLeave={() => setShowTip(false)}
-            style={{
-              display: "inline-flex", alignItems: "center", gap: 3,
-              padding: "2px 7px", borderRadius: 10,
-              background: "#ede9fe", border: "1px solid #c4b5fd",
-              cursor: "help", fontSize: 10, fontWeight: 700, color: "#6d28d9",
-              userSelect: "none",
-            }}
-          >
-            ✦ AI
-          </div>
-          {showTip && (
-            <div style={{
-              position: "absolute", right: 0, top: "100%", marginTop: 4,
-              background: "#1e1b4b", color: "#e0e7ff",
-              borderRadius: 8, padding: "8px 12px",
-              fontSize: 11.5, lineHeight: 1.5, width: 220,
-              boxShadow: "0 4px 20px rgba(0,0,0,0.25)",
-              zIndex: 100, pointerEvents: "none",
-            }}>
-              <div style={{ fontWeight: 700, marginBottom: 3, color: "#a5b4fc" }}>Why AI suggested this:</div>
-              {aiReason}
-              <div style={{
-                position: "absolute", right: 10, top: -5,
-                width: 10, height: 10, background: "#1e1b4b",
-                transform: "rotate(45deg)",
-              }} />
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ─── Main form ───────────────────────────────────────────────────────────────
+// ─── Main form — accepts optional editRecord prop ──────────────────────────
+// editRecord shape: { id: string, data: object }
+// When editRecord is provided the form pre-fills all fields and resubmits as
+// a PUT /data/:id (update) instead of POST /save (new).
 export default function RdsForm({ onSectionChange, jumpToSection, editRecord, onEditDone }) {
   const [currentIdx,        setCurrentIdx]        = useState(0);
   const [completedSections, setCompletedSections] = useState(new Set());
@@ -326,109 +77,47 @@ export default function RdsForm({ onSectionChange, jumpToSection, editRecord, on
   const [lastSaved,         setLastSaved]         = useState(null);
   const [roomImage,         setRoomImage]         = useState(null);
   const [showSuccess,       setShowSuccess]       = useState(false);
-  const [submittedRoom,     setSubmittedRoom]     = useState({ code: "", name: "" });
+  const [submittedRoom,     setSubmittedRoom]     = useState({ code:"", name:"" });
   const [isEditMode,        setIsEditMode]        = useState(false);
   const [editId,            setEditId]            = useState(null);
-
-  // ── AI state ────────────────────────────────────────────────────────────────
-  const [aiStatus,      setAiStatus]      = useState("idle"); // idle | loading | ready | applied | error
-  const [aiData,        setAiData]        = useState(null);   // { recommendations, reasons }
-  const [aiReasons,     setAiReasons]     = useState({});     // active reasons shown on fields
-  const lastRoomRef = useRef("");                              // avoid duplicate calls
-
   const { toasts, addToast } = useToast();
 
   const {
     register, handleSubmit, setValue, watch, trigger, getValues, reset,
     formState: { errors, isDirty: formIsDirty },
-  } = useForm({ mode: "onBlur" });
+  } = useForm({ mode:"onBlur" });
 
   const currentSection = rdsSchema[currentIdx];
 
-  // ── Watch room identity fields to trigger AI ────────────────────────────────
-  const watchedRoomName   = watch("roomName");
-  const watchedDepartment = watch("department");
-  const watchedCategory   = watch("category");
-
-  // ── Trigger Groq when roomName is filled in section 0 ──────────────────────
-  useEffect(() => {
-    if (!watchedRoomName || watchedRoomName.trim().length < 3) return;
-    if (watchedRoomName === lastRoomRef.current) return;
-    if (isEditMode) return;
-
-    const timer = setTimeout(async () => {
-      lastRoomRef.current = watchedRoomName;
-      setAiStatus("loading");
-      setAiData(null);
-      setAiReasons({});
-      try {
-        const result = await fetchGroqRecommendations(
-          watchedRoomName,
-          watchedDepartment,
-          watchedCategory
-        );
-        if (result?.recommendations) {
-          setAiData(result);
-          setAiStatus("ready");
-        } else {
-          setAiStatus("idle");
-        }
-      } catch (err) {
-        console.error("Groq error:", err?.response?.data || err.message);
-        setAiStatus("error");
-      }
-    }, 1200); // 1.2s debounce after user stops typing
-
-    return () => clearTimeout(timer);
-  }, [watchedRoomName, watchedDepartment, watchedCategory, isEditMode]);
-
-  // ── Apply all AI recommendations ───────────────────────────────────────────
-  const handleApplyAi = useCallback(() => {
-    if (!aiData?.recommendations) return;
-    const { recommendations, reasons } = aiData;
-    let count = 0;
-    Object.entries(recommendations).forEach(([fieldName, value]) => {
-      if (value !== undefined && value !== null && value !== "") {
-        setValue(fieldName, value, { shouldDirty: true, shouldValidate: false });
-        count++;
-      }
-    });
-    setAiReasons(reasons || {});
-    setAiStatus("applied");
-    addToast(`✦ ${count} AI suggestions applied across all sections`, "success");
-  }, [aiData, setValue, addToast]);
-
-  const handleDismissAi = () => {
-    setAiStatus("idle");
-    setAiReasons({});
-  };
-
-  // ── Sync sidebar jump ───────────────────────────────────────────────────────
+  // ── Sync sidebar jump ──────────────────────────────────────────────────────
   useEffect(() => {
     if (jumpToSection && typeof jumpToSection.idx === "number") {
       setCurrentIdx(jumpToSection.idx);
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      window.scrollTo({ top:0, behavior:"smooth" });
     }
   }, [jumpToSection]);
 
-  // ── Load edit record ────────────────────────────────────────────────────────
+  // ── Load edit record when provided ────────────────────────────────────────
   useEffect(() => {
     if (editRecord && editRecord.id && editRecord.data) {
+      // Clear any draft first
       localStorage.removeItem(DRAFT_KEY);
+      // Reset form with existing data
       reset(editRecord.data);
+      // Mark all sections as completed since we have full data
       setCompletedSections(new Set(rdsSchema.map(s => s.id)));
       setIsEditMode(true);
       setEditId(editRecord.id);
       setCurrentIdx(0);
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      window.scrollTo({ top:0, behavior:"smooth" });
       addToast("Room data loaded — make your changes and resubmit", "success");
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editRecord]);
 
-  // ── Restore draft (only when NOT editing) ──────────────────────────────────
+  // ── Restore draft (only when NOT editing) ─────────────────────────────────
   useEffect(() => {
-    if (editRecord) return;
+    if (editRecord) return; // skip draft restore in edit mode
     try {
       const saved = localStorage.getItem(DRAFT_KEY);
       if (saved) {
@@ -443,7 +132,7 @@ export default function RdsForm({ onSectionChange, jumpToSection, editRecord, on
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ── Auto-save draft every 30s ───────────────────────────────────────────────
+  // ── Auto-save draft every 30s ──────────────────────────────────────────────
   useEffect(() => {
     if (!formIsDirty || isEditMode) return;
     const timer = setTimeout(() => saveDraft(true), 30000);
@@ -452,6 +141,7 @@ export default function RdsForm({ onSectionChange, jumpToSection, editRecord, on
 
   const watchedValues = watch();
 
+  // Count sections with at least one filled field
   const filledSectionsCount = rdsSchema.filter(section => {
     const allNames = section.subsections
       ? section.subsections.flatMap(s => s.fields.map(f => f.name))
@@ -480,7 +170,7 @@ export default function RdsForm({ onSectionChange, jumpToSection, editRecord, on
 
   const getSectionFieldNames = (section) => {
     if (section.subsections) return section.subsections.flatMap(s => s.fields.map(f => f.name));
-    return (section.fields || []).map(f => f.name);
+    return section.fields.map(f => f.name);
   };
 
   const handleNext = async () => {
@@ -489,10 +179,11 @@ export default function RdsForm({ onSectionChange, jumpToSection, editRecord, on
     setCompletedSections(prev => new Set([...prev, currentSection.id]));
     if (currentIdx < rdsSchema.length - 1) {
       setCurrentIdx(i => i + 1);
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      window.scrollTo({ top:0, behavior:"smooth" });
     }
   };
 
+  // ── Submit (new) ───────────────────────────────────────────────────────────
   const onSubmit = async (data) => {
     if (currentIdx !== rdsSchema.length - 1) return;
     setIsSubmitting(true);
@@ -512,6 +203,7 @@ export default function RdsForm({ onSectionChange, jumpToSection, editRecord, on
     }
   };
 
+  // ── Update (edit mode) ────────────────────────────────────────────────────
   const onUpdate = async (data) => {
     if (currentIdx !== rdsSchema.length - 1) return;
     setIsSubmitting(true);
@@ -529,15 +221,17 @@ export default function RdsForm({ onSectionChange, jumpToSection, editRecord, on
     }
   };
 
+  // ── Handle extracted fields from UploadZone ───────────────────────────────
   const handleExtracted = useCallback((fields, image) => {
     Object.entries(fields).forEach(([key, value]) => {
-      setValue(key, value, { shouldDirty: true, shouldValidate: false });
+      setValue(key, value, { shouldDirty:true, shouldValidate:false });
     });
     if (image) setRoomImage(image);
     addToast(`✓ ${Object.keys(fields).length} fields auto-filled${image ? " + room image extracted" : ""}`, "success");
-    window.scrollTo({ top: 300, behavior: "smooth" });
+    window.scrollTo({ top:300, behavior:"smooth" });
   }, [setValue, addToast]);
 
+  // ── Reset all fields ──────────────────────────────────────────────────────
   const handleReset = () => {
     if (!confirm("Reset all fields and start over? Your draft will be lost.")) return;
     reset({});
@@ -547,63 +241,53 @@ export default function RdsForm({ onSectionChange, jumpToSection, editRecord, on
     setRoomImage(null);
     setIsEditMode(false);
     setEditId(null);
-    setAiStatus("idle");
-    setAiData(null);
-    setAiReasons({});
-    lastRoomRef.current = "";
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    window.scrollTo({ top:0, behavior:"smooth" });
     addToast("Form reset — start fresh", "success");
   };
 
-  const isLastSection  = currentIdx === rdsSchema.length - 1;
-  const funcSectionIdx = rdsSchema.findIndex(s => s.id === "Clinical functionality and workflow");
-  const aiCount        = aiData ? Object.keys(aiData.recommendations || {}).length : 0;
+  const isLastSection   = currentIdx === rdsSchema.length - 1;
+  const funcSectionIdx  = rdsSchema.findIndex(s => s.id === "Clinical functionality and workflow");
 
   return (
     <>
       {/* ── EDIT MODE BANNER ── */}
       {isEditMode && (
         <div style={{
-          background: "linear-gradient(135deg,#eff6ff,#dbeafe)",
-          border: "1px solid #bfdbfe", borderRadius: 12,
-          padding: "14px 20px", marginBottom: 20,
-          display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12,
+          background:"linear-gradient(135deg,#eff6ff,#dbeafe)",
+          border:"1px solid #bfdbfe", borderRadius:12,
+          padding:"14px 20px", marginBottom:20,
+          display:"flex", alignItems:"center", justifyContent:"space-between",
+          gap:12,
         }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <span style={{ fontSize: 20 }}>✏️</span>
+          <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+            <span style={{ fontSize:20 }}>✏️</span>
             <div>
-              <div style={{ fontWeight: 700, fontSize: 13.5, color: "#1d4ed8" }}>
+              <div style={{ fontWeight:700, fontSize:13.5, color:"#1d4ed8" }}>
                 Edit Mode — Modifying existing room data sheet
               </div>
-              <div style={{ fontSize: 12, color: "#3b82f6", marginTop: 2 }}>
+              <div style={{ fontSize:12, color:"#3b82f6", marginTop:2 }}>
                 Make your changes across any section, then click "Update RDS" on the last section to save.
               </div>
             </div>
           </div>
           <button
             onClick={() => {
-              setIsEditMode(false); setEditId(null); reset({});
-              setCompletedSections(new Set()); setCurrentIdx(0);
+              setIsEditMode(false);
+              setEditId(null);
+              reset({});
+              setCompletedSections(new Set());
+              setCurrentIdx(0);
               if (onEditDone) onEditDone();
             }}
             style={{
-              padding: "6px 14px", background: "#fff", color: "#1d4ed8",
-              border: "1px solid #bfdbfe", borderRadius: 8,
-              cursor: "pointer", fontSize: 12, fontWeight: 600, flexShrink: 0,
+              padding:"6px 14px", background:"#fff", color:"#1d4ed8",
+              border:"1px solid #bfdbfe", borderRadius:8,
+              cursor:"pointer", fontSize:12, fontWeight:600, flexShrink:0,
             }}>
             ✕ Cancel Edit
           </button>
         </div>
       )}
-
-      {/* ── AI SUGGESTION BANNER ── */}
-      <AiBanner
-        status={aiStatus}
-        count={aiCount}
-        roomName={watchedRoomName}
-        onApply={handleApplyAi}
-        onDismiss={handleDismissAi}
-      />
 
       {/* Upload zone — only on section 0 and not in edit mode */}
       {currentIdx === 0 && !isEditMode && <UploadZone onExtracted={handleExtracted} />}
@@ -626,40 +310,39 @@ export default function RdsForm({ onSectionChange, jumpToSection, editRecord, on
           description={sectionDesc[currentSection.id]}
           badge={`${currentIdx + 1} of ${rdsSchema.length}`}
         >
+          {/* Room image panel */}
           {currentIdx === funcSectionIdx && roomImage && (
             <div style={{
-              marginBottom: 20, padding: 14,
-              background: "#f0f9ff", border: "1px solid #bae6fd",
-              borderRadius: 12, display: "flex", alignItems: "flex-start", gap: 14,
+              marginBottom:20, padding:14,
+              background:"#f0f9ff", border:"1px solid #bae6fd",
+              borderRadius:12, display:"flex", alignItems:"flex-start", gap:14,
             }}>
-              <img src={roomImage} alt="Room layout / floor plan" style={{
-                maxWidth: 220, maxHeight: 180, objectFit: "contain",
-                borderRadius: 8, border: "1px solid #e0f2fe", background: "#fff",
-              }} />
+              <img
+                src={roomImage}
+                alt="Room layout / floor plan"
+                style={{
+                  maxWidth:220, maxHeight:180, objectFit:"contain",
+                  borderRadius:8, border:"1px solid #e0f2fe", background:"#fff",
+                }}
+              />
               <div>
-                <div style={{ fontWeight: 700, fontSize: 12.5, color: "#0369a1", marginBottom: 4 }}>
+                <div style={{ fontWeight:700, fontSize:12.5, color:"#0369a1", marginBottom:4 }}>
                   📐 Room Image (extracted from uploaded file)
                 </div>
-                <div style={{ fontSize: 11.5, color: "#64748b", lineHeight: 1.5 }}>
+                <div style={{ fontSize:11.5, color:"#64748b", lineHeight:1.5 }}>
                   This image was automatically extracted from your uploaded document.
                 </div>
                 <button type="button"
                   onClick={() => setRoomImage(null)}
-                  style={{ marginTop: 8, fontSize: 11, color: "#dc2626", background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+                  style={{ marginTop:8, fontSize:11, color:"#dc2626", background:"none", border:"none", cursor:"pointer", padding:0 }}>
                   × Remove image
                 </button>
               </div>
             </div>
           )}
 
-          <SectionFields
-            section={currentSection}
-            register={register}
-            errors={errors}
-            setValue={setValue}
-            watch={watch}
-            aiReasons={aiReasons}
-          />
+          <SectionFields section={currentSection} register={register}
+            errors={errors} setValue={setValue} watch={watch} />
         </SectionCard>
 
         {/* STEP NAV */}
@@ -667,20 +350,20 @@ export default function RdsForm({ onSectionChange, jumpToSection, editRecord, on
           <div className="step-counter">
             Section <strong>{currentIdx + 1}</strong> of <strong>{rdsSchema.length}</strong>
             {isEditMode && (
-              <span style={{ marginLeft: 12, background: "#dbeafe", color: "#1d4ed8", fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 100 }}>
+              <span style={{ marginLeft:12, background:"#dbeafe", color:"#1d4ed8", fontSize:11, fontWeight:700, padding:"2px 8px", borderRadius:100 }}>
                 EDIT MODE
               </span>
             )}
             {!isEditMode && lastSaved && (
-              <span style={{ marginLeft: 16, color: "#94a3b8", fontSize: 11 }}>
-                Draft saved {lastSaved.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+              <span style={{ marginLeft:16, color:"#94a3b8", fontSize:11 }}>
+                Draft saved {lastSaved.toLocaleTimeString([], { hour:"2-digit", minute:"2-digit" })}
               </span>
             )}
           </div>
-          <div style={{ display: "flex", gap: 10 }}>
+          <div style={{ display:"flex", gap:10 }}>
             <button type="button" className="btn btn-ghost btn-sm"
               onClick={handleReset}
-              style={{ color: "#dc2626", borderColor: "#fecaca" }}
+              style={{ color:"#dc2626", borderColor:"#fecaca" }}
               title="Clear all fields">
               🔄 Reset
             </button>
@@ -691,7 +374,7 @@ export default function RdsForm({ onSectionChange, jumpToSection, editRecord, on
             )}
             {currentIdx > 0 && (
               <button type="button" className="btn btn-ghost"
-                onClick={() => { setCurrentIdx(i => i - 1); window.scrollTo({ top: 0, behavior: "smooth" }); }}>
+                onClick={() => { setCurrentIdx(i => i-1); window.scrollTo({ top:0, behavior:"smooth" }); }}>
                 ← Back
               </button>
             )}
@@ -700,20 +383,28 @@ export default function RdsForm({ onSectionChange, jumpToSection, editRecord, on
                 Next Section →
               </button>
             ) : isEditMode ? (
-              <button type="button" className="btn btn-primary"
+              /* UPDATE button in edit mode */
+              <button
+                type="button"
+                className="btn btn-primary"
                 disabled={isSubmitting}
                 onClick={() => handleSubmit(onUpdate)()}
-                style={{ background: "linear-gradient(135deg,#2563eb,#1d4ed8)", minWidth: 140 }}>
+                style={{ background:"linear-gradient(135deg,#2563eb,#1d4ed8)", minWidth:140 }}
+              >
                 {isSubmitting ? (
-                  <><span className="spinner" style={{ width: 14, height: 14, border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "#fff", borderRadius: "50%", animation: "spin 0.6s linear infinite", display: "inline-block" }} /> Updating…</>
+                  <><span className="spinner" style={{ width:14,height:14,border:"2px solid rgba(255,255,255,0.3)",borderTopColor:"#fff",borderRadius:"50%",animation:"spin 0.6s linear infinite",display:"inline-block" }} /> Updating…</>
                 ) : "✓ Update RDS"}
               </button>
             ) : (
-              <button type="button" className="btn btn-success"
+              /* SUBMIT button for new records */
+              <button
+                type="button"
+                className="btn btn-success"
                 disabled={isSubmitting}
-                onClick={() => handleSubmit(onSubmit)()}>
+                onClick={() => handleSubmit(onSubmit)()}
+              >
                 {isSubmitting ? (
-                  <><span className="spinner" style={{ width: 14, height: 14, border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "#fff", borderRadius: "50%", animation: "spin 0.6s linear infinite", display: "inline-block" }} /> Submitting…</>
+                  <><span className="spinner" style={{ width:14,height:14,border:"2px solid rgba(255,255,255,0.3)",borderTopColor:"#fff",borderRadius:"50%",animation:"spin 0.6s linear infinite",display:"inline-block" }} /> Submitting…</>
                 ) : "✓ Submit RDS"}
               </button>
             )}
@@ -726,11 +417,13 @@ export default function RdsForm({ onSectionChange, jumpToSection, editRecord, on
           roomCode={submittedRoom.code}
           roomName={submittedRoom.name}
           onClose={() => {
-            setShowSuccess(false); setCurrentIdx(0); reset({});
-            setCompletedSections(new Set()); setRoomImage(null);
-            setIsEditMode(false); setEditId(null);
-            setAiStatus("idle"); setAiData(null); setAiReasons({});
-            lastRoomRef.current = "";
+            setShowSuccess(false);
+            setCurrentIdx(0);
+            reset({});
+            setCompletedSections(new Set());
+            setRoomImage(null);
+            setIsEditMode(false);
+            setEditId(null);
             if (onEditDone) onEditDone();
           }}
         />
@@ -741,11 +434,7 @@ export default function RdsForm({ onSectionChange, jumpToSection, editRecord, on
           <div key={t.id} className={`toast ${t.type}`}><span>{t.msg}</span></div>
         ))}
       </div>
-
-      <style>{`
-        @keyframes spin { to { transform: rotate(360deg); } }
-        @keyframes rds-spin { to { transform: rotate(360deg); } }
-      `}</style>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </>
   );
 }

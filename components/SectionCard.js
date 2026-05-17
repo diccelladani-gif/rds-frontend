@@ -1,7 +1,7 @@
 export default function SectionCard({ title, icon, color, children, badge, description }) {
   return (
-    <div className="rds-card"style={{ '--section-color': color }}>
-      <div className="rds-card" style={{ '--section-color': color }}>
+    <div className="rds-card" style={{ "--section-color": color }}>
+      <div className="section-header">
         <div
           className="section-icon-wrap"
           style={{ background: `${color}15`, border: `1px solid ${color}25` }}
@@ -20,7 +20,7 @@ export default function SectionCard({ title, icon, color, children, badge, descr
             style={{
               background: `${color}12`,
               color: color,
-              border: `1px solid ${color}25`
+              border: `1px solid ${color}25`,
             }}
           >
             {badge}
@@ -32,4 +32,3 @@ export default function SectionCard({ title, icon, color, children, badge, descr
     </div>
   );
 }
-

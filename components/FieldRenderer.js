@@ -1903,6 +1903,132 @@ function ComputedInput({ field, register, setValue, watch }) {
   );
 }
 
+// ─── SAFETY MATRIX ─────────────────────────────────────────
+// Colour palette per subsection theme — used only for the selected chip & row accent
+const SAFETY_THEME = {
+  red:    { badge: "#991b1b", bg: "#fef2f2", border: "#fecaca", chip: "#fee2e2", text: "#7f1d1d" },
+  slate:  { badge: "#1e293b", bg: "#f8fafc", border: "#e2e8f0", chip: "#f1f5f9", text: "#334155" },
+};
+
+function SafetyMatrixInput({ field, register, setValue, watch }) {
+  const rows = field.rows || [];
+  const rawVal = watch?.(field.name) || "{}";
+  let data = {};
+  try { data = JSON.parse(rawVal); } catch { data = {}; }
+
+  const set = (rowKey, val) => {
+    const next = { ...data, [rowKey]: val };
+    setValue?.(field.name, JSON.stringify(next), { shouldDirty: true });
+  };
+
+  const configuredCount = rows.filter(r => data[r.key] && data[r.key] !== "").length;
+
+  return (
+    <div style={{ border: "1px solid #e2e8f0", borderRadius: 10, overflow: "hidden", background: "#fff", boxShadow: "0 1px 4px rgba(15,23,42,0.05)" }}>
+      <input type="hidden" {...register(field.name)} />
+
+      {/* Column header */}
+      <div style={{ display: "grid", gridTemplateColumns: "220px 1fr", background: "#f8fafc", borderBottom: "1px solid #e2e8f0", alignItems: "center" }}>
+        <div style={{ padding: "9px 14px", fontSize: 10, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.6px" }}>
+          Parameter
+        </div>
+        <div style={{ padding: "9px 14px", fontSize: 10, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.6px", borderLeft: "1px solid #e8edf5" }}>
+          Specification
+          {configuredCount > 0 && (
+            <span style={{ marginLeft: 10, background: "#f1f5f9", color: "#475569", fontSize: 10, fontWeight: 600, padding: "2px 8px", borderRadius: 20, border: "1px solid #e2e8f0", textTransform: "none", letterSpacing: 0 }}>
+              {configuredCount}/{rows.length} set
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Rows */}
+      {rows.map((row, i) => {
+        const selected = data[row.key] || "";
+        const isSet = selected !== "";
+        return (
+          <div key={row.key} style={{
+            display: "grid",
+            gridTemplateColumns: "220px 1fr",
+            borderBottom: i < rows.length - 1 ? "1px solid #f1f5f9" : "none",
+            background: isSet ? "#fafbfe" : "#fff",
+            transition: "background 0.15s",
+          }}>
+            {/* Parameter label */}
+            <div style={{ padding: "11px 14px", display: "flex", alignItems: "center", gap: 9, borderRight: "1px solid #f1f5f9" }}>
+              <span style={{
+                flexShrink: 0, width: 26, height: 26, borderRadius: 6,
+                background: isSet ? "#fee2e2" : "#f1f5f9",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: 13, transition: "all 0.2s"
+              }}>{row.icon}</span>
+              <span style={{ fontSize: 12, fontWeight: isSet ? 600 : 400, color: isSet ? "#0f172a" : "#64748b", lineHeight: 1.3, transition: "all 0.15s" }}>
+                {row.label}
+              </span>
+            </div>
+
+            {/* Option chips */}
+            <div style={{ padding: "9px 12px", display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center", borderLeft: "1px solid #f1f5f9" }}>
+              {row.options.map(opt => {
+                const isSelected = selected === opt;
+                const isNA = opt.startsWith("Not ") || opt === "Open Access" || opt.startsWith("General (");
+                return (
+                  <button
+                    key={opt}
+                    type="button"
+                    onClick={() => set(row.key, isSelected ? "" : opt)}
+                    style={{
+                      padding: "4px 11px",
+                      borderRadius: 6,
+                      fontSize: 11.5,
+                      fontWeight: isSelected ? 700 : 400,
+                      cursor: "pointer",
+                      transition: "all 0.15s",
+                      border: isSelected
+                        ? "1.5px solid #991b1b"
+                        : "1px solid #e2e8f0",
+                      background: isSelected
+                        ? "#fee2e2"
+                        : "#f8fafc",
+                      color: isSelected
+                        ? "#7f1d1d"
+                        : isNA ? "#94a3b8" : "#475569",
+                      letterSpacing: "0.1px",
+                      lineHeight: 1.4,
+                      textAlign: "left",
+                    }}
+                    onMouseEnter={e => { if (!isSelected) { e.currentTarget.style.background = "#f1f5f9"; e.currentTarget.style.borderColor = "#cbd5e1"; e.currentTarget.style.color = "#1e293b"; } }}
+                    onMouseLeave={e => { if (!isSelected) { e.currentTarget.style.background = "#f8fafc"; e.currentTarget.style.borderColor = "#e2e8f0"; e.currentTarget.style.color = isNA ? "#94a3b8" : "#475569"; } }}
+                  >
+                    {isSelected && <span style={{ marginRight: 4, fontSize: 10 }}>✓</span>}
+                    {opt}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
+
+      {/* Summary footer */}
+      {configuredCount > 0 && (
+        <div style={{ padding: "10px 14px", background: "#f8fafc", borderTop: "1px solid #e2e8f0" }}>
+          <div style={{ fontSize: 10, fontWeight: 700, color: "#94a3b8", letterSpacing: "0.6px", textTransform: "uppercase", marginBottom: 7 }}>Configured</div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+            {rows.filter(r => data[r.key] && data[r.key] !== "").map(r => (
+              <span key={r.key} style={{ background: "#fee2e2", border: "1px solid #fecaca", borderRadius: 5, padding: "3px 9px", fontSize: 11, fontWeight: 600, color: "#991b1b", display: "inline-flex", alignItems: "center", gap: 5 }}>
+                <span style={{ opacity: 0.7, fontSize: 11 }}>{r.icon}</span>
+                <span style={{ color: "#64748b", fontWeight: 400 }}>{r.label}:</span>
+                {data[r.key]}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── MAIN RENDERER ─────────────────────────────────────────
 export default function FieldRenderer({ field, register, errors, setValue, watch }) {
   const err = errors?.[field.name];
@@ -1972,6 +2098,10 @@ export default function FieldRenderer({ field, register, errors, setValue, watch
 
       {field.type === "yesno" && (
         <YesNoInput field={field} register={register} setValue={setValue} watch={watch} />
+      )}
+
+      {field.type === "safetymatrix" && (
+        <SafetyMatrixInput field={field} register={register} setValue={setValue} watch={watch} />
       )}
 
       {field.type === "gasmatrix" && (
