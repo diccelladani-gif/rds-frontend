@@ -224,67 +224,55 @@ function AiBanner({ status, count, onApply, onDismiss, roomName }) {
   return null;
 }
 
+// ─── Layout helpers — defined OUTSIDE component to prevent remount on keystroke ──
+const WIDGET_TYPES = new Set([
+  "ssomatrix","isolatormatrix","gasmatrix","elvmatrix","accessorymatrix",
+  "safetymatrix","constructionmatrix","sanitarygrid",
+  "doorconfig","windowconfig","usergroups","computed"
+]);
+
+function groupFields(fields) {
+  const groups = [];
+  let inlineBuffer = [];
+  fields.forEach((field) => {
+    const isWidget = field.colSpan === 4 && WIDGET_TYPES.has(field.type);
+    if (isWidget) {
+      if (inlineBuffer.length > 0) { groups.push({ type: "grid", fields: inlineBuffer }); inlineBuffer = []; }
+      groups.push({ type: "widget", field });
+    } else {
+      inlineBuffer.push(field);
+    }
+  });
+  if (inlineBuffer.length > 0) groups.push({ type: "grid", fields: inlineBuffer });
+
+  const merged = [];
+  let i = 0;
+  while (i < groups.length) {
+    if (groups[i].type === "widget" && groups[i+1]?.type === "widget" &&
+        groups[i].field.sideBySide && groups[i+1].field.sideBySide) {
+      merged.push({ type: "widgetpair", fields: [groups[i].field, groups[i+1].field] });
+      i += 2;
+    } else {
+      merged.push(groups[i]); i++;
+    }
+  }
+  return merged;
+}
+
 // ─── SectionFields renderer ──────────────────────────────────────────────────
 function SectionFields({ section, register, errors, setValue, watch, aiReasons }) {
 
-  // Split fields into groups: inline fields (col-1..col-3) vs full-width widgets (col-4)
-  // Full-width widgets that should pair side-by-side get layout="sidebyside" in schema
-  const renderFields = (fields) => {
-    const groups = [];
-    let inlineBuffer = [];
-
-    fields.forEach((field) => {
-      const isWidget = field.colSpan === 4 && [
-        "ssomatrix","isolatormatrix","gasmatrix","elvmatrix","accessorymatrix",
-        "safetymatrix","constructionmatrix","ssomatrix","sanitarygrid",
-        "doorconfig","windowconfig","usergroups","computed"
-      ].includes(field.type);
-
-      if (isWidget) {
-        if (inlineBuffer.length > 0) {
-          groups.push({ type: "grid", fields: inlineBuffer });
-          inlineBuffer = [];
-        }
-        groups.push({ type: "widget", field });
-      } else {
-        inlineBuffer.push(field);
-      }
-    });
-    if (inlineBuffer.length > 0) groups.push({ type: "grid", fields: inlineBuffer });
-
-    // Now check for consecutive widget pairs that should sit side-by-side
-    const merged = [];
-    let i = 0;
-    while (i < groups.length) {
-      if (
-        groups[i].type === "widget" &&
-        groups[i + 1]?.type === "widget" &&
-        groups[i].field.sideBySide &&
-        groups[i + 1].field.sideBySide
-      ) {
-        merged.push({ type: "widgetpair", fields: [groups[i].field, groups[i + 1].field] });
-        i += 2;
-      } else {
-        merged.push(groups[i]);
-        i++;
-      }
-    }
-    return merged;
-  };
-
-  const FieldGroup = ({ fields: flds }) => (
-    <div className="form-grid">
-      {flds.map(field => (
-        <FieldRendererWithBadge key={field.name} field={field}
-          register={register} errors={errors} setValue={setValue}
-          watch={watch} aiReason={aiReasons?.[field.name]} />
-      ))}
-    </div>
-  );
-
-  const renderGroups = (fields) => {
-    return renderFields(fields).map((grp, gi) => {
-      if (grp.type === "grid") return <FieldGroup key={gi} fields={grp.fields} />;
+  const renderGroups = (fields) =>
+    groupFields(fields).map((grp, gi) => {
+      if (grp.type === "grid") return (
+        <div key={gi} className="form-grid">
+          {grp.fields.map(field => (
+            <FieldRendererWithBadge key={field.name} field={field}
+              register={register} errors={errors} setValue={setValue}
+              watch={watch} aiReason={aiReasons?.[field.name]} />
+          ))}
+        </div>
+      );
       if (grp.type === "widgetpair") return (
         <div key={gi} style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
           {grp.fields.map(field => (
@@ -294,33 +282,23 @@ function SectionFields({ section, register, errors, setValue, watch, aiReasons }
           ))}
         </div>
       );
-      // single widget — full width
       return (
         <FieldRendererWithBadge key={grp.field.name} field={grp.field}
           register={register} errors={errors} setValue={setValue}
           watch={watch} aiReason={aiReasons?.[grp.field.name]} />
       );
     });
-  };
 
   if (section.subsections) {
     return (
       <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
         {section.subsections.map((sub, si) => (
           <div key={si} style={{ marginTop: si === 0 ? 0 : 28 }}>
-            <div style={{
-              display: "flex", alignItems: "center", gap: 10,
-              marginBottom: 14, paddingBottom: 8,
-              borderBottom: "1px solid #f1f5f9",
-            }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14, paddingBottom: 8, borderBottom: "1px solid #f1f5f9" }}>
               <div style={{ width: 3, height: 16, borderRadius: 2, background: section.color || "#6366f1", flexShrink: 0 }} />
-              <span style={{ fontSize: 11, fontWeight: 700, color: "#374151", textTransform: "uppercase", letterSpacing: "0.7px" }}>
-                {sub.title}
-              </span>
+              <span style={{ fontSize: 11, fontWeight: 700, color: "#374151", textTransform: "uppercase", letterSpacing: "0.7px" }}>{sub.title}</span>
               {sub.description && (
-                <span style={{ fontSize: 11, color: "#94a3b8", fontWeight: 400, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  — {sub.description}
-                </span>
+                <span style={{ fontSize: 11, color: "#94a3b8", fontWeight: 400, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>— {sub.description}</span>
               )}
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
