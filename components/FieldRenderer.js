@@ -520,32 +520,29 @@ function AccessoryMatrixInput({ field, register, setValue, watch }) {
   const colA = accessories.slice(0, half);
   const colB = accessories.slice(half);
 
-  const RowItem = ({ key: k, label, icon }) => {
-    const item = data[k] || { enabled: false, qty: 0 };
+  const RowItem = ({ id, label, icon }) => {
+    const item = data[id] || { enabled: false, qty: 0 };
     const active = item.enabled;
     return (
       <div style={{ display: "flex", alignItems: "center", gap: 0, borderBottom: "1px solid #f1f5f9", minHeight: 40 }}>
-        {/* Toggle */}
-        <div onClick={() => toggle(k)}
+        <div onClick={() => toggle(id)}
           style={{ width: 40, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", alignSelf: "stretch", borderRight: "1px solid #f1f5f9", background: active ? "#f5f3ff" : "#fafafa", transition: "background 0.15s", flexShrink: 0 }}>
           <span style={{ width: 18, height: 18, borderRadius: 5, border: `2px solid ${active ? "#6366f1" : "#cbd5e1"}`, background: active ? "#6366f1" : "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, color: "#fff", fontWeight: 700, transition: "all 0.15s" }}>
             {active && "✓"}
           </span>
         </div>
-        {/* Icon + Label */}
-        <div onClick={() => toggle(k)} style={{ flex: 1, padding: "8px 10px", display: "flex", alignItems: "center", gap: 8, cursor: "pointer", background: active ? "#faf9ff" : "#fff", transition: "background 0.15s" }}>
+        <div onClick={() => toggle(id)} style={{ flex: 1, padding: "8px 10px", display: "flex", alignItems: "center", gap: 8, cursor: "pointer", background: active ? "#faf9ff" : "#fff", transition: "background 0.15s" }}>
           <span style={{ fontSize: 14, flexShrink: 0 }}>{icon}</span>
           <span style={{ fontSize: 12, fontWeight: active ? 600 : 400, color: active ? "#4338ca" : "#475569" }}>{label}</span>
         </div>
-        {/* Qty stepper — only when active */}
         <div style={{ width: 100, display: "flex", alignItems: "center", justifyContent: "center", gap: 4, padding: "0 8px", borderLeft: "1px solid #f1f5f9", background: active ? "#eef2ff" : "#f8fafc", alignSelf: "stretch", flexShrink: 0 }}>
           {active ? (
             <>
-              <button type="button" onClick={() => setQty(k, (item.qty || 0) - 1)}
+              <button type="button" onClick={() => setQty(id, (item.qty || 0) - 1)}
                 style={{ width: 22, height: 22, borderRadius: 5, border: "1px solid #c7d2fe", background: "#fff", cursor: "pointer", fontSize: 14, color: "#6366f1", display: "flex", alignItems: "center", justifyContent: "center" }}>−</button>
-              <input type="number" min="0" value={item.qty || 0} onChange={e => setQty(k, parseInt(e.target.value) || 0)}
+              <input type="number" min="0" value={item.qty || 0} onChange={e => setQty(id, parseInt(e.target.value) || 0)}
                 style={{ width: 34, height: 24, textAlign: "center", border: "1px solid #c7d2fe", borderRadius: 5, fontSize: 12, fontWeight: 700, color: "#4338ca", background: "#fff", outline: "none" }} />
-              <button type="button" onClick={() => setQty(k, (item.qty || 0) + 1)}
+              <button type="button" onClick={() => setQty(id, (item.qty || 0) + 1)}
                 style={{ width: 22, height: 22, borderRadius: 5, border: "1px solid #6366f1", background: "#6366f1", cursor: "pointer", fontSize: 14, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}>+</button>
             </>
           ) : (
@@ -578,7 +575,7 @@ function AccessoryMatrixInput({ field, register, setValue, watch }) {
             <div style={{ padding: "5px 10px", fontSize: 9.5, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.5px" }}>Equipment</div>
             <div style={{ padding: "5px 8px", fontSize: 9.5, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.5px", textAlign: "center", borderLeft: "1px solid #f1f5f9" }}>Qty</div>
           </div>
-          {colA.map(acc => <RowItem key={acc.key} {...acc} />)}
+          {colA.map(acc => <RowItem key={acc.key} id={acc.key} label={acc.label} icon={acc.icon} />)}
         </div>
         <div>
           <div style={{ display: "grid", gridTemplateColumns: "40px 1fr 100px", background: "#f8fafc", borderBottom: "1px solid #e2e8f0" }}>
@@ -586,7 +583,7 @@ function AccessoryMatrixInput({ field, register, setValue, watch }) {
             <div style={{ padding: "5px 10px", fontSize: 9.5, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.5px" }}>Equipment</div>
             <div style={{ padding: "5px 8px", fontSize: 9.5, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.5px", textAlign: "center", borderLeft: "1px solid #f1f5f9" }}>Qty</div>
           </div>
-          {colB.map(acc => <RowItem key={acc.key} {...acc} />)}
+          {colB.map(acc => <RowItem key={acc.key} id={acc.key} label={acc.label} icon={acc.icon} />)}
         </div>
       </div>
 
