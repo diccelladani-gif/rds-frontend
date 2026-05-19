@@ -117,11 +117,10 @@ async function fetchGroqRecommendations(roomName, department, category) {
   const batch1 = FIELDS_MANIFEST.slice(0, mid);
   const batch2 = FIELDS_MANIFEST.slice(mid);
 
-  // Run both batches in parallel
-  const [res1, res2] = await Promise.all([
-    callGroqBatch(roomName, department, category, batch1),
-    callGroqBatch(roomName, department, category, batch2),
-  ]);
+  // Run batches sequentially to respect Groq rate limits
+  const res1 = await callGroqBatch(roomName, department, category, batch1);
+  await new Promise(r => setTimeout(r, 800)); // 800ms pause between calls
+  const res2 = await callGroqBatch(roomName, department, category, batch2);
 
   // Merge results
   const merged = {

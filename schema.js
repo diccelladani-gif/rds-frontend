@@ -17,7 +17,7 @@ export const rdsSchema = [
             type: "text",
             required: true,
             colSpan: 4,
-            placeholder: "e.g. Apollo Hospital — Phase III Expansion"
+            placeholder: "e.g. Adani Healthcity"
           },
           {
             name: "projectCode",
