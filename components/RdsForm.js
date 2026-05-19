@@ -12,7 +12,7 @@ import SuccessOverlay from "./SuccessOverlay";
 const DRAFT_KEY = "rds_draft_v2";
 const API = process.env.NEXT_PUBLIC_API_URL || "";
 const GROQ_API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY || "";
-const GROQ_URL = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
+const GROQ_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
 const GROQ_MODEL = "gemini-1.5-flash";
 
 if (!API) console.error("API URL missing");
@@ -95,17 +95,15 @@ async function fetchAiRecommendations(roomName, department, category) {
   const prompt = buildCompactPrompt(roomName, department, category);
 
   const resp = await axios.post(
-    GROQ_URL,
+    `${GROQ_URL}?key=${GROQ_API_KEY}`,
     {
-      model: GROQ_MODEL,
-      messages: [{ role: "user", content: prompt }],
-      temperature: 0.15,
-      max_tokens: 2500,
+      contents: [{ parts: [{ text: prompt }] }],
+      generationConfig: { temperature: 0.15, maxOutputTokens: 2500 },
     },
-    { headers: { Authorization: `Bearer ${GROQ_API_KEY}`, "Content-Type": "application/json" } }
+    { headers: { "Content-Type": "application/json" } }
   );
 
-  const raw     = resp.data.choices[0].message.content.trim();
+  const raw     = resp.data.candidates[0].content.parts[0].text.trim();
   const cleaned = raw.replace(/^```json\s*/m, "").replace(/^```\s*/m, "").replace(/\s*```$/m, "");
   const parsed  = JSON.parse(cleaned);
 
