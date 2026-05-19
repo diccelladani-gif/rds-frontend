@@ -32,7 +32,7 @@ const sectionDesc = {
   "fittings-fixtures-and-equipment":                "Fixed/loose furniture, and clinical equipment & services",
 };
 
-// ─── Extract all select + yesno fields from schema for Groq prompt ──────────
+// ─── Extract all select + yesno + number fields for Groq prompt ─────────────
 function buildFieldsManifest() {
   const manifest = [];
   for (const section of rdsSchema) {
@@ -54,71 +54,101 @@ function buildFieldsManifest() {
 
 const FIELDS_MANIFEST = buildFieldsManifest();
 
-// ─── Call Groq to get recommendations ───────────────────────────────────────
-async function fetchGroqRecommendations(roomName, department, category) {
-  if (!GROQ_API_KEY) return null;
+// Build a quick options lookup for validation: fieldName → Set of valid options
+const OPTIONS_LOOKUP = {};
+FIELDS_MANIFEST.forEach(f => {
+  if (f.options) OPTIONS_LOOKUP[f.name] = new Set(f.options);
+});
 
+// ─── Single Groq batch call ───────────────────────────────────────────────────
+async function callGroqBatch(roomName, department, category, fields) {
   const fieldsJson = JSON.stringify(
-    FIELDS_MANIFEST.map(f => ({
-      name: f.name,
+    fields.map(f => ({
+      name:  f.name,
       label: f.label,
-      ...(f.options ? { options: f.options } : {}),
-      ...(f.type === "number" ? { type: "number" } : {}),
+      ...(f.options ? { options: f.options } : { type: "number" }),
     })),
     null, 2
   );
 
-  const prompt = `You are an expert healthcare facility planner with deep knowledge of hospital design standards (HTM, HBN, ASHRAE, FGI Guidelines).
+  const prompt = `You are an expert healthcare facility planner (HTM, HBN, ASHRAE, FGI Guidelines).
 
-A user is configuring a Room Data Sheet for:
-- Room Name: ${roomName}
+Room being configured:
+- Name: ${roomName}
 - Department: ${department || "Not specified"}
 - Category: ${category || "Not specified"}
 
-Based on this room type, recommend the best value for each field below. Return ONLY a valid JSON object — no explanation, no markdown, no extra text.
+Recommend the best value for each field. Return ONLY valid JSON — no markdown, no explanation.
 
 Rules:
-- For "select" fields: the value MUST be exactly one of the listed options (copy it verbatim)
-- For "yesno" fields: value must be exactly "Yes" or "No" (capital first letter)
-- For "number" fields: provide a realistic numeric value as a number
-- If you are unsure about a field, omit it from the response
-- Only include fields where you have high confidence in the recommendation
+- "select": value MUST be copied verbatim from the listed options
+- "yesno": exactly "Yes" or "No"
+- "number": realistic numeric value
+- Omit any field you are not confident about
+- For specialist/imaging rooms (Mammography, MRI, CT, PET, Cath Lab, LINAC etc.) apply relevant radiation, shielding, and specialist standards
 
 Fields:
 ${fieldsJson}
 
-Respond with ONLY this JSON structure (no code block, no explanation):
-{
-  "recommendations": {
-    "fieldName": "recommended value",
-    ...
-  },
-  "reasons": {
-    "fieldName": "one-line clinical reason why",
-    ...
-  }
-}`;
+Respond ONLY with this exact JSON (no code fences):
+{"recommendations":{"fieldName":"value"},"reasons":{"fieldName":"one-line reason"}}`;
 
-  const response = await axios.post(
+  const resp = await axios.post(
     GROQ_URL,
     {
       model: GROQ_MODEL,
       messages: [{ role: "user", content: prompt }],
-      temperature: 0.2,
-      max_tokens: 3000,
+      temperature: 0.15,
+      max_tokens: 4000,
     },
-    {
-      headers: {
-        Authorization: `Bearer ${GROQ_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-    }
+    { headers: { Authorization: `Bearer ${GROQ_API_KEY}`, "Content-Type": "application/json" } }
   );
 
-  const raw = response.data.choices[0].message.content.trim();
-  // Strip any accidental markdown fences
-  const cleaned = raw.replace(/^```json\n?/, "").replace(/^```\n?/, "").replace(/\n?```$/, "");
+  const raw     = resp.data.choices[0].message.content.trim();
+  const cleaned = raw.replace(/^```json\s*/m, "").replace(/^```\s*/m, "").replace(/\s*```$/m, "");
   return JSON.parse(cleaned);
+}
+
+// ─── Main: fetch in 2 smaller batches, merge, validate ───────────────────────
+async function fetchGroqRecommendations(roomName, department, category) {
+  if (!GROQ_API_KEY) return null;
+
+  const mid    = Math.ceil(FIELDS_MANIFEST.length / 2);
+  const batch1 = FIELDS_MANIFEST.slice(0, mid);
+  const batch2 = FIELDS_MANIFEST.slice(mid);
+
+  // Run both batches in parallel
+  const [res1, res2] = await Promise.all([
+    callGroqBatch(roomName, department, category, batch1),
+    callGroqBatch(roomName, department, category, batch2),
+  ]);
+
+  // Merge results
+  const merged = {
+    recommendations: { ...(res1.recommendations || {}), ...(res2.recommendations || {}) },
+    reasons:         { ...(res1.reasons || {}),         ...(res2.reasons || {}) },
+  };
+
+  // Validate: remove any recommendation where the value is not in the options list
+  const validated = {};
+  const validatedReasons = {};
+  Object.entries(merged.recommendations).forEach(([key, value]) => {
+    if (!value && value !== 0) return;
+    // For select fields: value must exactly match one of the options
+    if (OPTIONS_LOOKUP[key]) {
+      if (OPTIONS_LOOKUP[key].has(String(value))) {
+        validated[key] = value;
+        if (merged.reasons[key]) validatedReasons[key] = merged.reasons[key];
+      }
+      // else: silently drop hallucinated values
+    } else {
+      // number or yesno — accept as-is
+      validated[key] = value;
+      if (merged.reasons[key]) validatedReasons[key] = merged.reasons[key];
+    }
+  });
+
+  return { recommendations: validated, reasons: validatedReasons };
 }
 
 // ─── Toast hook ──────────────────────────────────────────────────────────────
@@ -133,7 +163,7 @@ function useToast() {
 }
 
 // ─── AI Suggestion Banner ────────────────────────────────────────────────────
-function AiBanner({ status, count, onApply, onDismiss, roomName }) {
+function AiBanner({ status, count, onApply, onDismiss, roomName, errorMsg }) {
   if (status === "idle") return null;
 
   if (status === "loading") return (
@@ -161,10 +191,17 @@ function AiBanner({ status, count, onApply, onDismiss, roomName }) {
       background: "#fff1f2", border: "1.5px solid #fecdd3", borderRadius: 12,
     }}>
       <span style={{ fontSize: 16 }}>⚠️</span>
-      <span style={{ fontSize: 12.5, color: "#be123c" }}>
-        AI suggestions unavailable — check your Groq API key in .env
-      </span>
-      <button onClick={onDismiss} style={{ marginLeft: "auto", background: "none", border: "none", cursor: "pointer", color: "#be123c", fontSize: 18, lineHeight: 1 }}>×</button>
+      <div style={{ flex: 1 }}>
+        <div style={{ fontSize: 12.5, fontWeight: 600, color: "#be123c" }}>
+          AI suggestions unavailable for this room
+        </div>
+        {errorMsg && (
+          <div style={{ fontSize: 11.5, color: "#e11d48", marginTop: 2, opacity: 0.85 }}>
+            {errorMsg}
+          </div>
+        )}
+      </div>
+      <button onClick={onDismiss} style={{ background: "none", border: "none", cursor: "pointer", color: "#be123c", fontSize: 18, lineHeight: 1, flexShrink: 0 }}>×</button>
     </div>
   );
 
@@ -381,10 +418,11 @@ export default function RdsForm({ onSectionChange, jumpToSection, editRecord, on
   const [editId,            setEditId]            = useState(null);
 
   // ── AI state ────────────────────────────────────────────────────────────────
-  const [aiStatus,      setAiStatus]      = useState("idle"); // idle | loading | ready | applied | error
-  const [aiData,        setAiData]        = useState(null);   // { recommendations, reasons }
-  const [aiReasons,     setAiReasons]     = useState({});     // active reasons shown on fields
-  const lastRoomRef = useRef("");                              // avoid duplicate calls
+  const [aiStatus,  setAiStatus]  = useState("idle"); // idle | loading | ready | applied | error
+  const [aiData,    setAiData]    = useState(null);   // { recommendations, reasons }
+  const [aiReasons, setAiReasons] = useState({});     // active reasons shown on fields
+  const [aiError,   setAiError]   = useState("");     // real error message
+  const lastRoomRef = useRef("");                      // avoid duplicate calls
 
   const { toasts, addToast } = useToast();
 
@@ -411,6 +449,7 @@ export default function RdsForm({ onSectionChange, jumpToSection, editRecord, on
       setAiStatus("loading");
       setAiData(null);
       setAiReasons({});
+      setAiError("");
       try {
         const result = await fetchGroqRecommendations(
           watchedRoomName,
@@ -424,7 +463,24 @@ export default function RdsForm({ onSectionChange, jumpToSection, editRecord, on
           setAiStatus("idle");
         }
       } catch (err) {
-        console.error("Groq error:", err?.response?.data || err.message);
+        const errData = err?.response?.data?.error || err?.response?.data || {};
+        const errMsg  = errData.message || err.message || "Unknown error";
+        const errCode = err?.response?.status || 0;
+        console.error("Groq error:", errCode, errMsg, errData);
+        // Distinguish between different error types for better UX
+        if (errCode === 401) {
+          setAiError("Invalid Groq API key — check Vercel environment variables");
+        } else if (errCode === 429) {
+          setAiError("Groq rate limit reached — please wait a moment and try again");
+        } else if (errCode === 400) {
+          setAiError(`Groq request error: ${errMsg.slice(0, 120)}`);
+        } else if (errCode >= 500) {
+          setAiError("Groq service temporarily unavailable — please try again");
+        } else if (err.message?.includes("JSON")) {
+          setAiError("AI returned unexpected format — please try again");
+        } else {
+          setAiError(`AI error: ${errMsg.slice(0, 120)}`);
+        }
         setAiStatus("error");
       }
     }, 1200); // 1.2s debounce after user stops typing
@@ -614,6 +670,7 @@ export default function RdsForm({ onSectionChange, jumpToSection, editRecord, on
     setAiStatus("idle");
     setAiData(null);
     setAiReasons({});
+    setAiError("");
     lastRoomRef.current = "";
     window.scrollTo({ top: 0, behavior: "smooth" });
     addToast("Form reset — start fresh", "success");
@@ -667,6 +724,7 @@ export default function RdsForm({ onSectionChange, jumpToSection, editRecord, on
         roomName={watchedRoomName}
         onApply={handleApplyAi}
         onDismiss={handleDismissAi}
+        errorMsg={aiError}
       />
 
       {/* Upload zone — only on section 0 and not in edit mode */}
