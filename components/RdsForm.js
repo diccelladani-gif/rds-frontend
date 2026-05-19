@@ -11,12 +11,12 @@ import SuccessOverlay from "./SuccessOverlay";
 
 const DRAFT_KEY = "rds_draft_v2";
 const API = process.env.NEXT_PUBLIC_API_URL || "";
-const GROQ_API_KEY = process.env.NEXT_PUBLIC_GROQ_API_KEY || "";
-const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
-const GROQ_MODEL = "llama-3.3-70b-versatile";
+const GROQ_API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY || "";
+const GROQ_URL = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
+const GROQ_MODEL = "gemini-1.5-flash";
 
 if (!API) console.error("API URL missing");
-if (!GROQ_API_KEY) console.warn("GROQ_API_KEY missing — AI suggestions disabled");
+if (!GROQ_API_KEY) console.warn("GEMINI_API_KEY missing — AI suggestions disabled");
 
 const sectionDesc = {
   "Room identity and General Information":          "Basic identification and classification of this room",
@@ -89,7 +89,7 @@ Respond ONLY with compact JSON (no markdown, no explanation):
 }
 
 // ─── Single API call — validate response against options ─────────────────────
-async function fetchGroqRecommendations(roomName, department, category) {
+async function fetchAiRecommendations(roomName, department, category) {
   if (!GROQ_API_KEY) return null;
 
   const prompt = buildCompactPrompt(roomName, department, category);
@@ -200,7 +200,7 @@ function AiBanner({ status, count, onApply, onDismiss, roomName, errorMsg }) {
             AI found {count} recommendations for <em>{roomName}</em>
           </span>
           <span style={{ fontSize: 11.5, color: "#6d28d9", marginLeft: 6 }}>
-            — powered by Groq · Llama 3 70B
+            — powered by Gemini 1.5 Flash
           </span>
         </div>
         <button onClick={onDismiss} style={{ background: "none", border: "none", cursor: "pointer", color: "#7c3aed", fontSize: 20, lineHeight: 1, padding: 0 }}>×</button>
@@ -453,7 +453,7 @@ export default function RdsForm({ onSectionChange, jumpToSection, editRecord, on
       setAiReasons({});
       setAiError("");
       try {
-        const result = await fetchGroqRecommendations(
+        const result = await fetchAiRecommendations(
           watchedRoomName,
           watchedDepartment,
           watchedCategory
@@ -468,16 +468,16 @@ export default function RdsForm({ onSectionChange, jumpToSection, editRecord, on
         const errData = err?.response?.data?.error || err?.response?.data || {};
         const errMsg  = errData.message || err.message || "Unknown error";
         const errCode = err?.response?.status || 0;
-        console.error("Groq error:", errCode, errMsg, errData);
+        console.error("Gemini error:", errCode, errMsg, errData);
         // Distinguish between different error types for better UX
         if (errCode === 401) {
-          setAiError("Invalid Groq API key — check Vercel environment variables");
+          setAiError("Invalid Gemini API key — check Vercel environment variables");
         } else if (errCode === 429) {
-          setAiError("Groq rate limit reached — please wait a moment and try again");
+          setAiError("Gemini rate limit reached — please wait a moment and try again");
         } else if (errCode === 400) {
-          setAiError(`Groq request error: ${errMsg.slice(0, 120)}`);
+          setAiError(`Gemini request error: ${errMsg.slice(0, 120)}`);
         } else if (errCode >= 500) {
-          setAiError("Groq service temporarily unavailable — please try again");
+          setAiError("Gemini service temporarily unavailable — please try again");
         } else if (err.message?.includes("JSON")) {
           setAiError("AI returned unexpected format — please try again");
         } else {
