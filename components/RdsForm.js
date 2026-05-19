@@ -420,11 +420,31 @@ export default function RdsForm({ onSectionChange, jumpToSection, editRecord, on
   const watchedDepartment = watch("department");
   const watchedCategory   = watch("category");
 
-  // ── Trigger Groq when roomName is filled in section 0 ──────────────────────
+  // ── Trigger Groq when roomName changes ─────────────────────────────────────
   useEffect(() => {
-    if (!watchedRoomName || watchedRoomName.trim().length < 3) return;
-    if (watchedRoomName === lastRoomRef.current) return;
+    // Room cleared or too short — reset so next valid entry triggers fresh call
+    if (!watchedRoomName || watchedRoomName.trim().length < 3) {
+      if (lastRoomRef.current) {
+        lastRoomRef.current = "";
+        setAiStatus("idle");
+        setAiData(null);
+        setAiReasons({});
+        setAiError("");
+      }
+      return;
+    }
     if (isEditMode) return;
+
+    // Room name changed from previous — reset banner immediately
+    if (watchedRoomName !== lastRoomRef.current) {
+      setAiStatus("idle");
+      setAiData(null);
+      setAiReasons({});
+      setAiError("");
+    }
+
+    // Already processed this exact name — skip
+    if (watchedRoomName === lastRoomRef.current) return;
 
     const timer = setTimeout(async () => {
       lastRoomRef.current = watchedRoomName;
