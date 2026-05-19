@@ -67,8 +67,7 @@ function buildCompactPrompt(roomName, department, category) {
     if (f.type === "number") return `${f.name}(${f.label})|NUM`;
     if (f.type === "yesno")  return `${f.name}(${f.label})|Yes,No`;
     return `${f.name}(${f.label})|${f.options.join(",")}`;
-  }).join("
-");
+  }).join("\n");
 
   return `You are an expert healthcare facility planner (HTM, HBN, ASHRAE, FGI Guidelines).
 
