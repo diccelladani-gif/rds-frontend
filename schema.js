@@ -1504,5 +1504,52 @@ export const rdsSchema = [
         ]
       }
     ]
+  },
+
+  // ─── 12. WASTE MANAGEMENT ─────────────────────────────────
+  {
+    id: "waste-management",
+    section: "Waste Management",
+    icon: "♻️",
+    color: "#16a34a",
+    subsections: [
+      {
+        title: "Clinical & Hazardous Waste",
+        description: "Infectious, radioactive and chemical waste streams",
+        fields: [
+          { name: "wmBiohazard",        label: "Biohazard Waste",                              type: "yesno", required: false, colSpan: 2 },
+          { name: "wmRadioactive",       label: "Radioactive Waste",                             type: "yesno", required: false, colSpan: 2 },
+          { name: "wmFlammableSolvent",  label: "Flammable Solvent",                             type: "yesno", required: false, colSpan: 2 },
+          { name: "wmChemicalWaste",     label: "Chemical Waste",                                type: "yesno", required: false, colSpan: 2 },
+          { name: "wmHumanAnatomical",   label: "Human Anatomical Waste",                        type: "yesno", required: false, colSpan: 2 },
+          { name: "wmMicrobiologyWaste", label: "Microbiology & Biotechnology Waste",            type: "yesno", required: false, colSpan: 2 },
+          { name: "wmWasteSharps",       label: "Waste Sharps",                                  type: "yesno", required: false, colSpan: 2 },
+          { name: "wmCytotoxicDrugs",    label: "Discarded Medicines & Cytotoxic Drugs",         type: "yesno", required: false, colSpan: 2 },
+        ]
+      },
+      {
+        title: "General & Solid Waste",
+        description: "Soiled, solid, liquid and container waste streams",
+        fields: [
+          { name: "wmSoiledWaste",       label: "Soiled Waste",                                  type: "yesno", required: false, colSpan: 2 },
+          { name: "wmSolidWaste",        label: "Solid Waste",                                   type: "yesno", required: false, colSpan: 2 },
+          { name: "wmLiquidWaste",       label: "Liquid Waste",                                  type: "yesno", required: false, colSpan: 2 },
+          { name: "wmDiscardedContainers",label: "Discarded Containers",                         type: "yesno", required: false, colSpan: 2 },
+          { name: "wmUsedOil",           label: "Used / Lubricating Oil",                        type: "yesno", required: false, colSpan: 2 },
+          { name: "wmEwaste",            label: "E-Waste",                                       type: "yesno", required: false, colSpan: 2 },
+          { name: "wmConfidentialPaper", label: "Confidential Paper / Document Shredding Waste", type: "yesno", required: false, colSpan: 2 },
+          { name: "wmFoodPantryWaste",   label: "Food / Pantry Waste",                          type: "yesno", required: false, colSpan: 2 },
+        ]
+      },
+      {
+        title: "Additional Waste Streams",
+        description: "Other waste types applicable to this room",
+        fields: [
+          { name: "wmOthers1", label: "Others — Item 1 (Please specify)", type: "text", placeholder: "Describe waste type", required: false, colSpan: 2 },
+          { name: "wmOthers2", label: "Others — Item 2 (Please specify)", type: "text", placeholder: "Describe waste type", required: false, colSpan: 2 },
+          { name: "wmNotes",   label: "Waste Management Notes",           type: "textarea", placeholder: "Special handling requirements, bin locations, disposal frequency, compliance notes…", required: false, colSpan: 4 },
+        ]
+      }
+    ]
   }
 ];

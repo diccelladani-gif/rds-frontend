@@ -30,6 +30,7 @@ const sectionDesc = {
   "safety-infection-control":                       "Infection prevention, safety and hazard provisions",
   "Stakeholder experience":                         "Comfort, privacy, lighting and wayfinding considerations",
   "fittings-fixtures-and-equipment":                "Fixed/loose furniture, and clinical equipment & services",
+  "waste-management":                               "Waste streams, hazardous materials and disposal requirements",
 };
 
 // ─── Build field manifest + options lookup ───────────────────────────────────
