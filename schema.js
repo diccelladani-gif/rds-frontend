@@ -509,6 +509,360 @@ export const rdsSchema = [
 
     ]
   },
+  // ─── INTERIOR LIGHTING & FURNITURE ───────────────────────────
+  {
+    id: "interior-lighting-and-furniture",
+    section: "Interior Lighting & Furniture",
+    icon: "💡",
+    color: "#f59e0b",
+    subsections: [
+
+      // ─── 1. LIGHTING CONTROL & OPTIMIZATION ───────────────────
+      {
+        title: "Lighting Control & Optimization",
+        description: "Define the control strategy and optimization method for all lighting circuits within the room",
+        fields: [
+          {
+            name: "lightingControl",
+            label: "Lighting Control Strategy",
+            type: "select",
+            required: false,
+            colSpan: 2,
+            options: [
+              "Not Applicable",
+              "Dimming Control",
+              "Two-way Switching",
+              "Chromatic / Colour Temperature Control",
+              "Dimming + Two-way Switching",
+              "Dimming + Chromatic Control",
+              "Full Control — Dimming + Two-way + Chromatic"
+            ]
+          },
+          {
+            name: "lightingControlNotes",
+            label: "Lighting Control Notes",
+            type: "textarea",
+            required: false,
+            colSpan: 2,
+            placeholder: "e.g. Separate dimming circuits for examination, ambient and night modes; two-way switching at entry and bedhead; tunable white 2700K–6500K"
+          }
+        ]
+      },
+
+      // ─── 2. LIGHTING LEVELS ───────────────────────────────────
+      {
+        title: "Lighting Levels",
+        description: "Specify illuminance requirements for each functional mode — standard working, clinical treatment and any room-specific lighting scenes",
+        fields: [
+          {
+            name: "lightingLevelStandard",
+            label: "Standard Ambient Level (lux)",
+            type: "select",
+            required: false,
+            colSpan: 2,
+            options: [
+              "Not Specified",
+              "50–100 lux — Corridor / Low-activity",
+              "150–200 lux — General Ward / Waiting",
+              "300 lux — Standard Office / Admin",
+              "500 lux — Clinical / Examination",
+              "750 lux — Procedure Room",
+              "1000 lux — Operating / High-precision",
+              "Custom (specify in notes)"
+            ]
+          },
+          {
+            name: "lightingLevelTreatment",
+            label: "Treatment / Task Level (lux)",
+            type: "select",
+            required: false,
+            colSpan: 2,
+            options: [
+              "Not Applicable",
+              "300 lux — General Task",
+              "500 lux — Clinical Examination",
+              "750–1000 lux — Procedure / Surgical Field",
+              "10 000–100 000 lux — Surgical Light (Examination Luminaire)",
+              "Custom (specify in notes)"
+            ]
+          },
+          {
+            name: "lightingLevelOther",
+            label: "Other / Scene-Specific Requirements",
+            type: "textarea",
+            required: false,
+            colSpan: 4,
+            placeholder: "e.g. Night mode 5 lux at floor level for patient safety; circadian wake scene 6500K at 500 lux; reading light at bedhead 200 lux warm white"
+          }
+        ]
+      },
+
+      // ─── 3. LIGHTING FITTING TYPE ─────────────────────────────
+      {
+        title: "Lighting Fitting Type",
+        description: "Select all luminaire types required in this room — indicate quantity or zone in notes",
+        fields: [
+          {
+            name: "lightFitT5Fluorescent",
+            label: "T5 Tube Fluorescent",
+            type: "yesno",
+            required: false,
+            colSpan: 2
+          },
+          {
+            name: "lightFitLEDTube",
+            label: "LED Tube Light",
+            type: "yesno",
+            required: false,
+            colSpan: 2
+          },
+          {
+            name: "lightFitLEDStrip",
+            label: "LED Strip Light",
+            type: "yesno",
+            required: false,
+            colSpan: 2
+          },
+          {
+            name: "lightFitCompactPL",
+            label: "Compact PL Down Light",
+            type: "yesno",
+            required: false,
+            colSpan: 2
+          },
+          {
+            name: "lightFitLEDDownlight",
+            label: "LED Down-light",
+            type: "yesno",
+            required: false,
+            colSpan: 2
+          },
+          {
+            name: "lightFitBiophilic",
+            label: "Biophilic / Stretch Ceiling Light",
+            type: "yesno",
+            required: false,
+            colSpan: 2
+          },
+          {
+            name: "lightFitCeilingLight",
+            label: "Ceiling Light (Surface / Semi-recessed)",
+            type: "yesno",
+            required: false,
+            colSpan: 2
+          },
+          {
+            name: "lightFitOthers",
+            label: "Others (Please specify in notes)",
+            type: "yesno",
+            required: false,
+            colSpan: 2
+          },
+          {
+            name: "lightFittingNotes",
+            label: "Lighting Fitting Notes",
+            type: "textarea",
+            required: false,
+            colSpan: 4,
+            placeholder: "e.g. 12× LED recessed downlight (IP44) in wet areas; 2× LED strip cove behind bed wall cornice; 1× biophilic stretch ceiling panel 1200×600 above patient zone"
+          }
+        ]
+      },
+
+      // ─── 4. LIGHTING CONTROL DEVICES ─────────────────────────
+      {
+        title: "Lighting Control Devices",
+        description: "Specify the switching and automation devices that will operate the lighting — select all applicable",
+        fields: [
+          {
+            name: "ctrlOnOff",
+            label: "On / Off Switch",
+            type: "yesno",
+            required: false,
+            colSpan: 2
+          },
+          {
+            name: "ctrlTimer",
+            label: "Timer",
+            type: "yesno",
+            required: false,
+            colSpan: 2
+          },
+          {
+            name: "ctrlMotionSensor",
+            label: "Motion Sensor (PIR / Occupancy)",
+            type: "yesno",
+            required: false,
+            colSpan: 2
+          },
+          {
+            name: "ctrlPhotosensor",
+            label: "Photosensor (Daylight Harvesting)",
+            type: "yesno",
+            required: false,
+            colSpan: 2
+          },
+          {
+            name: "ctrlLMS",
+            label: "Lighting Management System (Touch Panel / iPad / BMS)",
+            type: "yesno",
+            required: false,
+            colSpan: 2
+          },
+          {
+            name: "ctrlOthers",
+            label: "Others (Please specify in notes)",
+            type: "yesno",
+            required: false,
+            colSpan: 2
+          },
+          {
+            name: "lightingControlDeviceNotes",
+            label: "Control Device Notes",
+            type: "textarea",
+            required: false,
+            colSpan: 4,
+            placeholder: "e.g. Bedhead panel with 3-preset dimmer scenes; PIR sensor at entry for auto-off after 10 min; iPad-based LMS integrated with BMS for energy monitoring"
+          }
+        ]
+      },
+
+      // ─── 5. FURNITURE & ROOM FIXTURES ─────────────────────────
+      {
+        title: "Furniture & Room Fixtures",
+        description: "Indicate Yes / No for each furniture and fixture item required in this room",
+        fields: [
+          { name: "furnitureLaboratoryBenches",    label: "Lab Benches (Modular Lab Furniture)",    type: "yesno", required: false, colSpan: 2 },
+          { name: "furnitureSystemFurniture",      label: "System Furniture (Modular Workstations)", type: "yesno", required: false, colSpan: 2 },
+          { name: "furnitureLooseChairs",          label: "Loose Chairs / Waiting Chairs",            type: "yesno", required: false, colSpan: 2 },
+          { name: "furnitureModularCabin",         label: "Modular Furniture (Office Cabin)",         type: "yesno", required: false, colSpan: 2 },
+          { name: "furnitureCustom",               label: "Custom Furniture",                         type: "yesno", required: false, colSpan: 2 },
+          { name: "furnitureFixedBench",           label: "Fixed Bench / Countertop",                 type: "yesno", required: false, colSpan: 2 },
+          { name: "furnitureLockers",              label: "Lockers",                                  type: "yesno", required: false, colSpan: 2 },
+          { name: "furnitureCoatHooks",            label: "Hooks for Coat",                           type: "yesno", required: false, colSpan: 2 },
+          { name: "furnitureBulletinBoard",        label: "Bulletin Board",                           type: "yesno", required: false, colSpan: 2 },
+          { name: "furnitureMarkerBoard",          label: "Marker Board / Whiteboard",                type: "yesno", required: false, colSpan: 2 },
+          { name: "furnitureHandRail",             label: "Hand Rail",                                type: "yesno", required: false, colSpan: 2 },
+          { name: "furnitureOthers",               label: "Others (Please specify in notes)",         type: "yesno", required: false, colSpan: 2 },
+          {
+            name: "furnitureNotes",
+            label: "Furniture & Fixtures Notes",
+            type: "textarea",
+            required: false,
+            colSpan: 4,
+            placeholder: "e.g. 4× fixed countertop workstations along north wall; 2× modular lockers at entry; continuous grab rail both sides of WC; custom joinery headwall panel"
+          }
+        ]
+      },
+
+      // ─── 6. CABINETRY & SHELVING ──────────────────────────────
+      {
+        title: "Cabinetry & Shelving",
+        description: "Specify all joinery and shelving elements required — select all that apply and add inventory detail in notes",
+        fields: [
+          { name: "cabBuiltInIntegrated",   label: "Built-in Integrated Counter with Open Shelves & Cabinet Shutters", type: "yesno", required: false, colSpan: 2 },
+          { name: "cabMobilePedestal",       label: "Mobile Pedestal",                                                  type: "yesno", required: false, colSpan: 2 },
+          { name: "cabOverheadCabinets",     label: "Cabinets (Overhead)",                                              type: "yesno", required: false, colSpan: 2 },
+          { name: "cabUndercountCabinets",   label: "Cabinets (Undercounter)",                                          type: "yesno", required: false, colSpan: 2 },
+          { name: "cabOpenShelvesOverhead",  label: "Open Shelves (Overhead)",                                          type: "yesno", required: false, colSpan: 2 },
+          { name: "cabOpenShelvesUnder",     label: "Open Shelves (Undercounter)",                                      type: "yesno", required: false, colSpan: 2 },
+          { name: "cabFullHeightCabinets",   label: "Full Height Cabinets",                                             type: "yesno", required: false, colSpan: 2 },
+          { name: "cabFullHeightShelving",   label: "Full Height Shelving",                                             type: "yesno", required: false, colSpan: 2 },
+          { name: "cabInventoryStocked",     label: "Inventory Details or Stocked Items Required",                      type: "yesno", required: false, colSpan: 2 },
+          { name: "cabOthers",               label: "Others (Please specify in notes)",                                  type: "yesno", required: false, colSpan: 2 },
+          {
+            name: "cabinetryNotes",
+            label: "Cabinetry & Shelving Notes",
+            type: "textarea",
+            required: false,
+            colSpan: 4,
+            placeholder: "e.g. 3600mm built-in base cabinetry with laminate shutter and solid-surface top; 2× full-height cabinets for PPE storage; open overhead shelves above hand basin; stocked items: gloves, masks, dressings"
+          }
+        ]
+      },
+
+      // ─── 7. FUME CUPBOARDS ────────────────────────────────────
+      {
+        title: "Fume Cupboards",
+        description: "Specify fume cupboard types and sizes required — indicate Yes / No for each configuration",
+        fields: [
+          {
+            name: "fumeFloorVertical1200",
+            label: "Floor Standing Vertical Sash — 1200 mm",
+            type: "yesno",
+            required: false,
+            colSpan: 2
+          },
+          {
+            name: "fumeFloorVertical1500",
+            label: "Floor Standing Vertical Sash — 1500 mm",
+            type: "yesno",
+            required: false,
+            colSpan: 2
+          },
+          {
+            name: "fumeFloorVertical1800",
+            label: "Floor Standing Vertical Sash — 1800 mm",
+            type: "yesno",
+            required: false,
+            colSpan: 2
+          },
+          {
+            name: "fumeWalkIn1200",
+            label: "Walk-in Fume Hood — 1200 mm",
+            type: "yesno",
+            required: false,
+            colSpan: 2
+          },
+          {
+            name: "fumeWalkIn1500",
+            label: "Walk-in Fume Hood — 1500 mm",
+            type: "yesno",
+            required: false,
+            colSpan: 2
+          },
+          {
+            name: "fumeWalkIn1800",
+            label: "Walk-in Fume Hood — 1800 mm",
+            type: "yesno",
+            required: false,
+            colSpan: 2
+          },
+          {
+            name: "fumePortable1200",
+            label: "Portable Ductless Fume Hood — 1200 mm",
+            type: "yesno",
+            required: false,
+            colSpan: 2
+          },
+          {
+            name: "fumePortable1500",
+            label: "Portable Ductless Fume Hood — 1500 mm",
+            type: "yesno",
+            required: false,
+            colSpan: 2
+          },
+          {
+            name: "fumePortable1800",
+            label: "Portable Ductless Fume Hood — 1800 mm",
+            type: "yesno",
+            required: false,
+            colSpan: 2
+          },
+          {
+            name: "fumeNotes",
+            label: "Fume Cupboard Notes",
+            type: "textarea",
+            required: false,
+            colSpan: 4,
+            placeholder: "e.g. 1× floor-standing 1500mm vertical sash with exhaust duct to roof; filter specification; bypass valve; sash alarm at >200mm open"
+          }
+        ]
+      }
+
+    ]
+  },
+
   {
     id: "Clinical functionality and workflow",
     section: "Clinical functionality and workflow",
