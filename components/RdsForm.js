@@ -401,6 +401,7 @@ export default function RdsForm({ onSectionChange, jumpToSection, editRecord, on
   const [editId,            setEditId]            = useState(null);
 
   // ── AI state ────────────────────────────────────────────────────────────────
+  const [aiOptIn,   setAiOptIn]   = useState(null);   // null = not chosen, true = yes, false = no
   const [aiStatus,  setAiStatus]  = useState("idle"); // idle | loading | ready | applied | error
   const [aiData,    setAiData]    = useState(null);   // { recommendations, reasons }
   const [aiReasons, setAiReasons] = useState({});     // active reasons shown on fields
@@ -421,7 +422,7 @@ export default function RdsForm({ onSectionChange, jumpToSection, editRecord, on
   const watchedDepartment = watch("department");
   const watchedCategory   = watch("category");
 
-  // ── Trigger Groq when roomName changes ─────────────────────────────────────
+  // ── Trigger Groq when roomName changes — only if user opted in ────────────
   useEffect(() => {
     // Room cleared or too short — reset so next valid entry triggers fresh call
     if (!watchedRoomName || watchedRoomName.trim().length < 3) {
@@ -435,6 +436,7 @@ export default function RdsForm({ onSectionChange, jumpToSection, editRecord, on
       return;
     }
     if (isEditMode) return;
+    if (!aiOptIn) return;   // ← guard: only run when user said Yes
 
     // Room name changed from previous — reset banner immediately
     if (watchedRoomName !== lastRoomRef.current) {
@@ -489,7 +491,7 @@ export default function RdsForm({ onSectionChange, jumpToSection, editRecord, on
     }, 1200); // 1.2s debounce after user stops typing
 
     return () => clearTimeout(timer);
-  }, [watchedRoomName, watchedDepartment, watchedCategory, isEditMode]);
+  }, [watchedRoomName, watchedDepartment, watchedCategory, isEditMode, aiOptIn]);
 
   // ── Apply all AI recommendations ───────────────────────────────────────────
   // Build a quick lookup: fieldName -> type
@@ -674,6 +676,7 @@ export default function RdsForm({ onSectionChange, jumpToSection, editRecord, on
     setAiData(null);
     setAiReasons({});
     setAiError("");
+    setAiOptIn(null);
     lastRoomRef.current = "";
     window.scrollTo({ top: 0, behavior: "smooth" });
     addToast("Form reset — start fresh", "success");
@@ -720,15 +723,117 @@ export default function RdsForm({ onSectionChange, jumpToSection, editRecord, on
         </div>
       )}
 
+      {/* ── AI OPT-IN CARD — section 0, new form only ── */}
+      {currentIdx === 0 && !isEditMode && aiOptIn === null && (
+        <div style={{
+          marginBottom: 20,
+          background: "linear-gradient(135deg, #faf5ff 0%, #f5f3ff 100%)",
+          border: "1.5px solid #c4b5fd", borderRadius: 14,
+          padding: "20px 22px",
+        }}>
+          <div style={{ display: "flex", alignItems: "flex-start", gap: 14 }}>
+            <div style={{
+              width: 42, height: 42, borderRadius: 11, flexShrink: 0,
+              background: "linear-gradient(135deg,#7c3aed,#4f46e5)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: 20, boxShadow: "0 4px 12px rgba(124,58,237,0.3)",
+            }}>✦</div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontWeight: 700, fontSize: 14.5, color: "#3b0764", marginBottom: 3 }}>
+                Would you like AI to suggest field values?
+              </div>
+              <div style={{ fontSize: 12.5, color: "#6d28d9", lineHeight: 1.6, marginBottom: 14 }}>
+                Based on the room name and department you enter, our AI (Groq · Llama 3.3 70B) can
+                intelligently pre-fill select fields, Yes/No options, and quantities — saving you time.
+                You can review and override any suggestion freely.
+              </div>
+              <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                <button
+                  type="button"
+                  onClick={() => setAiOptIn(true)}
+                  style={{
+                    display: "flex", alignItems: "center", gap: 7,
+                    padding: "9px 20px", borderRadius: 9, fontSize: 13, fontWeight: 700,
+                    background: "linear-gradient(135deg,#7c3aed,#4f46e5)",
+                    color: "#fff", border: "none", cursor: "pointer",
+                    boxShadow: "0 3px 10px rgba(124,58,237,0.35)",
+                    transition: "opacity 0.15s",
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.opacity = "0.88"}
+                  onMouseLeave={e => e.currentTarget.style.opacity = "1"}
+                >
+                  ✦ Yes, enable AI suggestions
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAiOptIn(false)}
+                  style={{
+                    display: "flex", alignItems: "center", gap: 7,
+                    padding: "9px 20px", borderRadius: 9, fontSize: 13, fontWeight: 600,
+                    background: "#fff", color: "#374151",
+                    border: "1.5px solid #d1d5db", cursor: "pointer",
+                    transition: "background 0.15s",
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = "#f9fafb"}
+                  onMouseLeave={e => e.currentTarget.style.background = "#fff"}
+                >
+                  No, I'll fill manually
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── AI OPTED-IN PILL — shows after user said Yes ── */}
+      {currentIdx === 0 && !isEditMode && aiOptIn === true && aiStatus === "idle" && (
+        <div style={{
+          display: "flex", alignItems: "center", gap: 10,
+          padding: "10px 16px", marginBottom: 16,
+          background: "#f5f3ff", border: "1.5px solid #c4b5fd", borderRadius: 10,
+        }}>
+          <span style={{ fontSize: 15 }}>✦</span>
+          <span style={{ fontSize: 12.5, color: "#5b21b6", fontWeight: 500, flex: 1 }}>
+            AI suggestions <strong>enabled</strong> — type a room name above and suggestions will appear automatically.
+          </span>
+          <button
+            type="button"
+            onClick={() => { setAiOptIn(false); setAiStatus("idle"); setAiData(null); setAiReasons({}); lastRoomRef.current = ""; }}
+            style={{ background: "none", border: "none", cursor: "pointer", color: "#7c3aed", fontSize: 18, lineHeight: 1, padding: 0 }}
+          >×</button>
+        </div>
+      )}
+
+      {/* ── AI OPTED-OUT PILL — shows after user said No ── */}
+      {currentIdx === 0 && !isEditMode && aiOptIn === false && (
+        <div style={{
+          display: "flex", alignItems: "center", gap: 10,
+          padding: "10px 16px", marginBottom: 16,
+          background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 10,
+        }}>
+          <span style={{ fontSize: 14, color: "#94a3b8" }}>◌</span>
+          <span style={{ fontSize: 12.5, color: "#64748b", flex: 1 }}>
+            AI suggestions <strong>disabled</strong> for this session — fill all fields manually.
+          </span>
+          <button
+            type="button"
+            onClick={() => { setAiOptIn(null); }}
+            style={{ background: "none", border: "none", cursor: "pointer", color: "#94a3b8", fontSize: 11.5, textDecoration: "underline", padding: 0 }}
+          >Change</button>
+        </div>
+      )}
+
       {/* ── AI SUGGESTION BANNER ── */}
-      <AiBanner
-        status={aiStatus}
-        count={aiCount}
-        roomName={watchedRoomName}
-        onApply={handleApplyAi}
-        onDismiss={handleDismissAi}
-        errorMsg={aiError}
-      />
+      {aiOptIn === true && (
+        <AiBanner
+          status={aiStatus}
+          count={aiCount}
+          roomName={watchedRoomName}
+          onApply={handleApplyAi}
+          onDismiss={handleDismissAi}
+          errorMsg={aiError}
+        />
+      )}
 
       {/* Upload zone — only on section 0 and not in edit mode */}
       {currentIdx === 0 && !isEditMode && <UploadZone onExtracted={handleExtracted} />}
@@ -855,6 +960,7 @@ export default function RdsForm({ onSectionChange, jumpToSection, editRecord, on
             setCompletedSections(new Set()); setRoomImage(null);
             setIsEditMode(false); setEditId(null);
             setAiStatus("idle"); setAiData(null); setAiReasons({});
+            setAiOptIn(null);
             lastRoomRef.current = "";
             if (onEditDone) onEditDone();
           }}
