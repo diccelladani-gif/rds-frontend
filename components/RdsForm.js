@@ -32,7 +32,7 @@ const sectionDesc = {
   "fittings-fixtures-and-equipment":                "Fixed/loose furniture, and clinical equipment & services",
 };
 
-// ─── Extract all select + yesno + number fields for Groq prompt ─────────────
+// ─── Build field manifest + options lookup ───────────────────────────────────
 function buildFieldsManifest() {
   const manifest = [];
   for (const section of rdsSchema) {
@@ -54,44 +54,46 @@ function buildFieldsManifest() {
 
 const FIELDS_MANIFEST = buildFieldsManifest();
 
-// Build a quick options lookup for validation: fieldName → Set of valid options
+// Options lookup for post-response validation
 const OPTIONS_LOOKUP = {};
 FIELDS_MANIFEST.forEach(f => {
   if (f.options) OPTIONS_LOOKUP[f.name] = new Set(f.options);
 });
 
-// ─── Single Groq batch call ───────────────────────────────────────────────────
-async function callGroqBatch(roomName, department, category, fields) {
-  const fieldsJson = JSON.stringify(
-    fields.map(f => ({
-      name:  f.name,
-      label: f.label,
-      ...(f.options ? { options: f.options } : { type: "number" }),
-    })),
-    null, 2
-  );
+// ─── Compact prompt builder — ~60% fewer tokens than pretty JSON ──────────────
+function buildCompactPrompt(roomName, department, category) {
+  // Format: "fieldName|opt1,opt2,opt3" for select; "fieldName|YN" for yesno; "fieldName|N" for number
+  const lines = FIELDS_MANIFEST.map(f => {
+    if (f.type === "number") return `${f.name}(${f.label})|NUM`;
+    if (f.type === "yesno")  return `${f.name}(${f.label})|Yes,No`;
+    return `${f.name}(${f.label})|${f.options.join(",")}`;
+  }).join("
+");
 
-  const prompt = `You are an expert healthcare facility planner (HTM, HBN, ASHRAE, FGI Guidelines).
+  return `You are an expert healthcare facility planner (HTM, HBN, ASHRAE, FGI Guidelines).
 
-Room being configured:
-- Name: ${roomName}
-- Department: ${department || "Not specified"}
-- Category: ${category || "Not specified"}
+Configure a Room Data Sheet for: ${roomName}${department ? ` | Dept: ${department}` : ""}${category ? ` | Category: ${category}` : ""}
 
-Recommend the best value for each field. Return ONLY valid JSON — no markdown, no explanation.
+For specialist rooms (Mammography, Tomosynthesis, MRI, CT, PET, Cath Lab, LINAC, Fluoroscopy, Ultrasound, Nuclear Medicine, Endoscopy, DSA, OT, NICU, ICU, HDU, Pharmacy, Lab, Mortuary etc.) apply appropriate clinical standards.
 
-Rules:
-- "select": value MUST be copied verbatim from the listed options
-- "yesno": exactly "Yes" or "No"
-- "number": realistic numeric value
-- Omit any field you are not confident about
-- For specialist/imaging rooms (Mammography, MRI, CT, PET, Cath Lab, LINAC etc.) apply relevant radiation, shielding, and specialist standards
+Each line below is: fieldName(label)|option1,option2,...
+Pick the BEST option for this room type. Only include fields you are confident about.
+For NUM fields: return a realistic number.
+For Yes,No fields: return exactly "Yes" or "No".
+For other fields: return exactly one of the listed options (verbatim).
 
-Fields:
-${fieldsJson}
+FIELDS:
+${lines}
 
-Respond ONLY with this exact JSON (no code fences):
-{"recommendations":{"fieldName":"value"},"reasons":{"fieldName":"one-line reason"}}`;
+Respond ONLY with compact JSON (no markdown, no explanation):
+{"r":{"fieldName":"value"},"w":{"fieldName":"why"}}`;
+}
+
+// ─── Single API call — validate response against options ─────────────────────
+async function fetchGroqRecommendations(roomName, department, category) {
+  if (!GROQ_API_KEY) return null;
+
+  const prompt = buildCompactPrompt(roomName, department, category);
 
   const resp = await axios.post(
     GROQ_URL,
@@ -99,55 +101,37 @@ Respond ONLY with this exact JSON (no code fences):
       model: GROQ_MODEL,
       messages: [{ role: "user", content: prompt }],
       temperature: 0.15,
-      max_tokens: 4000,
+      max_tokens: 2500,
     },
     { headers: { Authorization: `Bearer ${GROQ_API_KEY}`, "Content-Type": "application/json" } }
   );
 
   const raw     = resp.data.choices[0].message.content.trim();
   const cleaned = raw.replace(/^```json\s*/m, "").replace(/^```\s*/m, "").replace(/\s*```$/m, "");
-  return JSON.parse(cleaned);
-}
+  const parsed  = JSON.parse(cleaned);
 
-// ─── Main: fetch in 2 smaller batches, merge, validate ───────────────────────
-async function fetchGroqRecommendations(roomName, department, category) {
-  if (!GROQ_API_KEY) return null;
+  // Support both {r,w} compact and {recommendations,reasons} verbose formats
+  const recs    = parsed.r || parsed.recommendations || {};
+  const reasons = parsed.w || parsed.reasons || {};
 
-  const mid    = Math.ceil(FIELDS_MANIFEST.length / 2);
-  const batch1 = FIELDS_MANIFEST.slice(0, mid);
-  const batch2 = FIELDS_MANIFEST.slice(mid);
-
-  // Run batches sequentially to respect Groq rate limits
-  const res1 = await callGroqBatch(roomName, department, category, batch1);
-  await new Promise(r => setTimeout(r, 800)); // 800ms pause between calls
-  const res2 = await callGroqBatch(roomName, department, category, batch2);
-
-  // Merge results
-  const merged = {
-    recommendations: { ...(res1.recommendations || {}), ...(res2.recommendations || {}) },
-    reasons:         { ...(res1.reasons || {}),         ...(res2.reasons || {}) },
-  };
-
-  // Validate: remove any recommendation where the value is not in the options list
+  // Validate — drop any value not in the options list (hallucination guard)
   const validated = {};
-  const validatedReasons = {};
-  Object.entries(merged.recommendations).forEach(([key, value]) => {
-    if (!value && value !== 0) return;
-    // For select fields: value must exactly match one of the options
+  const validReasons = {};
+  Object.entries(recs).forEach(([key, value]) => {
+    if (value === undefined || value === null || value === "") return;
     if (OPTIONS_LOOKUP[key]) {
       if (OPTIONS_LOOKUP[key].has(String(value))) {
         validated[key] = value;
-        if (merged.reasons[key]) validatedReasons[key] = merged.reasons[key];
+        if (reasons[key]) validReasons[key] = reasons[key];
       }
-      // else: silently drop hallucinated values
+      // silently drop hallucinated option values
     } else {
-      // number or yesno — accept as-is
       validated[key] = value;
-      if (merged.reasons[key]) validatedReasons[key] = merged.reasons[key];
+      if (reasons[key]) validReasons[key] = reasons[key];
     }
   });
 
-  return { recommendations: validated, reasons: validatedReasons };
+  return { recommendations: validated, reasons: validReasons };
 }
 
 // ─── Toast hook ──────────────────────────────────────────────────────────────
