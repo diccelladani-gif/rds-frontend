@@ -1987,16 +1987,54 @@ function PremiumQtyCard({ field, register, setValue, watch, err }) {
 
 // ─── PREMIUM SELECT DROPDOWN ────────────────────────────────────────────────
 function PremiumSelect({ field, register, setValue, watch, err }) {
-  const [open, setOpen] = React.useState(false);
+  const [open, setOpen]     = React.useState(false);
   const [search, setSearch] = React.useState("");
-  const ref = React.useRef(null);
+  const [pos, setPos]       = React.useState({ top: 0, left: 0, width: 0, openUp: false });
+  const triggerRef = React.useRef(null);
+  const portalRef  = React.useRef(null);
   const val = watch?.(field.name) || "";
 
-  React.useEffect(() => {
-    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
+  // ── Position the portal panel relative to trigger ──────────
+  const reposition = React.useCallback(() => {
+    if (!triggerRef.current) return;
+    const r = triggerRef.current.getBoundingClientRect();
+    const spaceBelow = window.innerHeight - r.bottom;
+    const spaceAbove = r.top;
+    const panelH = 300; // max expected height
+    const openUp = spaceBelow < panelH && spaceAbove > spaceBelow;
+    setPos({
+      top:    openUp ? r.top + window.scrollY - panelH - 6 : r.bottom + window.scrollY + 6,
+      left:   r.left + window.scrollX,
+      width:  r.width,
+      openUp,
+    });
   }, []);
+
+  const openDropdown = () => {
+    reposition();
+    setOpen(true);
+    setSearch("");
+  };
+
+  // ── Click-outside & scroll close ───────────────────────────
+  React.useEffect(() => {
+    if (!open) return;
+    const close = (e) => {
+      if (
+        triggerRef.current && !triggerRef.current.contains(e.target) &&
+        portalRef.current  && !portalRef.current.contains(e.target)
+      ) setOpen(false);
+    };
+    const onScroll = () => { reposition(); };
+    document.addEventListener("mousedown", close);
+    window.addEventListener("scroll", onScroll, true);
+    window.addEventListener("resize", reposition);
+    return () => {
+      document.removeEventListener("mousedown", close);
+      window.removeEventListener("scroll", onScroll, true);
+      window.removeEventListener("resize", reposition);
+    };
+  }, [open, reposition]);
 
   const filtered = (field.options || []).filter(o =>
     o.toLowerCase().includes(search.toLowerCase())
@@ -2004,8 +2042,7 @@ function PremiumSelect({ field, register, setValue, watch, err }) {
 
   const select = (opt) => {
     setValue?.(field.name, opt, { shouldDirty: true, shouldValidate: true });
-    setOpen(false);
-    setSearch("");
+    setOpen(false); setSearch("");
   };
 
   const clear = (e) => {
@@ -2015,12 +2052,11 @@ function PremiumSelect({ field, register, setValue, watch, err }) {
 
   const isEmpty = !val;
 
-  // Colour-coded badge by option category
   const getBadgeStyle = (v) => {
     const lv = v.toLowerCase();
-    if (["critical","very high","negative (-ve)","level 4","bsl-4","positive (+ve)"].some(k => lv.includes(k)))
+    if (["critical","very high","negative (-ve)","level 4","bsl-4"].some(k => lv.includes(k)))
       return { bg: "#fee2e2", color: "#991b1b", border: "#fca5a5" };
-    if (["high","enhanced","level 3","bsl-3","variable"].some(k => lv.includes(k)))
+    if (["high","enhanced","level 3","bsl-3","variable","positive (+ve)"].some(k => lv.includes(k)))
       return { bg: "#fff7ed", color: "#9a3412", border: "#fdba74" };
     if (["medium","standard","level 2","bsl-2","neutral"].some(k => lv.includes(k)))
       return { bg: "#fefce8", color: "#854d0e", border: "#fde047" };
@@ -2031,180 +2067,154 @@ function PremiumSelect({ field, register, setValue, watch, err }) {
 
   const badge = val ? getBadgeStyle(val) : null;
 
+  // ── Portal panel rendered at body level ────────────────────
+  const DropPanel = open ? (
+    <div
+      ref={portalRef}
+      style={{
+        position: "absolute",
+        top: pos.top, left: pos.left, width: pos.width,
+        background: "#fff",
+        border: "1.5px solid #e2e8f0",
+        borderRadius: 14,
+        boxShadow: "0 12px 40px rgba(0,0,0,0.16), 0 2px 8px rgba(0,0,0,0.08)",
+        zIndex: 99999,
+        overflow: "hidden",
+        animation: "dropIn 0.15s ease",
+      }}
+    >
+      {(field.options || []).length > 5 && (
+        <div style={{ padding: "9px 10px", borderBottom: "1px solid #f1f5f9" }}>
+          <div style={{
+            display: "flex", alignItems: "center", gap: 7,
+            background: "#f8fafc", border: "1px solid #e2e8f0",
+            borderRadius: 8, padding: "5px 9px",
+          }}>
+            <svg width="12" height="12" viewBox="0 0 13 13" fill="none">
+              <circle cx="5.5" cy="5.5" r="4" stroke="#94a3b8" strokeWidth="1.5"/>
+              <path d="M8.5 8.5L11 11" stroke="#94a3b8" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+            <input autoFocus placeholder="Search…" value={search}
+              onChange={e => setSearch(e.target.value)}
+              onClick={e => e.stopPropagation()}
+              style={{ flex:1, border:"none", background:"none", outline:"none", fontSize:12.5, color:"#0f172a" }}
+            />
+            {search && <button type="button" onClick={() => setSearch("")}
+              style={{ background:"none", border:"none", cursor:"pointer", color:"#94a3b8", padding:0, fontSize:14 }}>×</button>}
+          </div>
+        </div>
+      )}
+      <div style={{ maxHeight: 230, overflowY: "auto", padding: "5px" }}>
+        {filtered.length === 0 ? (
+          <div style={{ padding: "14px", textAlign: "center", fontSize: 12, color: "#94a3b8" }}>
+            No options match "{search}"
+          </div>
+        ) : filtered.map(opt => {
+          const isSel = opt === val;
+          const bs = getBadgeStyle(opt);
+          return (
+            <button key={opt} type="button" onClick={() => select(opt)}
+              style={{
+                width: "100%", textAlign: "left", border: "none",
+                background: isSel ? bs.bg : "transparent",
+                borderRadius: 8, padding: "8px 11px",
+                cursor: "pointer", display: "flex", alignItems: "center", gap: 9,
+                transition: "background 0.1s",
+              }}
+              onMouseEnter={e => { if (!isSel) e.currentTarget.style.background = "#f8fafc"; }}
+              onMouseLeave={e => { if (!isSel) e.currentTarget.style.background = "transparent"; }}
+            >
+              <div style={{
+                width: 7, height: 7, borderRadius: "50%", flexShrink: 0,
+                background: bs.color, border: `1.5px solid ${bs.border}`,
+                boxShadow: isSel ? `0 0 0 3px ${bs.bg}` : "none",
+              }} />
+              <span style={{ fontSize: 13, fontWeight: isSel ? 700 : 400, color: isSel ? bs.color : "#374151", flex: 1, lineHeight: 1.4 }}>
+                {opt}
+              </span>
+              {isSel && (
+                <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
+                  <path d="M2.5 7L5.5 10L11.5 4" stroke={bs.color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              )}
+            </button>
+          );
+        })}
+      </div>
+      <style>{`
+        @keyframes dropIn {
+          from { opacity:0; transform:translateY(-5px); }
+          to   { opacity:1; transform:translateY(0); }
+        }
+      `}</style>
+    </div>
+  ) : null;
+
   return (
-    <div ref={ref} style={{ position: "relative" }}>
-      {/* Hidden native input for RHF */}
+    <div ref={triggerRef} style={{ position: "relative" }}>
       <input type="hidden" {...register(field.name, {
         required: field.required ? `${field.label} is required` : false,
       })} />
 
-      {/* Trigger button */}
+      {/* Trigger */}
       <button
         type="button"
-        onClick={() => { setOpen(o => !o); setSearch(""); }}
+        onClick={() => open ? setOpen(false) : openDropdown()}
         style={{
-          width: "100%", minHeight: 46,
-          background: isEmpty
-            ? "linear-gradient(145deg, #f8fafc, #f1f5f9)"
-            : `linear-gradient(145deg, ${badge.bg}, ${badge.bg}dd)`,
-          border: `1.5px solid ${err ? "#fca5a5" : isEmpty ? "#e2e8f0" : badge.border}`,
-          borderRadius: 12,
-          padding: "10px 14px",
-          display: "flex", alignItems: "center", gap: 10,
+          width: "100%", minHeight: 44,
+          background: isEmpty ? "#f8fafc" : `${badge.bg}`,
+          border: `1.5px solid ${err ? "#fca5a5" : open ? "#7dd3fc" : isEmpty ? "#e2e8f0" : badge.border}`,
+          borderRadius: 11,
+          padding: "9px 13px",
+          display: "flex", alignItems: "center", gap: 9,
           cursor: "pointer", textAlign: "left",
-          transition: "all 0.2s",
-          boxShadow: open ? "0 0 0 3px rgba(14,165,233,0.15)" : isEmpty ? "none" : "0 1px 6px rgba(0,0,0,0.06)",
+          transition: "all 0.18s",
+          boxShadow: open ? "0 0 0 3px rgba(14,165,233,0.13)" : "none",
           position: "relative", overflow: "hidden",
         }}
         onMouseEnter={e => { if (isEmpty) e.currentTarget.style.borderColor = "#94a3b8"; }}
-        onMouseLeave={e => { if (isEmpty) e.currentTarget.style.borderColor = "#e2e8f0"; }}
+        onMouseLeave={e => { if (isEmpty && !open) e.currentTarget.style.borderColor = "#e2e8f0"; }}
       >
-        {/* Left accent line */}
         {!isEmpty && (
           <div style={{
             position: "absolute", left: 0, top: 0, bottom: 0, width: 3,
             background: `linear-gradient(180deg, ${badge.border}, ${badge.color})`,
-            borderRadius: "12px 0 0 12px",
+            borderRadius: "11px 0 0 11px",
           }} />
         )}
-
-        <div style={{ flex: 1, paddingLeft: !isEmpty ? 4 : 0 }}>
-          {isEmpty ? (
-            <span style={{ fontSize: 13, color: "#94a3b8", fontStyle: "italic" }}>
-              — Select {field.label} —
-            </span>
-          ) : (
-            <span style={{
-              fontSize: 13, fontWeight: 600, color: badge.color,
-              lineHeight: 1.3, display: "block",
-            }}>{val}</span>
-          )}
+        <div style={{ flex: 1, paddingLeft: !isEmpty ? 4 : 0, overflow: "hidden" }}>
+          {isEmpty
+            ? <span style={{ fontSize: 13, color: "#94a3b8", fontStyle: "italic", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", display: "block" }}>— Select {field.label} —</span>
+            : <span style={{ fontSize: 13, fontWeight: 600, color: badge.color, lineHeight: 1.3, display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{val}</span>
+          }
         </div>
-
-        <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 5, flexShrink: 0 }}>
           {!isEmpty && (
-            <span
-              onClick={clear}
-              style={{
-                width: 18, height: 18, borderRadius: "50%",
-                background: "#e2e8f0", color: "#64748b",
-                fontSize: 11, fontWeight: 700,
-                display: "flex", alignItems: "center", justifyContent: "center",
-                cursor: "pointer", lineHeight: 1,
-              }}
-            >×</span>
+            <span onClick={clear} style={{
+              width: 17, height: 17, borderRadius: "50%",
+              background: "#e2e8f0", color: "#64748b",
+              fontSize: 11, fontWeight: 700,
+              display: "flex", alignItems: "center", justifyContent: "center",
+              cursor: "pointer",
+            }}>×</span>
           )}
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"
-            style={{ transform: open ? "rotate(180deg)" : "none", transition: "transform 0.2s", color: isEmpty ? "#94a3b8" : badge.color }}>
-            <path d="M2.5 5L7 9.5L11.5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          <svg width="13" height="13" viewBox="0 0 14 14" fill="none"
+            style={{ transform: open ? "rotate(180deg)" : "none", transition: "transform 0.2s", flexShrink: 0 }}>
+            <path d="M2.5 5L7 9.5L11.5 5" stroke={isEmpty ? "#94a3b8" : badge.color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
         </div>
       </button>
 
-      {/* Dropdown panel */}
-      {open && (
-        <div style={{
-          position: "absolute", top: "calc(100% + 6px)", left: 0, right: 0,
-          background: "#fff",
-          border: "1.5px solid #e2e8f0",
-          borderRadius: 14,
-          boxShadow: "0 8px 32px rgba(0,0,0,0.14), 0 2px 8px rgba(0,0,0,0.08)",
-          zIndex: 9999,
-          overflow: "hidden",
-          animation: "dropIn 0.15s ease",
-        }}>
-          {/* Search bar */}
-          {(field.options || []).length > 6 && (
-            <div style={{ padding: "10px 12px", borderBottom: "1px solid #f1f5f9" }}>
-              <div style={{
-                display: "flex", alignItems: "center", gap: 8,
-                background: "#f8fafc", border: "1px solid #e2e8f0",
-                borderRadius: 8, padding: "6px 10px",
-              }}>
-                <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
-                  <circle cx="5.5" cy="5.5" r="4" stroke="#94a3b8" strokeWidth="1.5"/>
-                  <path d="M8.5 8.5L11 11" stroke="#94a3b8" strokeWidth="1.5" strokeLinecap="round"/>
-                </svg>
-                <input
-                  autoFocus
-                  placeholder="Search options…"
-                  value={search}
-                  onChange={e => setSearch(e.target.value)}
-                  onClick={e => e.stopPropagation()}
-                  style={{
-                    flex: 1, border: "none", background: "none", outline: "none",
-                    fontSize: 12.5, color: "#0f172a",
-                  }}
-                />
-                {search && (
-                  <button type="button" onClick={() => setSearch("")}
-                    style={{ background: "none", border: "none", cursor: "pointer", color: "#94a3b8", padding: 0, fontSize: 14 }}>
-                    ×
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Options list */}
-          <div style={{ maxHeight: 240, overflowY: "auto", padding: "6px" }}>
-            {filtered.length === 0 ? (
-              <div style={{ padding: "14px", textAlign: "center", fontSize: 12.5, color: "#94a3b8" }}>
-                No options match "{search}"
-              </div>
-            ) : filtered.map(opt => {
-              const isSelected = opt === val;
-              const bs = getBadgeStyle(opt);
-              return (
-                <button
-                  key={opt}
-                  type="button"
-                  onClick={() => select(opt)}
-                  style={{
-                    width: "100%", textAlign: "left", border: "none",
-                    background: isSelected ? bs.bg : "transparent",
-                    borderRadius: 8, padding: "9px 12px",
-                    cursor: "pointer", display: "flex", alignItems: "center", gap: 10,
-                    transition: "background 0.12s",
-                  }}
-                  onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = "#f8fafc"; }}
-                  onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = "transparent"; }}
-                >
-                  {/* Colour dot */}
-                  <div style={{
-                    width: 8, height: 8, borderRadius: "50%", flexShrink: 0,
-                    background: bs.color, border: `1.5px solid ${bs.border}`,
-                    boxShadow: isSelected ? `0 0 0 3px ${bs.bg}` : "none",
-                  }} />
-                  <span style={{
-                    fontSize: 13, fontWeight: isSelected ? 700 : 400,
-                    color: isSelected ? bs.color : "#374151",
-                    lineHeight: 1.4, flex: 1,
-                  }}>{opt}</span>
-                  {isSelected && (
-                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                      <path d="M2.5 7L5.5 10L11.5 4" stroke={bs.color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
+      {/* Portal — rendered into document.body to escape overflow:hidden */}
+      {typeof document !== "undefined" && open &&
+        require("react-dom").createPortal(DropPanel, document.body)
+      }
 
       {err && (
         <div style={{ fontSize: 10.5, color: "#dc2626", marginTop: 4, fontWeight: 500, paddingLeft: 4 }}>
           {err.message || `${field.label} is required`}
         </div>
       )}
-
-      <style>{`
-        @keyframes dropIn {
-          from { opacity: 0; transform: translateY(-6px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-      `}</style>
     </div>
   );
 }
