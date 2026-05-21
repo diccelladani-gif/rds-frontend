@@ -1882,116 +1882,102 @@ function PremiumQtyCard({ field, register, setValue, watch, err }) {
 
   const decrement = () => setValue?.(field.name, Math.max(min, val - 1), { shouldDirty: true });
   const increment = () => setValue?.(field.name, val + 1, { shouldDirty: true });
-
   const isEmpty = val === 0;
 
   return (
-    <div style={{
-      position: "relative",
-      background: isEmpty
-        ? "linear-gradient(145deg, #f8fafc 0%, #f1f5f9 100%)"
-        : "linear-gradient(145deg, #f0f9ff 0%, #e0f2fe 100%)",
-      border: `1.5px solid ${err ? "#fca5a5" : isEmpty ? "#e2e8f0" : "#7dd3fc"}`,
-      borderRadius: 14,
-      padding: "14px 16px 12px",
-      transition: "all 0.2s ease",
-      boxShadow: isEmpty ? "none" : "0 2px 12px rgba(14,165,233,0.12)",
-      overflow: "hidden",
-    }}>
-      {/* Decorative accent line */}
+    <div style={{ width: "100%" }}>
       <div style={{
-        position: "absolute", top: 0, left: 0, right: 0, height: 3,
-        background: isEmpty
-          ? "linear-gradient(90deg, #e2e8f0, #cbd5e1)"
-          : "linear-gradient(90deg, #0ea5e9, #38bdf8, #7dd3fc)",
-        borderRadius: "14px 14px 0 0",
-        transition: "all 0.3s ease",
-      }} />
-
-      {/* Value display */}
-      <div style={{
-        display: "flex", alignItems: "center", justifyContent: "space-between",
-        marginBottom: 10, marginTop: 2,
+        display: "flex",
+        alignItems: "center",
+        gap: 0,
+        background: isEmpty ? "#f8fafc" : "#f0f9ff",
+        border: `1.5px solid ${err ? "#fca5a5" : isEmpty ? "#e2e8f0" : "#7dd3fc"}`,
+        borderRadius: 10,
+        overflow: "hidden",
+        height: 40,
+        transition: "border-color 0.2s, background 0.2s",
+        boxShadow: isEmpty ? "none" : "0 1px 6px rgba(14,165,233,0.1)",
       }}>
-        <span style={{
-          fontSize: 28, fontWeight: 800, letterSpacing: "-1px",
-          color: isEmpty ? "#cbd5e1" : "#0369a1",
-          lineHeight: 1, transition: "color 0.2s",
-          fontVariantNumeric: "tabular-nums",
-        }}>
-          {String(val).padStart(2, "0")}
-        </span>
-        <span style={{
-          fontSize: 10, fontWeight: 700, letterSpacing: "1px",
-          color: isEmpty ? "#94a3b8" : "#0ea5e9",
-          textTransform: "uppercase",
-          transition: "color 0.2s",
-        }}>
-          {val === 1 ? "unit" : "units"}
-        </span>
-      </div>
-
-      {/* Stepper controls */}
-      <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+        {/* Decrement */}
         <button
           type="button"
           onClick={decrement}
           disabled={val <= min}
           style={{
-            width: 32, height: 32, borderRadius: 8, border: "none",
-            background: val <= min ? "#f1f5f9" : "#fff",
+            width: 36, height: "100%", border: "none", borderRight: "1px solid #e2e8f0",
+            background: "transparent",
             color: val <= min ? "#cbd5e1" : "#0369a1",
-            fontSize: 18, fontWeight: 700, cursor: val <= min ? "not-allowed" : "pointer",
+            fontSize: 18, fontWeight: 600,
+            cursor: val <= min ? "not-allowed" : "pointer",
             display: "flex", alignItems: "center", justifyContent: "center",
-            boxShadow: val <= min ? "none" : "0 1px 4px rgba(0,0,0,0.1)",
-            transition: "all 0.15s",
-            flexShrink: 0,
+            flexShrink: 0, transition: "background 0.15s, color 0.15s",
+            lineHeight: 1,
           }}
           onMouseEnter={e => { if (val > min) e.currentTarget.style.background = "#e0f2fe"; }}
-          onMouseLeave={e => { e.currentTarget.style.background = val <= min ? "#f1f5f9" : "#fff"; }}
+          onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
         >−</button>
 
-        {/* Hidden native input for react-hook-form */}
-        <input
-          type="number"
-          min={min}
-          style={{
-            flex: 1, height: 32, borderRadius: 8,
-            border: `1px solid ${isEmpty ? "#e2e8f0" : "#bae6fd"}`,
-            background: "#fff", textAlign: "center",
-            fontSize: 14, fontWeight: 700, color: "#0f172a",
-            outline: "none", padding: "0 4px",
+        {/* Value + label stacked in centre */}
+        <div style={{
+          flex: 1, display: "flex", flexDirection: "column",
+          alignItems: "center", justifyContent: "center",
+          padding: "0 4px", overflow: "hidden",
+          position: "relative",
+        }}>
+          {/* Invisible RHF input */}
+          <input
+            type="number"
+            min={min}
+            style={{
+              position: "absolute", inset: 0, opacity: 0,
+              width: "100%", height: "100%", cursor: "text",
+            }}
+            onKeyDown={e => { if (e.key === "-" || e.key === "e") e.preventDefault(); }}
+            {...register(field.name, {
+              required: field.required ? `${field.label} is required` : false,
+              valueAsNumber: true,
+              min: { value: min, message: `${field.label} cannot be negative` },
+            })}
+          />
+          <span style={{
+            fontSize: 16, fontWeight: 800,
+            color: isEmpty ? "#94a3b8" : "#0369a1",
+            lineHeight: 1, letterSpacing: "-0.5px",
             fontVariantNumeric: "tabular-nums",
-          }}
-          placeholder="0"
-          onKeyDown={e => { if (e.key === "-" || e.key === "e") e.preventDefault(); }}
-          {...register(field.name, {
-            required: field.required ? `${field.label} is required` : false,
-            valueAsNumber: true,
-            min: { value: min, message: `${field.label} cannot be negative` },
-          })}
-        />
+            pointerEvents: "none",
+          }}>
+            {String(val).padStart(2, "0")}
+          </span>
+          <span style={{
+            fontSize: 8.5, fontWeight: 700, letterSpacing: "0.8px",
+            color: isEmpty ? "#cbd5e1" : "#38bdf8",
+            textTransform: "uppercase", lineHeight: 1, marginTop: 1,
+            pointerEvents: "none",
+          }}>
+            {val === 1 ? "UNIT" : "UNITS"}
+          </span>
+        </div>
 
+        {/* Increment */}
         <button
           type="button"
           onClick={increment}
           style={{
-            width: 32, height: 32, borderRadius: 8, border: "none",
-            background: "linear-gradient(135deg, #0ea5e9, #0284c7)",
-            color: "#fff", fontSize: 18, fontWeight: 700,
+            width: 36, height: "100%", border: "none", borderLeft: "1px solid #e2e8f0",
+            background: "linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)",
+            color: "#fff", fontSize: 18, fontWeight: 600,
             cursor: "pointer",
             display: "flex", alignItems: "center", justifyContent: "center",
-            boxShadow: "0 2px 8px rgba(14,165,233,0.4)",
-            transition: "all 0.15s",
-            flexShrink: 0,
+            flexShrink: 0, transition: "opacity 0.15s",
+            lineHeight: 1,
           }}
-          onMouseEnter={e => { e.currentTarget.style.transform = "scale(1.08)"; e.currentTarget.style.boxShadow = "0 4px 14px rgba(14,165,233,0.55)"; }}
-          onMouseLeave={e => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "0 2px 8px rgba(14,165,233,0.4)"; }}
+          onMouseEnter={e => { e.currentTarget.style.opacity = "0.85"; }}
+          onMouseLeave={e => { e.currentTarget.style.opacity = "1"; }}
         >+</button>
       </div>
 
       {err && (
-        <div style={{ fontSize: 10.5, color: "#dc2626", marginTop: 5, fontWeight: 500 }}>
+        <div style={{ fontSize: 10, color: "#dc2626", marginTop: 3, fontWeight: 500 }}>
           {err.message || "Invalid value"}
         </div>
       )}
