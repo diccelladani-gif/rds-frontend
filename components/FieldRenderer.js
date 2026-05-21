@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 
 // ─── USER GROUPS DATA ──────────────────────────────────────
 const USER_GROUP_CATEGORIES = [
@@ -1874,6 +1874,355 @@ function SafetyMatrixInput({ field, register, setValue, watch }) {
 }
 
 
+// ─── PREMIUM QTY STEPPER CARD ──────────────────────────────────────────────
+function PremiumQtyCard({ field, register, setValue, watch, err }) {
+  const raw = watch?.(field.name);
+  const val = (raw !== undefined && raw !== null && raw !== "" && !isNaN(Number(raw))) ? Number(raw) : 0;
+  const min = field.min !== undefined ? field.min : 0;
+
+  const decrement = () => setValue?.(field.name, Math.max(min, val - 1), { shouldDirty: true });
+  const increment = () => setValue?.(field.name, val + 1, { shouldDirty: true });
+
+  const isEmpty = val === 0;
+
+  return (
+    <div style={{
+      position: "relative",
+      background: isEmpty
+        ? "linear-gradient(145deg, #f8fafc 0%, #f1f5f9 100%)"
+        : "linear-gradient(145deg, #f0f9ff 0%, #e0f2fe 100%)",
+      border: `1.5px solid ${err ? "#fca5a5" : isEmpty ? "#e2e8f0" : "#7dd3fc"}`,
+      borderRadius: 14,
+      padding: "14px 16px 12px",
+      transition: "all 0.2s ease",
+      boxShadow: isEmpty ? "none" : "0 2px 12px rgba(14,165,233,0.12)",
+      overflow: "hidden",
+    }}>
+      {/* Decorative accent line */}
+      <div style={{
+        position: "absolute", top: 0, left: 0, right: 0, height: 3,
+        background: isEmpty
+          ? "linear-gradient(90deg, #e2e8f0, #cbd5e1)"
+          : "linear-gradient(90deg, #0ea5e9, #38bdf8, #7dd3fc)",
+        borderRadius: "14px 14px 0 0",
+        transition: "all 0.3s ease",
+      }} />
+
+      {/* Value display */}
+      <div style={{
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        marginBottom: 10, marginTop: 2,
+      }}>
+        <span style={{
+          fontSize: 28, fontWeight: 800, letterSpacing: "-1px",
+          color: isEmpty ? "#cbd5e1" : "#0369a1",
+          lineHeight: 1, transition: "color 0.2s",
+          fontVariantNumeric: "tabular-nums",
+        }}>
+          {String(val).padStart(2, "0")}
+        </span>
+        <span style={{
+          fontSize: 10, fontWeight: 700, letterSpacing: "1px",
+          color: isEmpty ? "#94a3b8" : "#0ea5e9",
+          textTransform: "uppercase",
+          transition: "color 0.2s",
+        }}>
+          {val === 1 ? "unit" : "units"}
+        </span>
+      </div>
+
+      {/* Stepper controls */}
+      <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+        <button
+          type="button"
+          onClick={decrement}
+          disabled={val <= min}
+          style={{
+            width: 32, height: 32, borderRadius: 8, border: "none",
+            background: val <= min ? "#f1f5f9" : "#fff",
+            color: val <= min ? "#cbd5e1" : "#0369a1",
+            fontSize: 18, fontWeight: 700, cursor: val <= min ? "not-allowed" : "pointer",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            boxShadow: val <= min ? "none" : "0 1px 4px rgba(0,0,0,0.1)",
+            transition: "all 0.15s",
+            flexShrink: 0,
+          }}
+          onMouseEnter={e => { if (val > min) e.currentTarget.style.background = "#e0f2fe"; }}
+          onMouseLeave={e => { e.currentTarget.style.background = val <= min ? "#f1f5f9" : "#fff"; }}
+        >−</button>
+
+        {/* Hidden native input for react-hook-form */}
+        <input
+          type="number"
+          min={min}
+          style={{
+            flex: 1, height: 32, borderRadius: 8,
+            border: `1px solid ${isEmpty ? "#e2e8f0" : "#bae6fd"}`,
+            background: "#fff", textAlign: "center",
+            fontSize: 14, fontWeight: 700, color: "#0f172a",
+            outline: "none", padding: "0 4px",
+            fontVariantNumeric: "tabular-nums",
+          }}
+          placeholder="0"
+          onKeyDown={e => { if (e.key === "-" || e.key === "e") e.preventDefault(); }}
+          {...register(field.name, {
+            required: field.required ? `${field.label} is required` : false,
+            valueAsNumber: true,
+            min: { value: min, message: `${field.label} cannot be negative` },
+          })}
+        />
+
+        <button
+          type="button"
+          onClick={increment}
+          style={{
+            width: 32, height: 32, borderRadius: 8, border: "none",
+            background: "linear-gradient(135deg, #0ea5e9, #0284c7)",
+            color: "#fff", fontSize: 18, fontWeight: 700,
+            cursor: "pointer",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            boxShadow: "0 2px 8px rgba(14,165,233,0.4)",
+            transition: "all 0.15s",
+            flexShrink: 0,
+          }}
+          onMouseEnter={e => { e.currentTarget.style.transform = "scale(1.08)"; e.currentTarget.style.boxShadow = "0 4px 14px rgba(14,165,233,0.55)"; }}
+          onMouseLeave={e => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "0 2px 8px rgba(14,165,233,0.4)"; }}
+        >+</button>
+      </div>
+
+      {err && (
+        <div style={{ fontSize: 10.5, color: "#dc2626", marginTop: 5, fontWeight: 500 }}>
+          {err.message || "Invalid value"}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── PREMIUM SELECT DROPDOWN ────────────────────────────────────────────────
+function PremiumSelect({ field, register, setValue, watch, err }) {
+  const [open, setOpen] = React.useState(false);
+  const [search, setSearch] = React.useState("");
+  const ref = React.useRef(null);
+  const val = watch?.(field.name) || "";
+
+  React.useEffect(() => {
+    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const filtered = (field.options || []).filter(o =>
+    o.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const select = (opt) => {
+    setValue?.(field.name, opt, { shouldDirty: true, shouldValidate: true });
+    setOpen(false);
+    setSearch("");
+  };
+
+  const clear = (e) => {
+    e.stopPropagation();
+    setValue?.(field.name, "", { shouldDirty: true });
+  };
+
+  const isEmpty = !val;
+
+  // Colour-coded badge by option category
+  const getBadgeStyle = (v) => {
+    const lv = v.toLowerCase();
+    if (["critical","very high","negative (-ve)","level 4","bsl-4","positive (+ve)"].some(k => lv.includes(k)))
+      return { bg: "#fee2e2", color: "#991b1b", border: "#fca5a5" };
+    if (["high","enhanced","level 3","bsl-3","variable"].some(k => lv.includes(k)))
+      return { bg: "#fff7ed", color: "#9a3412", border: "#fdba74" };
+    if (["medium","standard","level 2","bsl-2","neutral"].some(k => lv.includes(k)))
+      return { bg: "#fefce8", color: "#854d0e", border: "#fde047" };
+    if (["low","minimal","ancillary","not applicable","level 1","none","bsl-1"].some(k => lv.includes(k)))
+      return { bg: "#f0fdf4", color: "#15803d", border: "#86efac" };
+    return { bg: "#f0f9ff", color: "#0369a1", border: "#7dd3fc" };
+  };
+
+  const badge = val ? getBadgeStyle(val) : null;
+
+  return (
+    <div ref={ref} style={{ position: "relative" }}>
+      {/* Hidden native input for RHF */}
+      <input type="hidden" {...register(field.name, {
+        required: field.required ? `${field.label} is required` : false,
+      })} />
+
+      {/* Trigger button */}
+      <button
+        type="button"
+        onClick={() => { setOpen(o => !o); setSearch(""); }}
+        style={{
+          width: "100%", minHeight: 46,
+          background: isEmpty
+            ? "linear-gradient(145deg, #f8fafc, #f1f5f9)"
+            : `linear-gradient(145deg, ${badge.bg}, ${badge.bg}dd)`,
+          border: `1.5px solid ${err ? "#fca5a5" : isEmpty ? "#e2e8f0" : badge.border}`,
+          borderRadius: 12,
+          padding: "10px 14px",
+          display: "flex", alignItems: "center", gap: 10,
+          cursor: "pointer", textAlign: "left",
+          transition: "all 0.2s",
+          boxShadow: open ? "0 0 0 3px rgba(14,165,233,0.15)" : isEmpty ? "none" : "0 1px 6px rgba(0,0,0,0.06)",
+          position: "relative", overflow: "hidden",
+        }}
+        onMouseEnter={e => { if (isEmpty) e.currentTarget.style.borderColor = "#94a3b8"; }}
+        onMouseLeave={e => { if (isEmpty) e.currentTarget.style.borderColor = "#e2e8f0"; }}
+      >
+        {/* Left accent line */}
+        {!isEmpty && (
+          <div style={{
+            position: "absolute", left: 0, top: 0, bottom: 0, width: 3,
+            background: `linear-gradient(180deg, ${badge.border}, ${badge.color})`,
+            borderRadius: "12px 0 0 12px",
+          }} />
+        )}
+
+        <div style={{ flex: 1, paddingLeft: !isEmpty ? 4 : 0 }}>
+          {isEmpty ? (
+            <span style={{ fontSize: 13, color: "#94a3b8", fontStyle: "italic" }}>
+              — Select {field.label} —
+            </span>
+          ) : (
+            <span style={{
+              fontSize: 13, fontWeight: 600, color: badge.color,
+              lineHeight: 1.3, display: "block",
+            }}>{val}</span>
+          )}
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+          {!isEmpty && (
+            <span
+              onClick={clear}
+              style={{
+                width: 18, height: 18, borderRadius: "50%",
+                background: "#e2e8f0", color: "#64748b",
+                fontSize: 11, fontWeight: 700,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                cursor: "pointer", lineHeight: 1,
+              }}
+            >×</span>
+          )}
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"
+            style={{ transform: open ? "rotate(180deg)" : "none", transition: "transform 0.2s", color: isEmpty ? "#94a3b8" : badge.color }}>
+            <path d="M2.5 5L7 9.5L11.5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </div>
+      </button>
+
+      {/* Dropdown panel */}
+      {open && (
+        <div style={{
+          position: "absolute", top: "calc(100% + 6px)", left: 0, right: 0,
+          background: "#fff",
+          border: "1.5px solid #e2e8f0",
+          borderRadius: 14,
+          boxShadow: "0 8px 32px rgba(0,0,0,0.14), 0 2px 8px rgba(0,0,0,0.08)",
+          zIndex: 9999,
+          overflow: "hidden",
+          animation: "dropIn 0.15s ease",
+        }}>
+          {/* Search bar */}
+          {(field.options || []).length > 6 && (
+            <div style={{ padding: "10px 12px", borderBottom: "1px solid #f1f5f9" }}>
+              <div style={{
+                display: "flex", alignItems: "center", gap: 8,
+                background: "#f8fafc", border: "1px solid #e2e8f0",
+                borderRadius: 8, padding: "6px 10px",
+              }}>
+                <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+                  <circle cx="5.5" cy="5.5" r="4" stroke="#94a3b8" strokeWidth="1.5"/>
+                  <path d="M8.5 8.5L11 11" stroke="#94a3b8" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+                <input
+                  autoFocus
+                  placeholder="Search options…"
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  onClick={e => e.stopPropagation()}
+                  style={{
+                    flex: 1, border: "none", background: "none", outline: "none",
+                    fontSize: 12.5, color: "#0f172a",
+                  }}
+                />
+                {search && (
+                  <button type="button" onClick={() => setSearch("")}
+                    style={{ background: "none", border: "none", cursor: "pointer", color: "#94a3b8", padding: 0, fontSize: 14 }}>
+                    ×
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Options list */}
+          <div style={{ maxHeight: 240, overflowY: "auto", padding: "6px" }}>
+            {filtered.length === 0 ? (
+              <div style={{ padding: "14px", textAlign: "center", fontSize: 12.5, color: "#94a3b8" }}>
+                No options match "{search}"
+              </div>
+            ) : filtered.map(opt => {
+              const isSelected = opt === val;
+              const bs = getBadgeStyle(opt);
+              return (
+                <button
+                  key={opt}
+                  type="button"
+                  onClick={() => select(opt)}
+                  style={{
+                    width: "100%", textAlign: "left", border: "none",
+                    background: isSelected ? bs.bg : "transparent",
+                    borderRadius: 8, padding: "9px 12px",
+                    cursor: "pointer", display: "flex", alignItems: "center", gap: 10,
+                    transition: "background 0.12s",
+                  }}
+                  onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = "#f8fafc"; }}
+                  onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = "transparent"; }}
+                >
+                  {/* Colour dot */}
+                  <div style={{
+                    width: 8, height: 8, borderRadius: "50%", flexShrink: 0,
+                    background: bs.color, border: `1.5px solid ${bs.border}`,
+                    boxShadow: isSelected ? `0 0 0 3px ${bs.bg}` : "none",
+                  }} />
+                  <span style={{
+                    fontSize: 13, fontWeight: isSelected ? 700 : 400,
+                    color: isSelected ? bs.color : "#374151",
+                    lineHeight: 1.4, flex: 1,
+                  }}>{opt}</span>
+                  {isSelected && (
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                      <path d="M2.5 7L5.5 10L11.5 4" stroke={bs.color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {err && (
+        <div style={{ fontSize: 10.5, color: "#dc2626", marginTop: 4, fontWeight: 500, paddingLeft: 4 }}>
+          {err.message || `${field.label} is required`}
+        </div>
+      )}
+
+      <style>{`
+        @keyframes dropIn {
+          from { opacity: 0; transform: translateY(-6px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
+    </div>
+  );
+}
+
 // ─── MAIN RENDERER ─────────────────────────────────────────
 export default function FieldRenderer({ field, register, errors, setValue, watch }) {
   const err = errors?.[field.name];
@@ -1900,21 +2249,7 @@ export default function FieldRenderer({ field, register, errors, setValue, watch
       )}
 
       {field.type === "number" && (
-        <input
-          type="number"
-          className={`rds-input ${baseClass}`}
-          placeholder={field.placeholder || "0"}
-          min={field.min !== undefined ? field.min : 0}
-          onKeyDown={e => {
-            // block minus key when min is 0
-            if ((field.min === 0 || field.min === undefined) && e.key === "-") e.preventDefault();
-          }}
-          {...register(field.name, {
-            required: field.required ? `${field.label} is required` : false,
-            valueAsNumber: true,
-            min: { value: field.min !== undefined ? field.min : 0, message: `${field.label} cannot be negative` }
-          })}
-        />
+        <PremiumQtyCard field={field} register={register} setValue={setValue} watch={watch} err={err} />
       )}
 
       {field.type === "textarea" && (
@@ -1929,16 +2264,7 @@ export default function FieldRenderer({ field, register, errors, setValue, watch
       )}
 
       {field.type === "select" && (
-        <select
-          className={`rds-select ${baseClass}`}
-          {...register(field.name, {
-            required: field.required ? `${field.label} is required` : false
-          })}>
-          <option value="">— Select {field.label} —</option>
-          {field.options?.map(opt => (
-            <option key={opt} value={opt}>{opt}</option>
-          ))}
-        </select>
+        <PremiumSelect field={field} register={register} setValue={setValue} watch={watch} err={err} />
       )}
 
       {field.type === "usergroups" && (
