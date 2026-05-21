@@ -158,7 +158,7 @@ export const rdsSchema = [
           {
             name: "netArea",
             label: "Net Area (m²)",
-            type: "number",
+            type: "text",
             placeholder: "e.g. 35",
             required: true,
             colSpan: 2
