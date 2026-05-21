@@ -1904,9 +1904,15 @@ export default function FieldRenderer({ field, register, errors, setValue, watch
           type="number"
           className={`rds-input ${baseClass}`}
           placeholder={field.placeholder || "0"}
+          min={field.min !== undefined ? field.min : 0}
+          onKeyDown={e => {
+            // block minus key when min is 0
+            if ((field.min === 0 || field.min === undefined) && e.key === "-") e.preventDefault();
+          }}
           {...register(field.name, {
             required: field.required ? `${field.label} is required` : false,
-            valueAsNumber: true
+            valueAsNumber: true,
+            min: { value: field.min !== undefined ? field.min : 0, message: `${field.label} cannot be negative` }
           })}
         />
       )}

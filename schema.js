@@ -1826,37 +1826,77 @@ export const rdsSchema = [
     icon: "🧰",
     color: "#7c3aed",
     subsections: [
+
+      // ─── 1. MEDICAL GAS & CLINICAL FITTINGS ──────────────────
       {
-        title: "Fittings & Furniture (FF)",
+        title: "Medical Gas & Clinical Fittings",
+        description: "Specify quantities for all medical gas outlet fittings and clinical point-of-care devices",
         fields: [
-          { name: "airFlowmeter", label: "Air Flowmeter", type: "number", placeholder: "Qty", required: false, colSpan: 1 },
-          { name: "oxygenFlowmeter", label: "Oxygen Flowmeter", type: "number", placeholder: "Qty", required: false, colSpan: 1 },
-          { name: "suctionAdapterLowFlow", label: "Suction Adapter: Low Flow", type: "number", placeholder: "Qty", required: false, colSpan: 1 },
-          { name: "suctionBottle", label: "Suction Bottle", type: "number", placeholder: "Qty", required: false, colSpan: 1 },
-          { name: "oxygenFlowmeterLowFlow", label: "Oxygen Flowmeter: Low Flow", type: "number", placeholder: "Qty", required: false, colSpan: 1 },
-          { name: "trolleyProcedure", label: "Trolley: Procedure", type: "number", placeholder: "Qty", required: false, colSpan: 1 },
-          { name: "blenderAirOxygen", label: "Blender: Air & Oxygen, Low Flow", type: "number", placeholder: "Qty", required: false, colSpan: 1 },
-          { name: "stoolAdjustableMobile", label: "Stool: Adjustable, Mobile", type: "number", placeholder: "Qty", required: false, colSpan: 1 },
-          { name: "curtainTrackSystem", label: "Curtain Track System", type: "number", placeholder: "Qty", required: false, colSpan: 1 },
-          { name: "ivHook", label: "IV Hook", type: "number", placeholder: "Qty", required: false, colSpan: 1 },
-          { name: "additionalFF", label: "Additional FF Items", type: "textarea", placeholder: "List any additional items", required: false, colSpan: 4 }
+          { name: "airFlowmeter",           label: "Air Flowmeter",                  type: "number", min: 0, placeholder: "0", required: false, colSpan: 1 },
+          { name: "oxygenFlowmeter",        label: "Oxygen Flowmeter",               type: "number", min: 0, placeholder: "0", required: false, colSpan: 1 },
+          { name: "oxygenFlowmeterLowFlow", label: "Oxygen Flowmeter: Low Flow",     type: "number", min: 0, placeholder: "0", required: false, colSpan: 1 },
+          { name: "suctionAdapterLowFlow",  label: "Suction Adapter: Low Flow",      type: "number", min: 0, placeholder: "0", required: false, colSpan: 1 },
+          { name: "suctionBottle",          label: "Suction Bottle",                 type: "number", min: 0, placeholder: "0", required: false, colSpan: 1 },
+          { name: "blenderAirOxygen",       label: "Blender: Air & Oxygen, Low Flow",type: "number", min: 0, placeholder: "0", required: false, colSpan: 1 },
+          { name: "ivHook",                 label: "IV Hook",                        type: "number", min: 0, placeholder: "0", required: false, colSpan: 1 },
+          { name: "curtainTrackSystem",     label: "Curtain Track System",           type: "number", min: 0, placeholder: "0", required: false, colSpan: 1 },
         ]
       },
+
+      // ─── 2. FURNITURE ─────────────────────────────────────────
       {
-        title: "Fixtures, Equipment & Services (FE)",
+        title: "Furniture",
+        description: "Patient, staff and visitor furniture — enter quantities or describe specifications in the notes field",
         fields: [
-          { name: "infusionPumpSyringe", label: "Infusion Pump: Syringe", type: "number", placeholder: "Qty", required: false, colSpan: 1 },
-          { name: "examinationLight", label: "Light: Examination, Single, Ceiling Mounted", type: "number", placeholder: "Qty", required: false, colSpan: 1 },
-          { name: "physiologicMonitor", label: "Monitor: Physiologic, Critical Care / Neonatal", type: "number", placeholder: "Qty", required: false, colSpan: 1 },
-          { name: "infantIncubator", label: "Incubator: Infant", type: "number", placeholder: "Qty", required: false, colSpan: 1 },
-          { name: "phototherapyLamp", label: "Lamp: Phototherapy, Neonatal", type: "number", placeholder: "Qty", required: false, colSpan: 1 },
-          { name: "supplyUnitCeiling", label: "Supply Unit: Ceiling, Double Arm", type: "number", placeholder: "Qty", required: false, colSpan: 1 },
-          { name: "infusionPumpEnteral", label: "Infusion Pump: Enteral Feeding", type: "number", placeholder: "Qty", required: false, colSpan: 1 },
-          { name: "infusionPumpSingleChannel", label: "Infusion Pump: Single Channel", type: "number", placeholder: "Qty", required: false, colSpan: 1 },
-          { name: "ventilatorNeonatal", label: "Ventilator: Neonatal / Paediatric", type: "number", placeholder: "Qty", required: false, colSpan: 1 },
-          { name: "additionalFE", label: "Additional FE Items", type: "textarea", placeholder: "List any additional items", required: false, colSpan: 4 }
+          { name: "trolleyProcedure",       label: "Trolley: Procedure",             type: "number", min: 0, placeholder: "0", required: false, colSpan: 1 },
+          { name: "stoolAdjustableMobile",  label: "Stool: Adjustable, Mobile",      type: "number", min: 0, placeholder: "0", required: false, colSpan: 1 },
+          { name: "patientFurniture",       label: "Patient Furniture",              type: "textarea", placeholder: "e.g. 1× hospital bed, 1× over-bed table, 1× bedside locker", required: false, colSpan: 2 },
+          { name: "staffVisitorFurniture",  label: "Staff & Visitors Furniture",     type: "textarea", placeholder: "e.g. 2× visitor chairs, 1× staff workstation chair, 1× writing desk", required: false, colSpan: 2 },
+          { name: "storageFurniture",       label: "Storage",                        type: "textarea", placeholder: "e.g. 1× linen trolley bay, 1× medication storage cabinet, open shelving unit", required: false, colSpan: 2 },
         ]
-      }
+      },
+
+      // ─── 3. ACCESSORIES & DISPENSERS ─────────────────────────
+      {
+        title: "Accessories & Dispensers",
+        description: "Wall-mounted dispensers, waste bins and other room accessories",
+        fields: [
+          { name: "wallMountedDispensers",  label: "Wall-Mounted Dispensers",        type: "textarea", placeholder: "e.g. 2× ABHR hand sanitiser dispenser, 1× soap dispenser, 1× paper towel dispenser", required: false, colSpan: 2 },
+          { name: "wasteBins",              label: "Waste Bins",                     type: "textarea", placeholder: "e.g. 1× clinical waste bin (yellow), 1× general waste bin, 1× sharps container bracket", required: false, colSpan: 2 },
+          { name: "additionalFF",           label: "Additional FF Items",            type: "textarea", placeholder: "List any additional fittings or furniture items not covered above", required: false, colSpan: 4 },
+        ]
+      },
+
+      // ─── 4. CLINICAL EQUIPMENT ────────────────────────────────
+      {
+        title: "Clinical Equipment",
+        description: "Powered medical devices and clinical equipment — enter quantities for each applicable item",
+        fields: [
+          { name: "infusionPumpSyringe",      label: "Infusion Pump: Syringe",                       type: "number", min: 0, placeholder: "0", required: false, colSpan: 1 },
+          { name: "infusionPumpEnteral",      label: "Infusion Pump: Enteral Feeding",                type: "number", min: 0, placeholder: "0", required: false, colSpan: 1 },
+          { name: "infusionPumpSingleChannel",label: "Infusion Pump: Single Channel",                 type: "number", min: 0, placeholder: "0", required: false, colSpan: 1 },
+          { name: "physiologicMonitor",       label: "Monitor: Physiologic, Critical Care / Neonatal",type: "number", min: 0, placeholder: "0", required: false, colSpan: 1 },
+          { name: "ventilatorNeonatal",       label: "Ventilator: Neonatal / Paediatric",             type: "number", min: 0, placeholder: "0", required: false, colSpan: 1 },
+          { name: "infantIncubator",          label: "Incubator: Infant",                             type: "number", min: 0, placeholder: "0", required: false, colSpan: 1 },
+          { name: "phototherapyLamp",         label: "Lamp: Phototherapy, Neonatal",                  type: "number", min: 0, placeholder: "0", required: false, colSpan: 1 },
+          { name: "examinationLight",         label: "Light: Examination, Single, Ceiling Mounted",   type: "number", min: 0, placeholder: "0", required: false, colSpan: 1 },
+          { name: "supplyUnitCeiling",        label: "Supply Unit: Ceiling, Double Arm",              type: "number", min: 0, placeholder: "0", required: false, colSpan: 1 },
+          { name: "medicalEquipments",        label: "Other Medical Equipments",                      type: "textarea", placeholder: "e.g. 1× portable ultrasound, 1× ECG machine, 1× defibrillator — specify make/model if known", required: false, colSpan: 3 },
+        ]
+      },
+
+      // ─── 5. DIAGNOSTICS, IT & COMMUNICATION ──────────────────
+      {
+        title: "Diagnostics, IT & Communication",
+        description: "Wall-mounted diagnostic panels, IT hardware, and nurse call systems for this room",
+        fields: [
+          { name: "wallMountedDiagnostics",  label: "Wall Mounted Diagnostics",      type: "textarea", placeholder: "e.g. 1× sphygmomanometer, 1× pulse oximeter panel, 1× ophthalmoscope/otoscope set", required: false, colSpan: 2 },
+          { name: "itCommunicationHardware", label: "IT & Communication Hardware",   type: "textarea", placeholder: "e.g. 1× PC workstation, 1× 27″ clinical monitor, 1× barcode scanner, 1× label printer, 1× VOIP handset", required: false, colSpan: 2 },
+          { name: "nurseCallSystems",        label: "Nurse Call Systems",            type: "textarea", placeholder: "e.g. 1× bedhead nurse call unit, 1× pull-cord WC call, 1× staff annunciator panel", required: false, colSpan: 2 },
+          { name: "additionalFE",            label: "Additional FE Items",           type: "textarea", placeholder: "List any additional fixtures, equipment or services not covered above", required: false, colSpan: 2 },
+        ]
+      },
+
     ]
   },
 
