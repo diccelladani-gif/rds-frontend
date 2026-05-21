@@ -976,7 +976,7 @@ export const rdsSchema = [
           {
             name: "airChangesACH",
             label: "Air Changes per Hour (ACH)",
-            type: "number",
+            type: "text",
             placeholder: "e.g. 15",
             required: false,
             colSpan: 2
@@ -1066,7 +1066,7 @@ export const rdsSchema = [
           {
             name: "powerLoad",
             label: "Power Load (kVA)",
-            type: "number",
+            type: "text",
             placeholder: "e.g. 15",
             required: false,
             colSpan: 1
