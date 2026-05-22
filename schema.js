@@ -955,10 +955,196 @@ export const rdsSchema = [
     section: "Adjacency Matrix",
     icon: "🔗",
     color: "#ef4444",
-    fields: [
-      { name: "mustBeAdjacent", label: "Must be Adjacent — Rooms", type: "textarea", placeholder: "e.g. Sterile Store, Scrub Area", required: false, colSpan: 4 },
-      { name: "shouldBeAdjacent", label: "Should be Adjacent — Rooms", type: "textarea", placeholder: "e.g. Recovery, Anaesthesia Room", required: false, colSpan: 4 },
-      { name: "avoidAdjacency", label: "Avoid Adjacency — Rooms", type: "textarea", placeholder: "e.g. Dirty Utility, Waiting Area", required: false, colSpan: 4 }
+    subsections: [
+
+      // ─── 1. FUNCTIONAL ADJACENCY ──────────────────────────────────
+      {
+        title: "Functional Adjacency",
+        description: "Define the required proximity relationships — both positive and negative — between this room and adjacent clinical or support spaces",
+        fields: [
+          {
+            name: "primaryFunctionalAdjacency",
+            label: "Primary Functional Adjacency",
+            type: "select",
+            required: false,
+            colSpan: 2,
+            options: [
+              "Direct Internal Door",
+              "Shared Wall",
+              "Immediate Corridor",
+              "Same Floor"
+            ]
+          },
+          {
+            name: "secondaryFunctionalAdjacency",
+            label: "Secondary Functional Adjacency",
+            type: "select",
+            required: false,
+            colSpan: 2,
+            options: [
+              "Same Floor",
+              "Same Building Block",
+              "Easily Accessible via Lift",
+              "No Specific Need"
+            ]
+          },
+          {
+            name: "negativeAdjacency",
+            label: "Negative Adjacency",
+            type: "select",
+            required: false,
+            colSpan: 2,
+            options: [
+              "Separate Building Block",
+              "Different Floor",
+              "Strictly Segregated Corridor",
+              "Not Applicable"
+            ]
+          },
+          {
+            name: "equipmentSharingAccess",
+            label: "Equipment Sharing & Access",
+            type: "select",
+            required: false,
+            colSpan: 2,
+            options: [
+              "Shared Internal Room (Jack-and-Jill Doors)",
+              "Shared Corridor Alcove",
+              "Dedicated Equipment Only (No Sharing)"
+            ]
+          }
+        ]
+      },
+
+      // ─── 2. DEPARTMENTAL & SITE ACCESS ────────────────────────────
+      {
+        title: "Departmental & Site Access",
+        description: "Departmental hub classification and the required external or site-level access routes serving this room",
+        fields: [
+          {
+            name: "departmentalGrouping",
+            label: "Departmental Grouping",
+            type: "select",
+            required: false,
+            colSpan: 2,
+            options: [
+              "Clinical Hub",
+              "Diagnostics Hub",
+              "Inpatient Wards",
+              "Admin & Support"
+            ]
+          },
+          {
+            name: "externalAccessSite",
+            label: "External Access / Site",
+            type: "select",
+            required: false,
+            colSpan: 2,
+            options: [
+              "Direct Street Access (Ambulance / Drop-off)",
+              "Main Entrance",
+              "Service Yard",
+              "Internal Only"
+            ]
+          }
+        ]
+      },
+
+      // ─── 3. ENVIRONMENTAL REQUIREMENTS ────────────────────────────
+      {
+        title: "Environmental Requirements",
+        description: "Sensory and surveillance conditions that govern where this room can be positioned within the facility",
+        fields: [
+          {
+            name: "naturalLightViewRequirement",
+            label: "Natural Light / View Requirement",
+            type: "select",
+            required: false,
+            colSpan: 2,
+            options: [
+              "Mandatory",
+              "Desirable",
+              "Not Required",
+              "Strictly Windowless (Dark Room)"
+            ]
+          },
+          {
+            name: "acousticAdjacencySeparation",
+            label: "Acoustic Adjacency / Separation",
+            type: "select",
+            required: false,
+            colSpan: 2,
+            options: [
+              "Needs Quiet Zone (Away from Noise Sources)",
+              "Generates Noise (Needs Soundproofing)",
+              "Neutral"
+            ]
+          },
+          {
+            name: "visualAdjacencyLineOfSight",
+            label: "Visual Adjacency (Line of Sight)",
+            type: "select",
+            required: false,
+            colSpan: 2,
+            options: [
+              "Mandatory Direct Line of Sight",
+              "CCTV Monitoring Sufficient",
+              "Visual Privacy Required (No Line of Sight)",
+              "Not Applicable"
+            ]
+          }
+        ]
+      },
+
+      // ─── 4. INFRASTRUCTURE & LOGISTICS ────────────────────────────
+      {
+        title: "Infrastructure & Logistics",
+        description: "Vertical circulation priorities and material supply route requirements that must be respected in the spatial arrangement",
+        fields: [
+          {
+            name: "verticalCoreProximity",
+            label: "Vertical Core Proximity",
+            type: "select",
+            required: false,
+            colSpan: 2,
+            options: [
+              "Must be Adjacent to Patient / Stretcher Lift",
+              "Near Public Lift",
+              "Not Critical"
+            ]
+          },
+          {
+            name: "materialSupplyRoute",
+            label: "Material Supply Route",
+            type: "select",
+            required: false,
+            colSpan: 2,
+            options: [
+              "Dedicated Clean Corridor",
+              "Shared Staff Corridor",
+              "Automated Transport (Pneumatic Tube / AGV)",
+              "General Public Corridor"
+            ]
+          }
+        ]
+      },
+
+      // ─── 5. ADDITIONAL NOTES ──────────────────────────────────────
+      {
+        title: "Additional Notes",
+        description: "Any project-specific adjacency requirements not covered by the standard categories above",
+        fields: [
+          {
+            name: "adjacencyOthers",
+            label: "Others",
+            type: "textarea",
+            required: false,
+            colSpan: 4,
+            placeholder: "Specify any additional adjacency requirements, special relationships, or project-specific constraints not captured above"
+          }
+        ]
+      }
+
     ]
   },
   {
