@@ -838,12 +838,14 @@ export default function RdsForm({ onSectionChange, jumpToSection, editRecord, on
       {/* Upload zone — only on section 0 and not in edit mode */}
       {currentIdx === 0 && !isEditMode && <UploadZone onExtracted={handleExtracted} />}
 
-      {/* STEPPER DOTS */}
+      {/* STEPPER TRACK */}
       <div className="section-stepper">
         {rdsSchema.map((s, i) => (
           <div key={s.id}
-            className={`stepper-dot ${completedSections.has(s.id) ? "done" : i === currentIdx ? "active" : ""}`}
-            onClick={() => setCurrentIdx(i)} title={s.section} />
+            className={`stepper-dot ${completedSections.has(s.id) ? "done" : i === currentIdx ? "active" : "pending"}`}
+            onClick={() => setCurrentIdx(i)}
+            title={s.section}
+          />
         ))}
       </div>
 
