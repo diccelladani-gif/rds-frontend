@@ -83,6 +83,20 @@ export default function SuccessOverlay({ roomCode, roomName, onClose }) {
         @keyframes barFill  { from { width:0%; } to { width:100%; } }
         @keyframes shimmer  { from { background-position:-200% 0; } to { background-position:200% 0; } }
         @keyframes floatBadge { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
+        @keyframes meshRotate { from { transform: rotate(0deg) scale(1.5); } to { transform: rotate(360deg) scale(1.5); } }
+        @keyframes auraPulse {
+          0%,100% { opacity: 0.15; transform: scale(1); }
+          50%     { opacity: 0.3; transform: scale(1.08); }
+        }
+        @keyframes statsRowIn {
+          from { opacity:0; transform:translateY(12px) scale(0.97); }
+          to   { opacity:1; transform:translateY(0) scale(1); }
+        }
+        @keyframes counterPop {
+          0%   { transform:scale(1); }
+          50%  { transform:scale(1.15); }
+          100% { transform:scale(1); }
+        }
       `}</style>
 
       {/* Backdrop */}
@@ -113,9 +127,19 @@ export default function SuccessOverlay({ roomCode, roomName, onClose }) {
           <div style={{
             position:"absolute", inset:0, pointerEvents:"none", borderRadius:28, overflow:"hidden",
           }}>
-            <div style={{ position:"absolute", top:-80, left:-80, width:300, height:300, borderRadius:"50%", background:"radial-gradient(circle,rgba(37,99,235,0.2) 0%,transparent 70%)" }} />
-            <div style={{ position:"absolute", bottom:-60, right:-60, width:250, height:250, borderRadius:"50%", background:"radial-gradient(circle,rgba(6,182,212,0.15) 0%,transparent 70%)" }} />
+            {/* Rotating conic mesh */}
+            <div style={{
+              position:"absolute", top:"50%", left:"50%", width:600, height:600,
+              marginLeft:-300, marginTop:-300,
+              background:"conic-gradient(from 0deg, rgba(37,99,235,0.04), rgba(6,182,212,0.06), rgba(124,58,237,0.03), rgba(37,99,235,0.04))",
+              animation:"meshRotate 12s linear infinite",
+              borderRadius:"50%",
+            }} />
+            <div style={{ position:"absolute", top:-80, left:-80, width:300, height:300, borderRadius:"50%", background:"radial-gradient(circle,rgba(37,99,235,0.2) 0%,transparent 70%)", animation:"auraPulse 3s ease-in-out infinite" }} />
+            <div style={{ position:"absolute", bottom:-60, right:-60, width:250, height:250, borderRadius:"50%", background:"radial-gradient(circle,rgba(6,182,212,0.15) 0%,transparent 70%)", animation:"auraPulse 3s 1.5s ease-in-out infinite" }} />
             <div style={{ position:"absolute", top:0, left:0, right:0, height:1, background:"linear-gradient(90deg,transparent,rgba(37,99,235,0.6),rgba(6,182,212,0.4),transparent)" }} />
+            {/* Bottom glow line */}
+            <div style={{ position:"absolute", bottom:0, left:0, right:0, height:1, background:"linear-gradient(90deg,transparent,rgba(124,58,237,0.3),rgba(37,99,235,0.3),transparent)" }} />
           </div>
 
           {/* Close button */}
@@ -124,7 +148,10 @@ export default function SuccessOverlay({ roomCode, roomName, onClose }) {
             background:"rgba(255,255,255,0.08)", border:"1px solid rgba(255,255,255,0.12)",
             borderRadius:8, cursor:"pointer", color:"rgba(255,255,255,0.5)", fontSize:16,
             display:"flex", alignItems:"center", justifyContent:"center", transition:"all 0.2s",
-          }}>×</button>
+          }}
+            onMouseEnter={e => { e.currentTarget.style.background="rgba(255,255,255,0.16)"; e.currentTarget.style.color="rgba(255,255,255,0.9)"; e.currentTarget.style.transform="rotate(90deg) scale(1.1)"; }}
+            onMouseLeave={e => { e.currentTarget.style.background="rgba(255,255,255,0.08)"; e.currentTarget.style.color="rgba(255,255,255,0.5)"; e.currentTarget.style.transform="rotate(0deg) scale(1)"; }}
+          >×</button>
 
           {/* ── Check icon with particles ── */}
           <div style={{ position:"relative", width:96, height:96, margin:"0 auto 28px" }}>
@@ -179,6 +206,7 @@ export default function SuccessOverlay({ roomCode, roomName, onClose }) {
             WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
             animation: phase >= 1 ? "slideUp 0.5s 0.55s both" : "none",
             fontFamily: "'DM Sans', system-ui, sans-serif",
+            backgroundSize: "200% 100%",
           }}>
             Submitted Successfully
           </div>
@@ -190,7 +218,13 @@ export default function SuccessOverlay({ roomCode, roomName, onClose }) {
               background:"rgba(37,99,235,0.15)", border:"1px solid rgba(37,99,235,0.35)",
               borderRadius:50, padding:"8px 18px",
               animation: phase >= 1 ? "slideUp 0.5s 0.65s both, floatBadge 3s 1.2s ease-in-out infinite" : "none",
-            }}>
+              backdropFilter:"blur(8px)",
+              transition:"all 0.3s ease",
+              cursor:"default",
+            }}
+              onMouseEnter={e => { e.currentTarget.style.background="rgba(37,99,235,0.25)"; e.currentTarget.style.boxShadow="0 8px 24px rgba(37,99,235,0.3)"; }}
+              onMouseLeave={e => { e.currentTarget.style.background="rgba(37,99,235,0.15)"; e.currentTarget.style.boxShadow="none"; }}
+            >
               <span style={{ fontSize:14, fontWeight:700, color:"#60a5fa", fontFamily:"'SF Mono','Fira Code',monospace" }}>
                 {roomCode || "—"}
               </span>
@@ -205,24 +239,51 @@ export default function SuccessOverlay({ roomCode, roomName, onClose }) {
           <div style={{
             height:1, background:"rgba(255,255,255,0.08)", margin:"24px 0",
             animation: phase >= 1 ? "slideUp 0.5s 0.7s both" : "none",
-          }} />
+            position:"relative",
+          }}>
+            <div style={{
+              position:"absolute", top:0, left:"50%", transform:"translateX(-50%)",
+              width:"40%", height:1,
+              background:"linear-gradient(90deg, transparent, rgba(37,99,235,0.5), rgba(6,182,212,0.5), transparent)",
+              animation: phase >= 1 ? "shimmer 2s 0.7s linear infinite" : "none",
+              backgroundSize:"200% 100%",
+            }} />
+          </div>
 
           {/* ── Stats row ── */}
           <div style={{
             display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:12,
-            animation: phase >= 1 ? "slideUp 0.5s 0.75s both" : "none",
+            animation: phase >= 1 ? "statsRowIn 0.6s 0.75s both" : "none",
           }}>
             {[
               { icon:"📋", label:"Sections", value:"13 / 13" },
               { icon:"✅", label:"Fields", value:`${counter}%` },
               { icon:"🏥", label:"Status", value:"Live" },
-            ].map(({ icon, label, value }) => (
+            ].map(({ icon, label, value }, idx) => (
               <div key={label} style={{
                 background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.08)",
                 borderRadius:12, padding:"14px 10px",
-              }}>
+                transition:"all 0.3s cubic-bezier(0.23,1,0.32,1)",
+                cursor:"default",
+              }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.background="rgba(255,255,255,0.1)";
+                  e.currentTarget.style.border="1px solid rgba(255,255,255,0.18)";
+                  e.currentTarget.style.transform="translateY(-3px) scale(1.03)";
+                  e.currentTarget.style.boxShadow="0 12px 28px rgba(0,0,0,0.3)";
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.background="rgba(255,255,255,0.05)";
+                  e.currentTarget.style.border="1px solid rgba(255,255,255,0.08)";
+                  e.currentTarget.style.transform="translateY(0) scale(1)";
+                  e.currentTarget.style.boxShadow="none";
+                }}
+              >
                 <div style={{ fontSize:20, marginBottom:5 }}>{icon}</div>
-                <div style={{ fontSize:16, fontWeight:800, color:"#fff" }}>{value}</div>
+                <div style={{
+                  fontSize:16, fontWeight:800, color:"#fff",
+                  animation: label === "Fields" && counter > 0 && counter % 30 === 0 ? "counterPop 0.2s ease" : "none",
+                }}>{value}</div>
                 <div style={{ fontSize:10.5, color:"rgba(255,255,255,0.4)", fontWeight:600, textTransform:"uppercase", letterSpacing:0.8 }}>{label}</div>
               </div>
             ))}
@@ -244,7 +305,11 @@ export default function SuccessOverlay({ roomCode, roomName, onClose }) {
             fontSize:11, color:"rgba(255,255,255,0.28)", marginTop:8,
             animation: phase >= 1 ? "slideUp 0.4s 0.9s both" : "none",
           }}>
-            Closing automatically in 5 seconds · <span style={{ cursor:"pointer", textDecoration:"underline" }} onClick={handleClose}>close now</span>
+            Closing automatically in 5 seconds · <span style={{ cursor:"pointer", textDecoration:"underline", transition:"color 0.2s" }}
+              onMouseEnter={e => e.target.style.color="rgba(255,255,255,0.6)"}
+              onMouseLeave={e => e.target.style.color="rgba(255,255,255,0.28)"}
+              onClick={handleClose}
+            >close now</span>
           </div>
 
           {/* ── Action buttons ── */}
@@ -256,10 +321,11 @@ export default function SuccessOverlay({ roomCode, roomName, onClose }) {
               flex:1, padding:"12px 0", borderRadius:12, border:"1px solid rgba(255,255,255,0.15)",
               background:"rgba(255,255,255,0.07)", color:"rgba(255,255,255,0.8)",
               fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"inherit",
-              transition:"all 0.2s",
+              transition:"all 0.25s cubic-bezier(0.23,1,0.32,1)",
+              backdropFilter:"blur(8px)",
             }}
-              onMouseEnter={e => e.target.style.background="rgba(255,255,255,0.12)"}
-              onMouseLeave={e => e.target.style.background="rgba(255,255,255,0.07)"}
+              onMouseEnter={e => { e.target.style.background="rgba(255,255,255,0.14)"; e.target.style.transform="translateY(-2px)"; e.target.style.boxShadow="0 8px 20px rgba(0,0,0,0.2)"; }}
+              onMouseLeave={e => { e.target.style.background="rgba(255,255,255,0.07)"; e.target.style.transform="translateY(0)"; e.target.style.boxShadow="none"; }}
             >
               New RDS
             </button>
@@ -268,10 +334,11 @@ export default function SuccessOverlay({ roomCode, roomName, onClose }) {
               background:"linear-gradient(135deg,#2563eb,#1d4ed8)",
               color:"#fff", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"inherit",
               boxShadow:"0 4px 16px rgba(37,99,235,0.4)",
-              transition:"all 0.2s",
+              transition:"all 0.25s cubic-bezier(0.23,1,0.32,1)",
+              position:"relative", overflow:"hidden",
             }}
-              onMouseEnter={e => { e.target.style.transform="translateY(-1px)"; e.target.style.boxShadow="0 8px 24px rgba(37,99,235,0.5)"; }}
-              onMouseLeave={e => { e.target.style.transform="translateY(0)"; e.target.style.boxShadow="0 4px 16px rgba(37,99,235,0.4)"; }}
+              onMouseEnter={e => { e.currentTarget.style.transform="translateY(-2px)"; e.currentTarget.style.boxShadow="0 10px 32px rgba(37,99,235,0.55)"; e.currentTarget.style.background="linear-gradient(135deg,#3b82f6,#2563eb)"; }}
+              onMouseLeave={e => { e.currentTarget.style.transform="translateY(0)"; e.currentTarget.style.boxShadow="0 4px 16px rgba(37,99,235,0.4)"; e.currentTarget.style.background="linear-gradient(135deg,#2563eb,#1d4ed8)"; }}
             >
               View All Records →
             </button>
@@ -281,4 +348,3 @@ export default function SuccessOverlay({ roomCode, roomName, onClose }) {
     </>
   );
 }
- 
