@@ -70,12 +70,108 @@ function buildCompactPrompt(roomName, department, category) {
     return `${f.name}(${f.label})|${f.options.join(",")}`;
   }).join("\n");
 
-  return `You are an expert healthcare facility planner (HTM, HBN, ASHRAE, FGI Guidelines).
+  return `You are an expert healthcare facility planner certified in HTM, HBN, ASHRAE 170, FGI Guidelines, NABH, and AERB standards. You have deep knowledge of multispecialty hospital room design across facilities like AIIMS, Apollo, Medanta, Fortis, Manipal, Max, Kokilaben, Narayana Health, and international JCI-accredited hospitals.
 
 Configure a Room Data Sheet for: ${roomName}${department ? ` | Dept: ${department}` : ""}${category ? ` | Category: ${category}` : ""}
 
-For specialist rooms (Mammography, Tomosynthesis, MRI, CT, PET, Cath Lab, LINAC, Fluoroscopy, Ultrasound, Nuclear Medicine, Endoscopy, DSA, OT, NICU, ICU, HDU, Pharmacy, Lab, Mortuary etc.) apply appropriate clinical standards.
+────────────────────────────────────────────────
+ROOM TYPE RECOGNITION — ABBREVIATIONS & ALIASES
+────────────────────────────────────────────────
+Recognise ALL of the following room names, abbreviations, and aliases and apply the correct clinical standards:
 
+CRITICAL CARE & HIGH DEPENDENCY:
+ICU, GICU (General ICU), MICU (Medical ICU), SICU (Surgical ICU), CTICU (Cardiothoracic ICU), NICU (Neonatal ICU), PICU (Paediatric ICU), BICU (Burns ICU), TICU (Trauma ICU), CCU (Cardiac Care Unit / Coronary Care Unit), HDU (High Dependency Unit), SDU (Step-Down Unit), IMC (Intermediate Care), IMCU, Isolation ICU, Negative Pressure Room, Positive Pressure Room, Bone Marrow Transplant Room (BMT), Oncology Isolation Room, Reverse Isolation Room
+
+OPERATING THEATRES & PROCEDURAL SUITES:
+OT, OR (Operating Room/Theatre), Major OT, Minor OT, Emergency OT, Day Surgery OT, Laminar Flow OT, Hybrid OT, Cath Lab (Cardiac Catheterisation Laboratory), EP Lab (Electrophysiology Lab), Hybrid Cath Lab, DSA Room (Digital Subtraction Angiography), Interventional Radiology Suite (IR Suite), Endoscopy Suite, Colonoscopy Room, Bronchoscopy Room, Cystoscopy Room, ERCP Room, Day Procedure Room, Pain Management Suite, Laser Room, Lithotripsy Room (ESWL), Robotic Surgery Suite, Neuro Interventional Suite
+
+EMERGENCY & TRAUMA:
+Emergency Department (ED / A&E), Resuscitation Bay (Resus), Trauma Bay, Triage Room, Emergency Observation Room, Emergency Treatment Bay, Plaster Room, Suture Room, ENT Emergency Room, Ophthalmology Emergency Room, Paediatric Emergency Room, Psychiatric Emergency Room, Ambulance Bay, Decontamination Room
+
+INPATIENT WARDS:
+General Ward, Male Ward, Female Ward, Paediatric Ward, Surgical Ward, Medical Ward, Orthopaedic Ward, Gynaecology Ward, Maternity Ward (Antenatal/Postnatal), Oncology Ward, Neurology Ward, Cardiology Ward, Urology Ward, Nephrology Ward, Haematology Ward, Gastroenterology Ward, Pulmonology Ward, Endocrinology Ward, Dermatology Ward, Psychiatry Ward, Geriatric Ward, Palliative Care Ward, Rehabilitation Ward, Burns Ward, ENT Ward, Ophthalmology Ward, Plastic Surgery Ward, Bariatric Ward, Transplant Ward, Private Room, Suite Room, Deluxe Room, VIP Room, VVIP Suite, Side Room, Infectious Disease Ward, Barrier Nursing Room
+
+LABOUR, DELIVERY & MATERNITY:
+Labour Room (LR), Normal Delivery Room (NDR), LDRP Room (Labour Delivery Recovery Postpartum), Caesarean Section Room (CS / LSCS Room), Operating Delivery Suite, Eclampsia Room, High-Risk Obstetric Room, Kangaroo Mother Care Room (KMC), Lactation Room, Neonatal Resuscitation Room, Milk Bank, Postnatal Ward, Antenatal Assessment Room
+
+OUTPATIENT & CONSULTATION:
+OPD Consultation Room, General Physician Room, Specialist Consultation Room, Cardiology OPD, Neurology OPD, Orthopaedic OPD, Oncology OPD, Urology OPD, Nephrology OPD, Gastroenterology OPD, Pulmonology OPD, Endocrinology OPD, Haematology OPD, Rheumatology OPD, Psychiatry OPD, Paediatric OPD, Gynaecology OPD, ENT OPD, Ophthalmology OPD, Dermatology OPD, Dental OPD, Plastic Surgery OPD, Bariatric OPD, Pain Clinic Room, Palliative Care OPD, Pre-Anaesthesia Check Room (PAC), Pre-Operative Assessment Room, Post-Operative Review Room, Allied Health Consultation Room, Dietetics Room, Social Worker Room, Counselling Room
+
+TREATMENT & PROCEDURE ROOMS:
+Treatment Room, Procedure Room, Dressing Room, Injection Room, Infusion Room (IV Therapy / Chemotherapy Day Care), Blood Transfusion Room, Dialysis Station, Haemodialysis Room, Peritoneal Dialysis Room, Plasmapheresis Room, Cardiac Rehabilitation Room, Pulmonary Rehabilitation Room, Wound Care Room, Hydrotherapy Room, ECG Room, Stress Test Room (Treadmill / TMT), Holter Monitoring Room, Spirometry Room, Audiometry Room, Audiometry Booth, Visual Field Room, Tonometry Room, Minor Procedure Room, Colposcopy Room, Endometrial Biopsy Room, Biopsy Room, Bone Marrow Biopsy Room, Lumbar Puncture Room, Intravitreal Injection Room, Phototherapy Room, PUVA Room, Vaccination Room, Travel Medicine Room, Family Planning Room, Pre-Natal Counselling Room, Neonatal Follow-Up Room
+
+DIAGNOSTIC IMAGING & RADIOLOGY:
+X-Ray Room, Digital X-Ray Room (DR Room), Fluoroscopy Room, C-Arm Room, OPG Room (Dental Panoramic X-Ray), Mammography Room, Tomosynthesis Room, Ultrasound Room, Doppler Room, Echo Room (Echocardiography), CT Scan Room (CT Suite), MRI Room (MRI Suite), PET-CT Room (PET Suite), SPECT Room, SPECT-CT Room, Nuclear Medicine Scan Room, Bone Densitometry Room (DEXA), Angiography Suite, MR Angiography Room, Gamma Camera Room, Thyroid Uptake Room, Hot Lab (Nuclear Medicine), Cold Lab, Reporting Room, Film Library / PACS Room, Interventional MRI Room, Intraoperative CT Room, MRI Control Room, CT Control Room, X-Ray Control Area, Radiographer Work Area
+
+LABORATORY & PATHOLOGY:
+Clinical Laboratory (General Lab), Haematology Lab, Biochemistry Lab, Clinical Pathology Lab, Microbiology Lab, Serology Lab, Immunology Lab, Molecular Diagnostics Lab (PCR Lab), Histopathology Lab, Cytology Lab, Cytogenetics Lab, Genetics Lab, Blood Bank, Component Separation Room, Blood Issue Room, Blood Storage Room, Bone Marrow Processing Lab, Stem Cell Lab, Flow Cytometry Lab, Point-of-Care Testing (POCT) Room, Specimen Collection Room, Phlebotomy Room, Urine Collection Room, Sample Reception, Centrifuge Room, Media Preparation Room, BSL-2 Lab, BSL-3 Lab, Lab Autoclave Room, Lab Wash Room
+
+CARDIOLOGY & CARDIAC SURGERY:
+Cardiac Catheterisation Lab (Cath Lab), EP Lab, Hybrid Cath Lab, Echocardiography Room (Echo Lab), Exercise Stress Test Room (TMT), Holter / Ambulatory Monitoring Room, Cardiac Rehab Gym, Cardiac ICU (CICU / CCU), CTICU, Pacemaker Clinic Room, Cardiac OPD, LVAD Room, ECMO Room, Perfusion Room, Heart Lung Machine Store, Cardiology Procedure Room
+
+NEUROSCIENCES:
+Neurology OPD, Neurosurgery OPD, Neurophysiology Lab, EEG Room, EMG/NCV Room, Evoked Potentials Room, Video EEG Monitoring Room, Neuro ICU (NICU), Neuro HDU, Neuro OT, Stereotactic Radiosurgery Suite (Gamma Knife / CyberKnife), Neuro Interventional Suite, Deep Brain Stimulation Suite, Intraoperative Monitoring Room, Neuro Rehabilitation Room, Cognitive Assessment Room
+
+ONCOLOGY & RADIOTHERAPY:
+Oncology OPD, Medical Oncology Room, Surgical Oncology OPD, Radiation Oncology OPD, Chemotherapy Day Care (Day Oncology Unit), Bone Marrow Transplant Unit (BMT), Haematopoietic Stem Cell Transplant Room, LINAC Room (Linear Accelerator), Brachytherapy Room (High Dose Rate — HDR), Simulation Room (CT Sim), Mould Room, Treatment Planning Room, Radiation Therapy Vault, Cobalt Therapy Room, Proton Therapy Room, Radiation Oncology ICU, Tumour Board Room, Palliative Care Room, Cancer Counselling Room
+
+ORTHOPAEDICS & REHABILITATION:
+Orthopaedic OPD, Plaster Room, Fracture Clinic Room, Cast Room, Splinting Room, Arthroscopy Room, Bone Bank, Orthopaedic OT, Physiotherapy Room, Occupational Therapy Room, Speech Therapy Room, Hydrotherapy Pool Room, Gait Analysis Room, Prosthetics & Orthotics Room, Rehabilitation Gym, Exercise Therapy Room, Cognitive Rehabilitation Room, Spinal Cord Injury Rehabilitation Room, Stroke Rehabilitation Room
+
+OPHTHALMOLOGY:
+Ophthalmology OPD, Refraction Room, Slit Lamp Room, Visual Field Room (Perimetry), OCT Room, Fundus Photography Room, Fluorescein Angiography Room, ERG Room, Orthoptics Room, Contact Lens Room, Low Vision Room, Glaucoma Assessment Room, Retina Clinic Room, Cornea Clinic Room, Ophthalmic OT (Eye OT), Laser Room (LASIK / YAG / Argon Laser), Intravitreal Injection Room, Eye Bank
+
+ENT (EAR NOSE THROAT):
+ENT OPD, Audiometry Room, Audiometry Booth (Sound-Proof Booth), Tympanometry Room, OAE Room, ABR Room, Video Laryngoscopy Room, Nasal Endoscopy Room, ENT Procedure Room, Voice Lab, Balance Lab (Vestibulometry / VNG Room), Hearing Aid Room, ENT OT, Microscopy Room
+
+UROLOGY & NEPHROLOGY:
+Urology OPD, Uroflowmetry Room, Cystoscopy Room, Urodynamics Room, ESWL Room (Lithotripsy), Dialysis Room (Haemodialysis Station), Peritoneal Dialysis Room, Kidney Transplant OT, Nephrology OPD, Renal Biopsy Room, Transplant Clinic Room
+
+GASTROENTEROLOGY & HEPATOLOGY:
+Gastroenterology OPD, Endoscopy Suite, Colonoscopy Room, ERCP Room, Capsule Endoscopy Room, Manometry Room, pH-Metry Room, Liver Biopsy Room, Hepatology OPD, Liver Transplant Clinic, Fibroscan Room
+
+OBSTETRICS, GYNAECOLOGY & FERTILITY:
+Gynaecology OPD, Antenatal OPD, Postnatal Clinic, Colposcopy Room, Hysteroscopy Room, Fertility Clinic Room, IVF Lab (Embryology Lab), Semen Analysis Room, Sperm Bank, IUI Room, Egg Retrieval Room, Embryo Transfer Room, Genetic Counselling Room, Foetal Medicine Room, Foetal Echo Room
+
+PSYCHIATRY & MENTAL HEALTH:
+Psychiatry OPD, Consultation Room, Psychotherapy Room, Group Therapy Room, Psychiatric Ward (Open), Psychiatric Ward (Closed / Secure), De-escalation Room, Seclusion Room, ECT Room (Electroconvulsive Therapy), Psychology Assessment Room, Neuropsychology Lab, Drug De-addiction Room, Geriatric Psychiatry Room, Child Psychiatry Room, Family Therapy Room
+
+PAEDIATRICS & NEONATOLOGY:
+Paediatric OPD, Paediatric Ward, NICU Level I / II / III, PICU, Neonatal Resuscitation Room, KMC Room (Kangaroo Mother Care), Paediatric HDU, Paediatric OT, Developmental Paediatrics Room, Child Development Centre, Play Therapy Room, School Room (Long Stay Paediatric), Paediatric Oncology Room, Paediatric Dialysis Room, Vaccination Room, Adolescent Health Room
+
+DENTAL & MAXILLOFACIAL:
+Dental OPD, General Dentistry Room, Orthodontics Room, Periodontics Room, Endodontics Room, Oral Surgery Room, Oral Medicine Room, Prosthodontics Room, Paediatric Dentistry Room, OPG Room, Dental Sterilisation Room, Maxillofacial OT, Dental Lab
+
+PHARMACY & STERILE SERVICES:
+Main Pharmacy (Retail / OPD Pharmacy), Inpatient Pharmacy, Emergency Pharmacy (24hr), Satellite Pharmacy, Clinical Pharmacy Room, Pharmacist Counselling Room, Aseptic Dispensing Room, Total Parenteral Nutrition Room (TPN Room), Cytotoxic Reconstitution Room (Chemo Preparation Room), Pharmacy Clean Room, Pharmacy Cold Store, Investigational Drug Store, Narcotic / Controlled Drug Store, CSSD (Central Sterile Supply Department), Decontamination Room (CSSD), Washer-Disinfector Room, Packing Room (CSSD), Autoclave Room (CSSD), Sterile Store (CSSD), Instrument Repair Room
+
+BLOOD BANK & TRANSFUSION:
+Blood Bank, Donor Collection Room, Blood Component Lab, Blood Issue Room, Blood Storage Room, Apheresis Room, Irradiation Room, Blood Bank Lab, Cross-Matching Room, Transfusion Reaction Room
+
+DIETETICS & NUTRITION:
+Dietetics OPD Room, Clinical Nutrition Assessment Room, Dietary Counselling Room, Metabolic Kitchen, Patient Diet Kitchen, Staff Canteen Kitchen, Hospital Kitchen, Pantry (Ward-Level), Nourishment Bay
+
+MORTUARY & FORENSICS:
+Mortuary, Body Storage Room, Post-Mortem Room (Autopsy Room), Forensic Autopsy Room, Embalming Room, Histology Lab (Mortuary), Viewing Room (Family Viewing), Coffin Store, Mortuary Cold Chamber, Forensic Office
+
+STERILISATION & INFECTION CONTROL:
+CSSD (Central Sterile Services Department), Theatre Sterile Supply Unit (TSSU), Endoscope Reprocessing Room, Washer-Disinfector Room, Autoclave Room, Decontamination Sink Area, Clean Utility Room, Dirty Utility Room (Sluice Room), Soiled Linen Hold Room, Clean Linen Store, Isolation Anteroom / Airlock, Hand Wash Bay
+
+SUPPORT, LOGISTICS & SUPPLY CHAIN:
+CSSD Store, Medical Consumable Store, Drug Store (Central Medical Store), Equipment Store, Linen Store, Housekeeping Store, Biomedical Engineering Workshop, EBME Lab, Biomedical Store, Estates / Maintenance Workshop, Medical Gas Manifold Room, Medical Gas Cylinder Store, Liquid Oxygen Tank Room, Electrical Sub-Station Room, UPS Room, Generator Room (DG Set Room), HVAC Plant Room, AHU Room (Air Handling Unit), Chiller Plant Room, BMS Control Room (Building Management System), Fire Control Room, CCTV Control Room, IT Server Room (Data Centre), Telephone Exchange (EPABX Room)
+
+ADMINISTRATION & MANAGEMENT:
+Hospital Director Room, CEO Room, CMO Room, CNO Room, Administration Office, Medical Records Department (MRD), Medical Records Room, Health Information Management Room, Front Desk / Reception, Registration Counter, Billing Counter, Insurance Desk, Discharge Lounge, Enquiry / Information Desk, Help Desk, Patient Relations Office, Quality Department Office, Infection Control Office, Hospital Infection Control Room, Bio-Medical Waste Store, Hazardous Material Store, Legal / Compliance Office, HR Department, Training Room, Lecture Hall, Conference Room, Board Room, Medical Library, Research Office, Ethics Committee Room
+
+STAFF & WELFARE AREAS:
+Doctors Change Room (Male/Female), Nurses Change Room (Male/Female), Staff Locker Room, Doctor Rest Room / On-Call Room, Nurse Rest Room, Night Duty Room, Staff Toilet, Staff Pantry, Staff Canteen, Duty Room, Nurses Station, Ward Sister Room, Charge Nurse Room, Staff Prayer Room, Staff Lounge
+
+PATIENT SUPPORT & AMENITY:
+Patient Waiting Area, Family Waiting Room, Patient Lounge, Relative Waiting Room, Consultation Waiting Bay, Patient Toilet / Bathroom, Patient Accessible Toilet, Ambulatory Patient Bay, Discharge Lounge, Patient Education Room, Prayer Room / Multi-Faith Room, Patient Library, Retail / Pharmacy Kiosk, Cafeteria / Coffee Shop, ATM Area, Florist / Gift Shop, Children Play Area, Teen Zone, Volunteer Room
+
+────────────────────────────────────────────────
+INSTRUCTIONS
+────────────────────────────────────────────────
 Each line below is: fieldName(label)|option1,option2,...
 Pick the BEST option for this room type. Only include fields you are confident about.
 For NUM fields: return a realistic number.
@@ -425,7 +521,7 @@ export default function RdsForm({ onSectionChange, jumpToSection, editRecord, on
   // ── Trigger Groq when roomName changes — only if user opted in ────────────
   useEffect(() => {
     // Room cleared or too short — reset so next valid entry triggers fresh call
-    if (!watchedRoomName || watchedRoomName.trim().length < 3) {
+    if (!watchedRoomName || watchedRoomName.trim().length < 2) {
       if (lastRoomRef.current) {
         lastRoomRef.current = "";
         setAiStatus("idle");
