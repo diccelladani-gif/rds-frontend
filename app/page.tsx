@@ -258,6 +258,11 @@ function Page() {
       {/* ── SIDEBAR ─────────────────────────────────── */}
       <aside className="sidebar" style={{ transform: sidebarOpen ? "none" : "translateX(-100%)", transition:"transform 0.3s cubic-bezier(0.23,1,0.32,1)" }}>
 
+        {/* ── Aurora atmosphere layers ── */}
+        <div className="sidebar-dot-grid" />
+        <div className="sidebar-edge-glow" />
+        <div className="sidebar-veil" />
+
         <div className="sidebar-logo-area">
           <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between" }}>
             <div className="sidebar-brand">
