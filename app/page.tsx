@@ -25,6 +25,82 @@ function addRipple(e: React.MouseEvent<HTMLButtonElement>) {
   setTimeout(() => el.remove(), 600);
 }
 
+// ── Animated counter hook ─────────────────────────────────────────
+function useCountUp(target: number, duration: number = 900, delay: number = 0) {
+  const [display, setDisplay] = useState(0);
+  const frameRef = useRef<number>(0);
+  const startRef = useRef<number | null>(null);
+  const fromRef  = useRef(0);
+
+  useEffect(() => {
+    const from = fromRef.current;
+    const diff  = target - from;
+    if (diff === 0) return;
+
+    let started = false;
+    const delayTimer = setTimeout(() => {
+      started = true;
+      const animate = (ts: number) => {
+        if (startRef.current === null) startRef.current = ts;
+        const elapsed = ts - startRef.current;
+        const t = Math.min(elapsed / duration, 1);
+        // Ease-out-expo
+        const eased = t === 1 ? 1 : 1 - Math.pow(2, -10 * t);
+        setDisplay(Math.round(from + diff * eased));
+        if (t < 1) {
+          frameRef.current = requestAnimationFrame(animate);
+        } else {
+          fromRef.current  = target;
+          startRef.current = null;
+        }
+      };
+      frameRef.current = requestAnimationFrame(animate);
+    }, delay);
+
+    return () => {
+      clearTimeout(delayTimer);
+      if (!started) return;
+      cancelAnimationFrame(frameRef.current);
+      startRef.current = null;
+    };
+  }, [target, duration, delay]);
+
+  return display;
+}
+
+// ── Animated stat card ────────────────────────────────────────────
+function AnimatedStat({
+  icon, label, value, color, ac, index
+}: {
+  icon: string; label: string; value: number | string;
+  color: string; ac: string; index: number;
+}) {
+  // Parse numeric value — "92%" → 92 (animate), then re-add "%"
+  const isPercent = typeof value === "string" && value.endsWith("%");
+  const numericTarget = isPercent
+    ? parseInt(value as string, 10)
+    : typeof value === "number" ? value : 0;
+
+  const counted = useCountUp(numericTarget, 1000, index * 120);
+  const display = isPercent ? `${counted}%` : counted;
+
+  return (
+    <div className="stat-card">
+      <div className="stat-icon" style={{ background: color }}>{icon}</div>
+      <div className="stat-body">
+        <strong
+          className="stat-number"
+          style={{ color: ac }}
+          data-value={numericTarget}
+        >
+          {display}
+        </strong>
+        <span>{label}</span>
+      </div>
+    </div>
+  );
+}
+
 function Page() {
   const router = useRouter();
   const [currentUser,    setCurrentUser]    = useState<RDSUser | null>(null);
@@ -365,18 +441,12 @@ function Page() {
           {view === "form" && !editRecord && (
             <div className="stats-strip">
               {[
-                { icon:"📋", label:"Total Sections",    value: rdsSchema.length,                color:"#eff6ff", ac:"#2563eb" },
-                { icon:"✅", label:"Completed",          value: completedCount,                   color:"#f0fdf4", ac:"#10b981" },
+                { icon:"📋", label:"Total Sections",    value: rdsSchema.length,                 color:"#eff6ff", ac:"#2563eb" },
+                { icon:"✅", label:"Completed",          value: completedCount,                    color:"#f0fdf4", ac:"#10b981" },
                 { icon:"⏳", label:"Remaining",          value: rdsSchema.length - completedCount, color:"#fefce8", ac:"#f59e0b" },
-                { icon:"📊", label:"Progress",           value: `${progress}%`,                  color:"#fdf4ff", ac:"#7c3aed" },
-              ].map(stat => (
-                <div key={stat.label} className="stat-card">
-                  <div className="stat-icon" style={{ background:stat.color }}>{stat.icon}</div>
-                  <div className="stat-body">
-                    <strong style={{ color:stat.ac }}>{stat.value}</strong>
-                    <span>{stat.label}</span>
-                  </div>
-                </div>
+                { icon:"📊", label:"Progress",           value: `${progress}%`,                   color:"#fdf4ff", ac:"#7c3aed" },
+              ].map((stat, i) => (
+                <AnimatedStat key={stat.label} {...stat} index={i} />
               ))}
             </div>
           )}
