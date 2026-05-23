@@ -74,21 +74,53 @@ function Page() {
 
   // ── Card reveal — Intersection Observer ─────────────
   useEffect(() => {
-    const cards = document.querySelectorAll<HTMLElement>(".rds-card");
-    cards.forEach((card, i) => {
-      card.style.setProperty("--stagger-delay", `${i * 55}ms`);
+    let rafId: number;
+    let timerId: ReturnType<typeof setTimeout>;
+
+    const setupObserver = () => {
+      const cards = document.querySelectorAll<HTMLElement>(".rds-card");
+
+      // No cards yet — RdsForm still rendering, retry once more
+      if (cards.length === 0) {
+        timerId = setTimeout(setupObserver, 120);
+        return;
+      }
+
+      cards.forEach((card, i) => {
+        card.style.setProperty("--stagger-delay", `${i * 55}ms`);
+      });
+
+      const obs = new IntersectionObserver(
+        (entries) => entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("card-visible");
+            obs.unobserve(entry.target);
+          }
+        }),
+        // Generous rootMargin — catches cards already in viewport on first load
+        { threshold: 0.01, rootMargin: "120px 0px 120px 0px" }
+      );
+
+      cards.forEach(card => obs.observe(card));
+
+      // Safety fallback — if observer never fires (e.g. hidden tab), force-show all after 800ms
+      timerId = setTimeout(() => {
+        document.querySelectorAll<HTMLElement>(".rds-card:not(.card-visible)")
+          .forEach(card => card.classList.add("card-visible"));
+      }, 800);
+
+      return () => obs.disconnect();
+    };
+
+    // Wait one animation frame for React to flush the DOM, then a small buffer
+    rafId = requestAnimationFrame(() => {
+      timerId = setTimeout(setupObserver, 80);
     });
-    const obs = new IntersectionObserver(
-      (entries) => entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add("card-visible");
-          obs.unobserve(entry.target);
-        }
-      }),
-      { threshold: 0.08, rootMargin: "0px 0px -40px 0px" }
-    );
-    cards.forEach(card => obs.observe(card));
-    return () => obs.disconnect();
+
+    return () => {
+      cancelAnimationFrame(rafId);
+      clearTimeout(timerId);
+    };
   }, [activeSection, view]);
 
   // ── Section slide direction animation ────────────────

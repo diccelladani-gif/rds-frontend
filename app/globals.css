@@ -1481,13 +1481,20 @@ div[title="System online"] {
     box-shadow 0.35s ease,
     border-color 0.35s ease !important;
   animation: none !important; /* override old fadeSlideIn */
+  /* Safety net: force visible after 1.2s if observer never fires (hidden tab, slow render) */
+  animation: cardSafetyReveal 0s 1.2s forwards !important;
 }
 .rds-card.card-visible {
   opacity: 1;
   transform: translateY(0);
+  animation: none !important;
 }
 /* Stagger delay per card index set by JS via --stagger-delay */
 .rds-card { transition-delay: var(--stagger-delay, 0ms); }
+
+@keyframes cardSafetyReveal {
+  to { opacity: 1; transform: translateY(0); }
+}
 
 /* ─── 7. SIDEBAR NAV — SMOOTH ACTIVE TRAIL ──────────────────────
    Active item gets an expanding glow trail animation ─────────── */
