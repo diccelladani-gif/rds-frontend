@@ -258,7 +258,7 @@ function Page() {
       {/* ── SIDEBAR ─────────────────────────────────── */}
       <aside className="sidebar" style={{ transform: sidebarOpen ? "none" : "translateX(-100%)", transition:"transform 0.3s cubic-bezier(0.23,1,0.32,1)" }}>
 
-        {/* ── Aurora atmosphere layers ── */}
+        {/* ── Aurora atmosphere layers ─────────────── */}
         <div className="sidebar-dot-grid" />
         <div className="sidebar-edge-glow" />
         <div className="sidebar-veil" />
@@ -269,10 +269,14 @@ function Page() {
               RDS System
               <span>Medical College</span>
             </div>
-            {/* Heartbeat online dot */}
+            {/* Heartbeat online dot — indigo/cyan to match new palette */}
             <div
               className="online-dot"
-              style={{ width:8, height:8, borderRadius:"50%", background:"#10b981", flexShrink:0 }}
+              style={{
+                width:8, height:8, borderRadius:"50%", flexShrink:0,
+                background:"linear-gradient(135deg,#6366f1,#22d3ee)",
+                boxShadow:"0 0 10px rgba(99,102,241,0.8), 0 0 20px rgba(34,211,238,0.4)"
+              }}
               title="System online"
             />
           </div>
@@ -280,26 +284,26 @@ function Page() {
           <div style={{ marginTop:18, display:"flex", alignItems:"center", gap:10 }}>
             <div style={{
               width:36, height:36, borderRadius:11,
-              background:"linear-gradient(135deg,rgba(37,99,235,0.5),rgba(6,182,212,0.3))",
+              background:"linear-gradient(135deg,rgba(99,102,241,0.55),rgba(34,211,238,0.30))",
               display:"flex", alignItems:"center", justifyContent:"center",
-              fontSize:15, fontWeight:800, color:"#93c5fd",
-              border:"1px solid rgba(59,130,246,0.25)",
-              boxShadow:"0 4px 12px rgba(37,99,235,0.2)",
+              fontSize:15, fontWeight:800, color:"#c7d2fe",
+              border:"1px solid rgba(99,102,241,0.35)",
+              boxShadow:"0 4px 16px rgba(99,102,241,0.35), 0 0 8px rgba(34,211,238,0.15)",
             }}>{avatarInitial}</div>
             <div style={{ flex:1, minWidth:0 }}>
-              <div style={{ fontSize:12.5, color:"rgba(255,255,255,0.82)", fontWeight:600, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+              <div style={{ fontSize:12.5, color:"rgba(255,255,255,0.88)", fontWeight:600, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
                 {currentUser.name}
               </div>
-              <div style={{ fontSize:10, color:"rgba(255,255,255,0.28)", marginTop:1, textTransform:"capitalize" }}>
+              <div style={{ fontSize:10, color:"rgba(255,255,255,0.30)", marginTop:1, textTransform:"capitalize", letterSpacing:"0.3px" }}>
                 {currentUser.role} · {time}
               </div>
             </div>
             <button
               onClick={handleLogout}
               title="Logout"
-              style={{ background:"none", border:"none", cursor:"pointer", color:"rgba(255,255,255,0.3)", fontSize:14, padding:4, flexShrink:0, transition:"color 0.2s" }}
-              onMouseOver={e => (e.currentTarget.style.color = "rgba(255,255,255,0.7)")}
-              onMouseOut={e  => (e.currentTarget.style.color = "rgba(255,255,255,0.3)")}
+              style={{ background:"none", border:"none", cursor:"pointer", color:"rgba(255,255,255,0.25)", fontSize:14, padding:4, flexShrink:0, transition:"all 0.2s" }}
+              onMouseOver={e => { e.currentTarget.style.color = "rgba(199,210,254,0.85)"; e.currentTarget.style.filter = "drop-shadow(0 0 6px rgba(99,102,241,0.6))"; }}
+              onMouseOut={e  => { e.currentTarget.style.color = "rgba(255,255,255,0.25)";  e.currentTarget.style.filter = "none"; }}
             >⏻</button>
           </div>
         </div>
@@ -360,17 +364,25 @@ function Page() {
 
         <div className="sidebar-progress-area">
           <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-            <span style={{ fontSize:9.5, color:"rgba(255,255,255,0.3)", fontWeight:700, letterSpacing:1.5, textTransform:"uppercase", fontFamily:"'Sora',sans-serif" }}>
+            <span style={{ fontSize:9, color:"rgba(255,255,255,0.28)", fontWeight:700, letterSpacing:2, textTransform:"uppercase", fontFamily:"'Sora',sans-serif" }}>
               Form Completion
             </span>
-            <span style={{ fontSize:13, color: progress === 100 ? "#34d399" : "#93c5fd", fontWeight:800, fontFamily:"'Sora',sans-serif" }}>
+            <span style={{
+              fontSize:13, fontWeight:800, fontFamily:"'Sora',sans-serif",
+              background: progress === 100
+                ? "linear-gradient(90deg,#34d399,#22d3ee)"
+                : "linear-gradient(90deg,#a5b4fc,#22d3ee)",
+              WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent",
+              backgroundClip:"text",
+              filter:`drop-shadow(0 0 8px ${progress === 100 ? "rgba(52,211,153,0.6)" : "rgba(99,102,241,0.5)"})`,
+            }}>
               {progress}%
             </span>
           </div>
           <div className="progress-bar-bg">
             <div className="progress-bar-fill" style={{ width:`${progress}%` }} />
           </div>
-          <div style={{ fontSize:10, color:"rgba(255,255,255,0.22)", marginTop:8, fontFamily:"'Sora',sans-serif" }}>
+          <div style={{ fontSize:10, color:"rgba(255,255,255,0.22)", marginTop:9, fontFamily:"'Sora',sans-serif", letterSpacing:"0.2px" }}>
             {completedCount} of {rdsSchema.length} sections reviewed
           </div>
         </div>
