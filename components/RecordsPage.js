@@ -242,8 +242,8 @@ export default function RecordsPage({ onBack, onEdit }) {
           }
         </div>
       ) : (
-        <div className="records-table-wrap">
-          <table className="records-table">
+        <div className="records-table-wrap" style={{ overflowX:"auto", width:"100%" }}>
+          <table className="records-table" style={{ minWidth:900, width:"100%" }}>
             <thead>
               <tr>
                 <th>Room</th>
@@ -252,7 +252,7 @@ export default function RecordsPage({ onBack, onEdit }) {
                 <th>Criticality</th>
                 <th>Net Area</th>
                 <th>Created</th>
-                <th style={{ textAlign:"center" }}>Actions</th>
+                <th style={{ textAlign:"center", minWidth:220, whiteSpace:"nowrap" }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -295,7 +295,7 @@ export default function RecordsPage({ onBack, onEdit }) {
                       <td>{d.netArea ? `${d.netArea} m²` : "—"}</td>
 
                       {/* Created date + time */}
-                      <td style={{ fontSize:12, color:"#94a3b8", minWidth:110 }}>
+                      <td style={{ fontSize:12, color:"#94a3b8", minWidth:110, whiteSpace:"nowrap" }}>
                         {dateIso ? (
                           <>
                             <div style={{ color:"#475569", fontWeight:600, fontSize:12.5 }}>
@@ -309,8 +309,8 @@ export default function RecordsPage({ onBack, onEdit }) {
                       </td>
 
                       {/* Actions */}
-                      <td style={{ textAlign:"center" }} onClick={e => e.stopPropagation()}>
-                        <div style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:5 }}>
+                      <td style={{ textAlign:"center", whiteSpace:"nowrap" }} onClick={e => e.stopPropagation()}>
+                        <div style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:5, flexWrap:"nowrap" }}>
 
                           {/* EDIT */}
                           <button
