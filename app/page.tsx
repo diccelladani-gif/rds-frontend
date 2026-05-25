@@ -267,7 +267,7 @@ function Page() {
           <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between" }}>
             <div className="sidebar-brand">
               RDS System
-              <span>Medical College</span>
+              <span>Medical Infra </span>
             </div>
             {/* Heartbeat online dot — indigo/cyan to match new palette */}
             <div
