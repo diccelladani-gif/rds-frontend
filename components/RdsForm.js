@@ -62,167 +62,177 @@ FIELDS_MANIFEST.forEach(f => {
 });
 
 // ─── Compact prompt builder — ~60% fewer tokens than pretty JSON ──────────────
+// ─── System prompt — room knowledge base (doesn't consume output tokens) ─────
+const SYSTEM_PROMPT = `You are an expert healthcare facility planner certified in HTM, HBN, ASHRAE 170, FGI Guidelines, NABH, and AERB standards, with deep knowledge of multispecialty hospital room design across AIIMS, Apollo, Medanta, Fortis, Manipal, Max, Kokilaben, Narayana Health, and international JCI-accredited hospitals.
+
+ROOM TYPE RECOGNITION — always identify and apply correct clinical standards for:
+Critical Care: ICU, GICU, MICU, SICU, CTICU, NICU, PICU, BICU, TICU, CCU, HDU, SDU, IMCU, Isolation ICU, Negative Pressure Room, Positive Pressure Room, BMT Room
+Operating Theatres: OT, OR, Major OT, Minor OT, Emergency OT, Laminar Flow OT, Hybrid OT, Cath Lab, EP Lab, DSA Room, IR Suite, Endoscopy Suite, Colonoscopy, Bronchoscopy, Cystoscopy, ERCP, Day Procedure Room, Robotic Surgery Suite
+Emergency: ED, A&E, Resus Bay, Trauma Bay, Triage Room, Emergency OT, Decontamination Room
+Wards: General Ward, Male Ward, Female Ward, Paediatric Ward, Surgical Ward, Medical Ward, Orthopaedic Ward, Maternity Ward, Oncology Ward, Neurology Ward, Cardiology Ward, Urology Ward, Nephrology Ward, Psychiatry Ward, Geriatric Ward, Palliative Ward, Burns Ward, VIP Room, VVIP Suite, Private Room
+Maternity: Labour Room (LR), NDR, LDRP, CS Room, LSCS Room, KMC Room, Milk Bank, Eclampsia Room
+OPD: OPD, Consultation Room, Cardiology OPD, Neurology OPD, Ortho OPD, Oncology OPD, ENT OPD, Eye OPD, Dental OPD, PAC Room, Pre-Op Assessment
+Treatment: Treatment Room, Procedure Room, Dialysis Room, Infusion Room, Chemo Day Care, Dressing Room, Injection Room, ECG Room, TMT Room, Spirometry, Audiometry
+Imaging: X-Ray, CT, MRI, PET-CT, Mammography, Tomosynthesis, Ultrasound, Echo, Fluoroscopy, SPECT, Nuclear Medicine, Bone Densitometry (DEXA), Angiography Suite, Gamma Camera
+Lab/Pathology: Lab, Haematology Lab, Biochemistry Lab, Microbiology Lab, Molecular Lab (PCR), Histopathology, Cytology, Blood Bank, BSL-2, BSL-3, Phlebotomy
+Cardiology: Cath Lab, EP Lab, Echo Lab, TMT Room, Holter Room, Cardiac Rehab, CCU, CICU, CTICU, ECMO Room, Perfusion Room
+Neuro: EEG Room, EMG Room, Video EEG, Neuro ICU, Neuro OT, Gamma Knife, CyberKnife, Neuro Rehab
+Oncology: LINAC, Brachytherapy (HDR), CT Sim, Chemo Day Care, BMT, Proton Therapy, Radiation Vault
+Ortho/Rehab: Plaster Room, Cast Room, Physio Room, OT (Occupational Therapy), Hydrotherapy, Gait Lab, Prosthetics Room
+Ophthalmology: Eye OPD, Refraction Room, Slit Lamp, OCT, Fundus Camera, LASIK Room, Intravitreal Injection Room, Eye Bank
+ENT: ENT OPD, Audiometry Booth, Tympanometry, Video Laryngoscopy, ENT OT
+Urology/Nephrology: Urology OPD, Cystoscopy, Urodynamics, ESWL, Dialysis, Transplant OT
+Gastro: Gastro OPD, Endoscopy, Colonoscopy, ERCP, Fibroscan Room
+Maternity/Fertility: Gynaecology OPD, Colposcopy, IVF Lab, Embryo Transfer, Sperm Bank
+Psychiatry: Psychiatry OPD, Psychotherapy, Group Therapy, Psych Ward, ECT Room, Seclusion Room
+Paediatrics: Paediatric OPD, Paediatric Ward, NICU, PICU, KMC, Play Therapy Room
+Dental: Dental OPD, Orthodontics, Oral Surgery, OPG Room, Dental Lab
+Pharmacy/CSSD: Pharmacy, Aseptic Dispensing, TPN Room, Cytotoxic Room, CSSD, Autoclave Room
+Blood Bank: Blood Bank, Component Lab, Apheresis, Cross-Matching
+Mortuary: Mortuary, Autopsy Room, Cold Chamber, Embalming
+Support: AHU Room, BMS Room, DG Set Room, UPS Room, Medical Gas Room, CSSD Store
+Admin: Admin Office, MRD, Reception, Billing, Conference Room, Nurses Station
+
+STRICT OUTPUT RULES:
+- Respond ONLY with a single valid JSON object. No markdown fences, no explanation, no preamble.
+- Format: {"r":{"fieldName":"value"},"w":{"fieldName":"one-line reason"}}
+- Only include fields you are confident about for this specific room type.
+- Values must be VERBATIM from the provided options list.
+- For NUM fields: return a realistic integer.
+- For Yes/No fields: return exactly "Yes" or "No".`;
+
+// ─── User prompt — lean, just the room + fields ───────────────────────────
 function buildCompactPrompt(roomName, department, category) {
-  // Format: "fieldName|opt1,opt2,opt3" for select; "fieldName|YN" for yesno; "fieldName|N" for number
   const lines = FIELDS_MANIFEST.map(f => {
-    if (f.type === "number") return `${f.name}(${f.label})|NUM`;
-    if (f.type === "yesno")  return `${f.name}(${f.label})|Yes,No`;
-    return `${f.name}(${f.label})|${f.options.join(",")}`;
+    if (f.type === "number") return `${f.name}|NUM`;
+    if (f.type === "yesno")  return `${f.name}|Yes,No`;
+    return `${f.name}|${f.options.join(",")}`;
   }).join("\n");
 
-  return `You are an expert healthcare facility planner certified in HTM, HBN, ASHRAE 170, FGI Guidelines, NABH, and AERB standards. You have deep knowledge of multispecialty hospital room design across facilities like AIIMS, Apollo, Medanta, Fortis, Manipal, Max, Kokilaben, Narayana Health, and international JCI-accredited hospitals.
+  return `Room: ${roomName}${department ? ` | Dept: ${department}` : ""}${category ? ` | Cat: ${category}` : ""}
 
-Configure a Room Data Sheet for: ${roomName}${department ? ` | Dept: ${department}` : ""}${category ? ` | Category: ${category}` : ""}
+FIELDS (name|options — pick best match, verbatim):
+${lines}`;
+}
 
-────────────────────────────────────────────────
-ROOM TYPE RECOGNITION — ABBREVIATIONS & ALIASES
-────────────────────────────────────────────────
-Recognise ALL of the following room names, abbreviations, and aliases and apply the correct clinical standards:
+// ─── Robust JSON extractor — handles fences, truncation, preamble ─────────
+function extractJSON(raw) {
+  if (!raw) throw new Error("Empty response");
 
-CRITICAL CARE & HIGH DEPENDENCY:
-ICU, GICU (General ICU), MICU (Medical ICU), SICU (Surgical ICU), CTICU (Cardiothoracic ICU), NICU (Neonatal ICU), PICU (Paediatric ICU), BICU (Burns ICU), TICU (Trauma ICU), CCU (Cardiac Care Unit / Coronary Care Unit), HDU (High Dependency Unit), SDU (Step-Down Unit), IMC (Intermediate Care), IMCU, Isolation ICU, Negative Pressure Room, Positive Pressure Room, Bone Marrow Transplant Room (BMT), Oncology Isolation Room, Reverse Isolation Room
+  // 1. Strip markdown fences
+  let cleaned = raw
+    .replace(/^```json\s*/im, "")
+    .replace(/^```\s*/im, "")
+    .replace(/\s*```$/im, "")
+    .trim();
 
-OPERATING THEATRES & PROCEDURAL SUITES:
-OT, OR (Operating Room/Theatre), Major OT, Minor OT, Emergency OT, Day Surgery OT, Laminar Flow OT, Hybrid OT, Cath Lab (Cardiac Catheterisation Laboratory), EP Lab (Electrophysiology Lab), Hybrid Cath Lab, DSA Room (Digital Subtraction Angiography), Interventional Radiology Suite (IR Suite), Endoscopy Suite, Colonoscopy Room, Bronchoscopy Room, Cystoscopy Room, ERCP Room, Day Procedure Room, Pain Management Suite, Laser Room, Lithotripsy Room (ESWL), Robotic Surgery Suite, Neuro Interventional Suite
+  // 2. Try direct parse first
+  try { return JSON.parse(cleaned); } catch (_) { /* fall through */ }
 
-EMERGENCY & TRAUMA:
-Emergency Department (ED / A&E), Resuscitation Bay (Resus), Trauma Bay, Triage Room, Emergency Observation Room, Emergency Treatment Bay, Plaster Room, Suture Room, ENT Emergency Room, Ophthalmology Emergency Room, Paediatric Emergency Room, Psychiatric Emergency Room, Ambulance Bay, Decontamination Room
+  // 3. Extract first complete {...} block via regex
+  const match = cleaned.match(/\{[\s\S]*\}/);
+  if (match) {
+    try { return JSON.parse(match[0]); } catch (_) { /* fall through */ }
+  }
 
-INPATIENT WARDS:
-General Ward, Male Ward, Female Ward, Paediatric Ward, Surgical Ward, Medical Ward, Orthopaedic Ward, Gynaecology Ward, Maternity Ward (Antenatal/Postnatal), Oncology Ward, Neurology Ward, Cardiology Ward, Urology Ward, Nephrology Ward, Haematology Ward, Gastroenterology Ward, Pulmonology Ward, Endocrinology Ward, Dermatology Ward, Psychiatry Ward, Geriatric Ward, Palliative Care Ward, Rehabilitation Ward, Burns Ward, ENT Ward, Ophthalmology Ward, Plastic Surgery Ward, Bariatric Ward, Transplant Ward, Private Room, Suite Room, Deluxe Room, VIP Room, VVIP Suite, Side Room, Infectious Disease Ward, Barrier Nursing Room
+  // 4. Attempt to repair truncated JSON — close open structures
+  const repaired = cleaned
+    .replace(/,\s*$/, "")           // trailing comma
+    .replace(/("[^"]*")\s*$/, '$1}') // unclosed string value
+    .replace(/:\s*$/, ':""}');      // hanging colon
+  // Ensure balanced braces
+  const opens  = (repaired.match(/\{/g) || []).length;
+  const closes = (repaired.match(/\}/g) || []).length;
+  const fixed  = repaired + "}".repeat(Math.max(0, opens - closes));
+  try { return JSON.parse(fixed); } catch (_) { /* fall through */ }
 
-LABOUR, DELIVERY & MATERNITY:
-Labour Room (LR), Normal Delivery Room (NDR), LDRP Room (Labour Delivery Recovery Postpartum), Caesarean Section Room (CS / LSCS Room), Operating Delivery Suite, Eclampsia Room, High-Risk Obstetric Room, Kangaroo Mother Care Room (KMC), Lactation Room, Neonatal Resuscitation Room, Milk Bank, Postnatal Ward, Antenatal Assessment Room
-
-OUTPATIENT & CONSULTATION:
-OPD Consultation Room, General Physician Room, Specialist Consultation Room, Cardiology OPD, Neurology OPD, Orthopaedic OPD, Oncology OPD, Urology OPD, Nephrology OPD, Gastroenterology OPD, Pulmonology OPD, Endocrinology OPD, Haematology OPD, Rheumatology OPD, Psychiatry OPD, Paediatric OPD, Gynaecology OPD, ENT OPD, Ophthalmology OPD, Dermatology OPD, Dental OPD, Plastic Surgery OPD, Bariatric OPD, Pain Clinic Room, Palliative Care OPD, Pre-Anaesthesia Check Room (PAC), Pre-Operative Assessment Room, Post-Operative Review Room, Allied Health Consultation Room, Dietetics Room, Social Worker Room, Counselling Room
-
-TREATMENT & PROCEDURE ROOMS:
-Treatment Room, Procedure Room, Dressing Room, Injection Room, Infusion Room (IV Therapy / Chemotherapy Day Care), Blood Transfusion Room, Dialysis Station, Haemodialysis Room, Peritoneal Dialysis Room, Plasmapheresis Room, Cardiac Rehabilitation Room, Pulmonary Rehabilitation Room, Wound Care Room, Hydrotherapy Room, ECG Room, Stress Test Room (Treadmill / TMT), Holter Monitoring Room, Spirometry Room, Audiometry Room, Audiometry Booth, Visual Field Room, Tonometry Room, Minor Procedure Room, Colposcopy Room, Endometrial Biopsy Room, Biopsy Room, Bone Marrow Biopsy Room, Lumbar Puncture Room, Intravitreal Injection Room, Phototherapy Room, PUVA Room, Vaccination Room, Travel Medicine Room, Family Planning Room, Pre-Natal Counselling Room, Neonatal Follow-Up Room
-
-DIAGNOSTIC IMAGING & RADIOLOGY:
-X-Ray Room, Digital X-Ray Room (DR Room), Fluoroscopy Room, C-Arm Room, OPG Room (Dental Panoramic X-Ray), Mammography Room, Tomosynthesis Room, Ultrasound Room, Doppler Room, Echo Room (Echocardiography), CT Scan Room (CT Suite), MRI Room (MRI Suite), PET-CT Room (PET Suite), SPECT Room, SPECT-CT Room, Nuclear Medicine Scan Room, Bone Densitometry Room (DEXA), Angiography Suite, MR Angiography Room, Gamma Camera Room, Thyroid Uptake Room, Hot Lab (Nuclear Medicine), Cold Lab, Reporting Room, Film Library / PACS Room, Interventional MRI Room, Intraoperative CT Room, MRI Control Room, CT Control Room, X-Ray Control Area, Radiographer Work Area
-
-LABORATORY & PATHOLOGY:
-Clinical Laboratory (General Lab), Haematology Lab, Biochemistry Lab, Clinical Pathology Lab, Microbiology Lab, Serology Lab, Immunology Lab, Molecular Diagnostics Lab (PCR Lab), Histopathology Lab, Cytology Lab, Cytogenetics Lab, Genetics Lab, Blood Bank, Component Separation Room, Blood Issue Room, Blood Storage Room, Bone Marrow Processing Lab, Stem Cell Lab, Flow Cytometry Lab, Point-of-Care Testing (POCT) Room, Specimen Collection Room, Phlebotomy Room, Urine Collection Room, Sample Reception, Centrifuge Room, Media Preparation Room, BSL-2 Lab, BSL-3 Lab, Lab Autoclave Room, Lab Wash Room
-
-CARDIOLOGY & CARDIAC SURGERY:
-Cardiac Catheterisation Lab (Cath Lab), EP Lab, Hybrid Cath Lab, Echocardiography Room (Echo Lab), Exercise Stress Test Room (TMT), Holter / Ambulatory Monitoring Room, Cardiac Rehab Gym, Cardiac ICU (CICU / CCU), CTICU, Pacemaker Clinic Room, Cardiac OPD, LVAD Room, ECMO Room, Perfusion Room, Heart Lung Machine Store, Cardiology Procedure Room
-
-NEUROSCIENCES:
-Neurology OPD, Neurosurgery OPD, Neurophysiology Lab, EEG Room, EMG/NCV Room, Evoked Potentials Room, Video EEG Monitoring Room, Neuro ICU (NICU), Neuro HDU, Neuro OT, Stereotactic Radiosurgery Suite (Gamma Knife / CyberKnife), Neuro Interventional Suite, Deep Brain Stimulation Suite, Intraoperative Monitoring Room, Neuro Rehabilitation Room, Cognitive Assessment Room
-
-ONCOLOGY & RADIOTHERAPY:
-Oncology OPD, Medical Oncology Room, Surgical Oncology OPD, Radiation Oncology OPD, Chemotherapy Day Care (Day Oncology Unit), Bone Marrow Transplant Unit (BMT), Haematopoietic Stem Cell Transplant Room, LINAC Room (Linear Accelerator), Brachytherapy Room (High Dose Rate — HDR), Simulation Room (CT Sim), Mould Room, Treatment Planning Room, Radiation Therapy Vault, Cobalt Therapy Room, Proton Therapy Room, Radiation Oncology ICU, Tumour Board Room, Palliative Care Room, Cancer Counselling Room
-
-ORTHOPAEDICS & REHABILITATION:
-Orthopaedic OPD, Plaster Room, Fracture Clinic Room, Cast Room, Splinting Room, Arthroscopy Room, Bone Bank, Orthopaedic OT, Physiotherapy Room, Occupational Therapy Room, Speech Therapy Room, Hydrotherapy Pool Room, Gait Analysis Room, Prosthetics & Orthotics Room, Rehabilitation Gym, Exercise Therapy Room, Cognitive Rehabilitation Room, Spinal Cord Injury Rehabilitation Room, Stroke Rehabilitation Room
-
-OPHTHALMOLOGY:
-Ophthalmology OPD, Refraction Room, Slit Lamp Room, Visual Field Room (Perimetry), OCT Room, Fundus Photography Room, Fluorescein Angiography Room, ERG Room, Orthoptics Room, Contact Lens Room, Low Vision Room, Glaucoma Assessment Room, Retina Clinic Room, Cornea Clinic Room, Ophthalmic OT (Eye OT), Laser Room (LASIK / YAG / Argon Laser), Intravitreal Injection Room, Eye Bank
-
-ENT (EAR NOSE THROAT):
-ENT OPD, Audiometry Room, Audiometry Booth (Sound-Proof Booth), Tympanometry Room, OAE Room, ABR Room, Video Laryngoscopy Room, Nasal Endoscopy Room, ENT Procedure Room, Voice Lab, Balance Lab (Vestibulometry / VNG Room), Hearing Aid Room, ENT OT, Microscopy Room
-
-UROLOGY & NEPHROLOGY:
-Urology OPD, Uroflowmetry Room, Cystoscopy Room, Urodynamics Room, ESWL Room (Lithotripsy), Dialysis Room (Haemodialysis Station), Peritoneal Dialysis Room, Kidney Transplant OT, Nephrology OPD, Renal Biopsy Room, Transplant Clinic Room
-
-GASTROENTEROLOGY & HEPATOLOGY:
-Gastroenterology OPD, Endoscopy Suite, Colonoscopy Room, ERCP Room, Capsule Endoscopy Room, Manometry Room, pH-Metry Room, Liver Biopsy Room, Hepatology OPD, Liver Transplant Clinic, Fibroscan Room
-
-OBSTETRICS, GYNAECOLOGY & FERTILITY:
-Gynaecology OPD, Antenatal OPD, Postnatal Clinic, Colposcopy Room, Hysteroscopy Room, Fertility Clinic Room, IVF Lab (Embryology Lab), Semen Analysis Room, Sperm Bank, IUI Room, Egg Retrieval Room, Embryo Transfer Room, Genetic Counselling Room, Foetal Medicine Room, Foetal Echo Room
-
-PSYCHIATRY & MENTAL HEALTH:
-Psychiatry OPD, Consultation Room, Psychotherapy Room, Group Therapy Room, Psychiatric Ward (Open), Psychiatric Ward (Closed / Secure), De-escalation Room, Seclusion Room, ECT Room (Electroconvulsive Therapy), Psychology Assessment Room, Neuropsychology Lab, Drug De-addiction Room, Geriatric Psychiatry Room, Child Psychiatry Room, Family Therapy Room
-
-PAEDIATRICS & NEONATOLOGY:
-Paediatric OPD, Paediatric Ward, NICU Level I / II / III, PICU, Neonatal Resuscitation Room, KMC Room (Kangaroo Mother Care), Paediatric HDU, Paediatric OT, Developmental Paediatrics Room, Child Development Centre, Play Therapy Room, School Room (Long Stay Paediatric), Paediatric Oncology Room, Paediatric Dialysis Room, Vaccination Room, Adolescent Health Room
-
-DENTAL & MAXILLOFACIAL:
-Dental OPD, General Dentistry Room, Orthodontics Room, Periodontics Room, Endodontics Room, Oral Surgery Room, Oral Medicine Room, Prosthodontics Room, Paediatric Dentistry Room, OPG Room, Dental Sterilisation Room, Maxillofacial OT, Dental Lab
-
-PHARMACY & STERILE SERVICES:
-Main Pharmacy (Retail / OPD Pharmacy), Inpatient Pharmacy, Emergency Pharmacy (24hr), Satellite Pharmacy, Clinical Pharmacy Room, Pharmacist Counselling Room, Aseptic Dispensing Room, Total Parenteral Nutrition Room (TPN Room), Cytotoxic Reconstitution Room (Chemo Preparation Room), Pharmacy Clean Room, Pharmacy Cold Store, Investigational Drug Store, Narcotic / Controlled Drug Store, CSSD (Central Sterile Supply Department), Decontamination Room (CSSD), Washer-Disinfector Room, Packing Room (CSSD), Autoclave Room (CSSD), Sterile Store (CSSD), Instrument Repair Room
-
-BLOOD BANK & TRANSFUSION:
-Blood Bank, Donor Collection Room, Blood Component Lab, Blood Issue Room, Blood Storage Room, Apheresis Room, Irradiation Room, Blood Bank Lab, Cross-Matching Room, Transfusion Reaction Room
-
-DIETETICS & NUTRITION:
-Dietetics OPD Room, Clinical Nutrition Assessment Room, Dietary Counselling Room, Metabolic Kitchen, Patient Diet Kitchen, Staff Canteen Kitchen, Hospital Kitchen, Pantry (Ward-Level), Nourishment Bay
-
-MORTUARY & FORENSICS:
-Mortuary, Body Storage Room, Post-Mortem Room (Autopsy Room), Forensic Autopsy Room, Embalming Room, Histology Lab (Mortuary), Viewing Room (Family Viewing), Coffin Store, Mortuary Cold Chamber, Forensic Office
-
-STERILISATION & INFECTION CONTROL:
-CSSD (Central Sterile Services Department), Theatre Sterile Supply Unit (TSSU), Endoscope Reprocessing Room, Washer-Disinfector Room, Autoclave Room, Decontamination Sink Area, Clean Utility Room, Dirty Utility Room (Sluice Room), Soiled Linen Hold Room, Clean Linen Store, Isolation Anteroom / Airlock, Hand Wash Bay
-
-SUPPORT, LOGISTICS & SUPPLY CHAIN:
-CSSD Store, Medical Consumable Store, Drug Store (Central Medical Store), Equipment Store, Linen Store, Housekeeping Store, Biomedical Engineering Workshop, EBME Lab, Biomedical Store, Estates / Maintenance Workshop, Medical Gas Manifold Room, Medical Gas Cylinder Store, Liquid Oxygen Tank Room, Electrical Sub-Station Room, UPS Room, Generator Room (DG Set Room), HVAC Plant Room, AHU Room (Air Handling Unit), Chiller Plant Room, BMS Control Room (Building Management System), Fire Control Room, CCTV Control Room, IT Server Room (Data Centre), Telephone Exchange (EPABX Room)
-
-ADMINISTRATION & MANAGEMENT:
-Hospital Director Room, CEO Room, CMO Room, CNO Room, Administration Office, Medical Records Department (MRD), Medical Records Room, Health Information Management Room, Front Desk / Reception, Registration Counter, Billing Counter, Insurance Desk, Discharge Lounge, Enquiry / Information Desk, Help Desk, Patient Relations Office, Quality Department Office, Infection Control Office, Hospital Infection Control Room, Bio-Medical Waste Store, Hazardous Material Store, Legal / Compliance Office, HR Department, Training Room, Lecture Hall, Conference Room, Board Room, Medical Library, Research Office, Ethics Committee Room
-
-STAFF & WELFARE AREAS:
-Doctors Change Room (Male/Female), Nurses Change Room (Male/Female), Staff Locker Room, Doctor Rest Room / On-Call Room, Nurse Rest Room, Night Duty Room, Staff Toilet, Staff Pantry, Staff Canteen, Duty Room, Nurses Station, Ward Sister Room, Charge Nurse Room, Staff Prayer Room, Staff Lounge
-
-PATIENT SUPPORT & AMENITY:
-Patient Waiting Area, Family Waiting Room, Patient Lounge, Relative Waiting Room, Consultation Waiting Bay, Patient Toilet / Bathroom, Patient Accessible Toilet, Ambulatory Patient Bay, Discharge Lounge, Patient Education Room, Prayer Room / Multi-Faith Room, Patient Library, Retail / Pharmacy Kiosk, Cafeteria / Coffee Shop, ATM Area, Florist / Gift Shop, Children Play Area, Teen Zone, Volunteer Room
-
-────────────────────────────────────────────────
-INSTRUCTIONS
-────────────────────────────────────────────────
-Each line below is: fieldName(label)|option1,option2,...
-Pick the BEST option for this room type. Only include fields you are confident about.
-For NUM fields: return a realistic number.
-For Yes,No fields: return exactly "Yes" or "No".
-For other fields: return exactly one of the listed options (verbatim).
-
-FIELDS:
-${lines}
-
-Respond ONLY with compact JSON (no markdown, no explanation):
-{"r":{"fieldName":"value"},"w":{"fieldName":"why"}}`;
+  throw new Error(`JSON parse failed. Raw: ${raw.slice(0, 200)}`);
 }
 
 // ─── Single API call — validate response against options ─────────────────────
 async function fetchAiRecommendations(roomName, department, category) {
   if (!GROQ_API_KEY) return null;
 
-  const prompt = buildCompactPrompt(roomName, department, category);
+  const userPrompt = buildCompactPrompt(roomName, department, category);
 
-  const resp = await axios.post(
-    GROQ_URL,
-    {
-      model: GROQ_MODEL,
-      messages: [{ role: "user", content: prompt }],
-      temperature: 0.15,
-      max_tokens: 2500,
-    },
-    { headers: { Authorization: `Bearer ${GROQ_API_KEY}`, "Content-Type": "application/json" } }
-  );
+  const makeRequest = async (retrySimple = false) => {
+    const resp = await axios.post(
+      GROQ_URL,
+      {
+        model: GROQ_MODEL,
+        messages: [
+          { role: "system", content: SYSTEM_PROMPT },
+          { role: "user",   content: retrySimple
+              ? `Room: ${roomName}. Return JSON {"r":{},"w":{}} with your best field suggestions.`
+              : userPrompt
+          }
+        ],
+        temperature: retrySimple ? 0.1 : 0.15,
+        max_tokens:  4096,
+        // Force JSON output mode if supported
+        response_format: { type: "json_object" },
+      },
+      { headers: { Authorization: `Bearer ${GROQ_API_KEY}`, "Content-Type": "application/json" } }
+    );
+    return resp.data.choices[0].message.content.trim();
+  };
 
-  const raw     = resp.data.choices[0].message.content.trim();
-  const cleaned = raw.replace(/^```json\s*/m, "").replace(/^```\s*/m, "").replace(/\s*```$/m, "");
-  const parsed  = JSON.parse(cleaned);
+  let raw;
+  try {
+    raw = await makeRequest(false);
+  } catch (err) {
+    // If it's a 400 (json_object mode not supported), retry without it
+    if (err?.response?.status === 400) {
+      const resp = await axios.post(
+        GROQ_URL,
+        {
+          model: GROQ_MODEL,
+          messages: [
+            { role: "system", content: SYSTEM_PROMPT },
+            { role: "user",   content: userPrompt }
+          ],
+          temperature: 0.15,
+          max_tokens:  4096,
+        },
+        { headers: { Authorization: `Bearer ${GROQ_API_KEY}`, "Content-Type": "application/json" } }
+      );
+      raw = resp.data.choices[0].message.content.trim();
+    } else {
+      throw err;
+    }
+  }
 
-  // Support both {r,w} compact and {recommendations,reasons} verbose formats
+  let parsed;
+  try {
+    parsed = extractJSON(raw);
+  } catch (jsonErr) {
+    // One automatic retry with a simpler prompt
+    console.warn("JSON parse failed on first attempt — retrying with simplified prompt:", jsonErr.message);
+    try {
+      raw    = await makeRequest(true);
+      parsed = extractJSON(raw);
+    } catch (retryErr) {
+      throw new Error("AI returned unexpected format — please try again");
+    }
+  }
+
   const recs    = parsed.r || parsed.recommendations || {};
   const reasons = parsed.w || parsed.reasons || {};
 
-  // Validate — drop any value not in the options list (hallucination guard)
-  const validated = {};
+  // Validate — drop any value not in the options list
+  const validated    = {};
   const validReasons = {};
   Object.entries(recs).forEach(([key, value]) => {
     if (value === undefined || value === null || value === "") return;
+    const strVal = String(value).trim();
     if (OPTIONS_LOOKUP[key]) {
-      if (OPTIONS_LOOKUP[key].has(String(value))) {
-        validated[key] = value;
+      if (OPTIONS_LOOKUP[key].has(strVal)) {
+        validated[key]    = strVal;
         if (reasons[key]) validReasons[key] = reasons[key];
       }
-      // silently drop hallucinated option values
+      // silently drop hallucinated values
     } else {
-      validated[key] = value;
+      validated[key] = strVal;
       if (reasons[key]) validReasons[key] = reasons[key];
     }
   });
