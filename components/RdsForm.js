@@ -386,7 +386,7 @@ function groupFields(fields) {
 }
 
 // ─── SectionFields renderer ──────────────────────────────────────────────────
-function SectionFields({ section, register, errors, setValue, watch, aiReasons }) {
+function SectionFields({ section, register, errors, setValue, watch, aiReasons, docFilledFields }) {
 
   const renderGroups = (fields) =>
     groupFields(fields).map((grp, gi) => {
@@ -395,7 +395,7 @@ function SectionFields({ section, register, errors, setValue, watch, aiReasons }
           {grp.fields.map(field => (
             <FieldRendererWithBadge key={field.name} field={field}
               register={register} errors={errors} setValue={setValue}
-              watch={watch} aiReason={aiReasons?.[field.name]} />
+              watch={watch} aiReason={aiReasons?.[field.name]} isDocFilled={docFilledFields?.has(field.name)} />
           ))}
         </div>
       );
@@ -404,14 +404,14 @@ function SectionFields({ section, register, errors, setValue, watch, aiReasons }
           {grp.fields.map(field => (
             <FieldRendererWithBadge key={field.name} field={field}
               register={register} errors={errors} setValue={setValue}
-              watch={watch} aiReason={aiReasons?.[field.name]} />
+              watch={watch} aiReason={aiReasons?.[field.name]} isDocFilled={docFilledFields?.has(field.name)} />
           ))}
         </div>
       );
       return (
         <FieldRendererWithBadge key={grp.field.name} field={grp.field}
           register={register} errors={errors} setValue={setValue}
-          watch={watch} aiReason={aiReasons?.[grp.field.name]} />
+          watch={watch} aiReason={aiReasons?.[grp.field.name]} isDocFilled={docFilledFields?.has(grp.field.name)} />
       );
     });
 
@@ -444,10 +444,48 @@ function SectionFields({ section, register, errors, setValue, watch, aiReasons }
 }
 
 // ─── Wraps FieldRenderer with AI badge + tooltip ─────────────────────────────
-function FieldRendererWithBadge({ field, register, errors, setValue, watch, aiReason }) {
+// ─── Field indicator badge styles ────────────────────────────────────────────
+const BADGE_KEYFRAMES = `
+  @keyframes badgePop {
+    0%   { transform: scale(0.5); opacity: 0; }
+    70%  { transform: scale(1.15); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  @keyframes badgeShimmer {
+    0%   { background-position: -100% 0; }
+    100% { background-position: 200% 0; }
+  }
+  @keyframes fieldGlow {
+    0%,100% { box-shadow: 0 0 0 0 transparent; }
+    50%      { box-shadow: 0 0 0 3px rgba(109,40,217,0.18); }
+  }
+  @keyframes docGlow {
+    0%,100% { box-shadow: 0 0 0 0 transparent; }
+    50%      { box-shadow: 0 0 0 3px rgba(6,182,212,0.18); }
+  }
+`;
+
+function FieldRendererWithBadge({ field, register, errors, setValue, watch, aiReason, isDocFilled }) {
   const [showTip, setShowTip] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const prevAiReason   = useRef(null);
+  const prevDocFilled  = useRef(false);
+
+  // Trigger pop animation only when badge first appears
+  useEffect(() => {
+    if ((aiReason && !prevAiReason.current) || (isDocFilled && !prevDocFilled.current)) {
+      setMounted(false);
+      requestAnimationFrame(() => setMounted(true));
+    }
+    prevAiReason.current  = aiReason;
+    prevDocFilled.current = isDocFilled;
+  }, [aiReason, isDocFilled]);
+
+  const hasBadge = aiReason || isDocFilled;
+
   return (
     <div style={{ position: "relative" }}>
+      <style>{BADGE_KEYFRAMES}</style>
       <FieldRenderer
         field={field}
         register={register}
@@ -455,39 +493,133 @@ function FieldRendererWithBadge({ field, register, errors, setValue, watch, aiRe
         setValue={setValue}
         watch={watch}
       />
+
+      {/* ── AI Badge ── */}
       {aiReason && (
         <div style={{ position: "absolute", top: 2, right: 2, zIndex: 10 }}>
           <div
-            onMouseEnter={() => setShowTip(true)}
+            onMouseEnter={() => setShowTip("ai")}
             onMouseLeave={() => setShowTip(false)}
             style={{
-              display: "inline-flex", alignItems: "center", gap: 3,
-              padding: "2px 7px", borderRadius: 10,
-              background: "#ede9fe", border: "1px solid #c4b5fd",
-              cursor: "help", fontSize: 10, fontWeight: 700, color: "#6d28d9",
-              userSelect: "none",
+              display: "inline-flex", alignItems: "center", gap: 4,
+              padding: "3px 8px", borderRadius: 10,
+              background: "linear-gradient(135deg, #7c3aed, #6d28d9)",
+              border: "1px solid rgba(167,139,250,0.5)",
+              cursor: "help", fontSize: 10, fontWeight: 800, color: "#fff",
+              userSelect: "none", letterSpacing: "0.3px",
+              boxShadow: "0 2px 8px rgba(109,40,217,0.35)",
+              animation: mounted ? "badgePop 0.35s cubic-bezier(0.34,1.56,0.64,1) both" : "none",
+              transition: "transform 0.15s, box-shadow 0.15s",
             }}
+            onMouseDown={e => e.currentTarget.style.transform = "scale(0.93)"}
+            onMouseUp={e => e.currentTarget.style.transform = "scale(1)"}
           >
-            ✦ AI
+            <span style={{ fontSize: 9, opacity: 0.9 }}>✦</span>
+            AI
           </div>
-          {showTip && (
+
+          {/* AI Tooltip */}
+          {showTip === "ai" && (
             <div style={{
-              position: "absolute", right: 0, top: "100%", marginTop: 4,
-              background: "#1e1b4b", color: "#e0e7ff",
-              borderRadius: 8, padding: "8px 12px",
-              fontSize: 11.5, lineHeight: 1.5, width: 220,
-              boxShadow: "0 4px 20px rgba(0,0,0,0.25)",
+              position: "absolute", right: 0, top: "calc(100% + 6px)",
+              background: "linear-gradient(145deg, #1e1b4b, #2e1065)",
+              color: "#e0e7ff", borderRadius: 10, padding: "10px 13px",
+              fontSize: 11.5, lineHeight: 1.55, width: 230,
+              boxShadow: "0 8px 30px rgba(0,0,0,0.35), 0 0 0 1px rgba(167,139,250,0.2)",
               zIndex: 100, pointerEvents: "none",
+              animation: "badgePop 0.2s ease both",
             }}>
-              <div style={{ fontWeight: 700, marginBottom: 3, color: "#a5b4fc" }}>Why AI suggested this:</div>
-              {aiReason}
+              {/* Arrow */}
               <div style={{
                 position: "absolute", right: 10, top: -5,
-                width: 10, height: 10, background: "#1e1b4b",
+                width: 10, height: 10,
+                background: "#1e1b4b",
                 transform: "rotate(45deg)",
+                borderTop: "1px solid rgba(167,139,250,0.2)",
+                borderLeft: "1px solid rgba(167,139,250,0.2)",
               }} />
+              <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 5 }}>
+                <span style={{ fontSize: 12 }}>✦</span>
+                <span style={{ fontWeight: 800, color: "#a5b4fc", fontSize: 11 }}>AI Suggested</span>
+              </div>
+              <div style={{ color: "#c7d2fe", fontSize: 11 }}>{aiReason}</div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* ── Doc Badge ── */}
+      {isDocFilled && !aiReason && (
+        <div style={{ position: "absolute", top: 2, right: 2, zIndex: 10 }}>
+          <div
+            onMouseEnter={() => setShowTip("doc")}
+            onMouseLeave={() => setShowTip(false)}
+            style={{
+              display: "inline-flex", alignItems: "center", gap: 4,
+              padding: "3px 8px", borderRadius: 10,
+              background: "linear-gradient(135deg, #0891b2, #0e7490)",
+              border: "1px solid rgba(103,232,249,0.4)",
+              cursor: "help", fontSize: 10, fontWeight: 800, color: "#fff",
+              userSelect: "none", letterSpacing: "0.3px",
+              boxShadow: "0 2px 8px rgba(6,182,212,0.3)",
+              animation: mounted ? "badgePop 0.35s cubic-bezier(0.34,1.56,0.64,1) both" : "none",
+              transition: "transform 0.15s, box-shadow 0.15s",
+            }}
+            onMouseDown={e => e.currentTarget.style.transform = "scale(0.93)"}
+            onMouseUp={e => e.currentTarget.style.transform = "scale(1)"}
+          >
+            <span style={{ fontSize: 10 }}>📄</span>
+            Doc
+          </div>
+
+          {/* Doc Tooltip */}
+          {showTip === "doc" && (
+            <div style={{
+              position: "absolute", right: 0, top: "calc(100% + 6px)",
+              background: "linear-gradient(145deg, #0c1a2e, #0f2744)",
+              color: "#e0f2fe", borderRadius: 10, padding: "10px 13px",
+              fontSize: 11.5, lineHeight: 1.55, width: 210,
+              boxShadow: "0 8px 30px rgba(0,0,0,0.35), 0 0 0 1px rgba(103,232,249,0.2)",
+              zIndex: 100, pointerEvents: "none",
+              animation: "badgePop 0.2s ease both",
+            }}>
+              <div style={{
+                position: "absolute", right: 10, top: -5,
+                width: 10, height: 10,
+                background: "#0c1a2e",
+                transform: "rotate(45deg)",
+                borderTop: "1px solid rgba(103,232,249,0.2)",
+                borderLeft: "1px solid rgba(103,232,249,0.2)",
+              }} />
+              <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 5 }}>
+                <span style={{ fontSize: 12 }}>📄</span>
+                <span style={{ fontWeight: 800, color: "#67e8f9", fontSize: 11 }}>Extracted from Document</span>
+              </div>
+              <div style={{ color: "#a5f3fc", fontSize: 11 }}>
+                This value was automatically extracted from your uploaded file.
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Both badges (AI overrides doc) — show stacked indicator ── */}
+      {isDocFilled && aiReason && (
+        <div style={{
+          position: "absolute", top: 2, right: isDocFilled && aiReason ? 44 : 2,
+          zIndex: 9,
+        }}>
+          <div style={{
+            display: "inline-flex", alignItems: "center", gap: 3,
+            padding: "3px 7px", borderRadius: 10,
+            background: "linear-gradient(135deg, #0891b2, #0e7490)",
+            border: "1px solid rgba(103,232,249,0.35)",
+            fontSize: 10, fontWeight: 700, color: "#fff",
+            opacity: 0.85,
+            boxShadow: "0 2px 6px rgba(6,182,212,0.25)",
+          }}>
+            <span style={{ fontSize: 10 }}>📄</span>
+          </div>
         </div>
       )}
     </div>
@@ -511,7 +643,8 @@ export default function RdsForm({ onSectionChange, jumpToSection, editRecord, on
   const [aiStatus,  setAiStatus]  = useState("idle"); // idle | loading | ready | applied | error
   const [aiData,    setAiData]    = useState(null);   // { recommendations, reasons }
   const [aiReasons, setAiReasons] = useState({});     // active reasons shown on fields
-  const [aiError,   setAiError]   = useState("");     // real error message
+  const [aiError,       setAiError]       = useState("");     // real error message
+  const [docFilledFields, setDocFilledFields] = useState(new Set()); // doc-extracted field names
   const lastRoomRef = useRef("");                      // avoid duplicate calls
 
   const { toasts, addToast } = useToast();
@@ -764,6 +897,8 @@ export default function RdsForm({ onSectionChange, jumpToSection, editRecord, on
     Object.entries(fields).forEach(([key, value]) => {
       setValue(key, value, { shouldDirty: true, shouldValidate: false });
     });
+    // Track which fields were filled by document extraction
+    setDocFilledFields(prev => new Set([...prev, ...Object.keys(fields)]));
     if (image) setRoomImage(image);
     addToast(`✓ ${Object.keys(fields).length} fields auto-filled${image ? " + room image extracted" : ""}`, "success");
     window.scrollTo({ top: 300, behavior: "smooth" });
@@ -783,6 +918,7 @@ export default function RdsForm({ onSectionChange, jumpToSection, editRecord, on
     setAiReasons({});
     setAiError("");
     setAiOptIn(null);
+    setDocFilledFields(new Set());
     lastRoomRef.current = "";
     window.scrollTo({ top: 0, behavior: "smooth" });
     addToast("Form reset — start fresh", "success");
@@ -904,7 +1040,7 @@ export default function RdsForm({ onSectionChange, jumpToSection, editRecord, on
           </span>
           <button
             type="button"
-            onClick={() => { setAiOptIn(false); setAiStatus("idle"); setAiData(null); setAiReasons({}); lastRoomRef.current = ""; }}
+            onClick={() => { setAiOptIn(false); setAiStatus("idle"); setAiData(null); setAiReasons({}); setDocFilledFields(new Set()); lastRoomRef.current = ""; }}
             style={{ background: "none", border: "none", cursor: "pointer", color: "#7c3aed", fontSize: 18, lineHeight: 1, padding: 0 }}
           >×</button>
         </div>
@@ -997,6 +1133,7 @@ export default function RdsForm({ onSectionChange, jumpToSection, editRecord, on
             setValue={setValue}
             watch={watch}
             aiReasons={aiReasons}
+            docFilledFields={docFilledFields}
           />
         </SectionCard>
 
