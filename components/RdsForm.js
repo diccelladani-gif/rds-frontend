@@ -8,6 +8,7 @@ import SectionCard from "./SectionCard";
 import FieldRenderer from "./FieldRenderer";
 import UploadZone from "./UploadZone";
 import SuccessOverlay from "./SuccessOverlay";
+import ValidationPanel from "./ValidationPanel";
 
 const DRAFT_KEY = "rds_draft_v2";
 const API = process.env.NEXT_PUBLIC_API_URL || "";
@@ -638,6 +639,8 @@ export default function RdsForm({ onSectionChange, jumpToSection, editRecord, on
   const [lastSaved,         setLastSaved]         = useState(null);
   const [roomImage,         setRoomImage]         = useState(null);
   const [showSuccess,       setShowSuccess]       = useState(false);
+  const [showValidation,    setShowValidation]    = useState(false);
+  const [validationRoomId,  setValidationRoomId]  = useState(null);
   const [submittedRoom,     setSubmittedRoom]     = useState({ code: "", name: "" });
   const [isEditMode,        setIsEditMode]        = useState(false);
   const [editId,            setEditId]            = useState(null);
@@ -870,11 +873,17 @@ export default function RdsForm({ onSectionChange, jumpToSection, editRecord, on
     try {
       const user = JSON.parse(sessionStorage.getItem("rds_user") || "{}");
       const payload = { ...data, roomImage, _submittedBy: user.name || "system" };
-      await axios.post(`${API}/save`, payload);
+      const response = await axios.post(`${API}/save`, payload);
       localStorage.removeItem(DRAFT_KEY);
       setCompletedSections(new Set(rdsSchema.map(s => s.id)));
       setSubmittedRoom({ code: data.roomCode || "", name: data.roomName || "" });
-      setShowSuccess(true);
+      const savedId = response?.data?.id;
+      if (savedId) {
+        setValidationRoomId(savedId);
+        setShowValidation(true);
+      } else {
+        setShowSuccess(true);
+      }
     } catch (error) {
       console.error("Submit error:", error.response?.data || error.message);
       addToast("Submission failed — please try again", "error");
@@ -1216,6 +1225,19 @@ export default function RdsForm({ onSectionChange, jumpToSection, editRecord, on
             setAiOptIn(null);
             lastRoomRef.current = "";
             if (onEditDone) onEditDone();
+          }}
+        />
+      )}
+
+      {showValidation && validationRoomId && (
+        <ValidationPanel
+          roomId={validationRoomId}
+          roomCode={submittedRoom.code}
+          roomName={submittedRoom.name}
+          onClose={() => {
+            setShowValidation(false);
+            setValidationRoomId(null);
+            setShowSuccess(true);
           }}
         />
       )}
