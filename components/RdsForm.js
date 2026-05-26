@@ -386,7 +386,7 @@ function groupFields(fields) {
 }
 
 // ─── SectionFields renderer ──────────────────────────────────────────────────
-function SectionFields({ section, register, errors, setValue, watch, aiReasons, docFilledFields }) {
+function SectionFields({ section, register, errors, setValue, watch, aiReasons, aiFilledFields, docFilledFields }) {
 
   const renderGroups = (fields) =>
     groupFields(fields).map((grp, gi) => {
@@ -395,7 +395,7 @@ function SectionFields({ section, register, errors, setValue, watch, aiReasons, 
           {grp.fields.map(field => (
             <FieldRendererWithBadge key={field.name} field={field}
               register={register} errors={errors} setValue={setValue}
-              watch={watch} aiReason={aiReasons?.[field.name]} isDocFilled={docFilledFields?.has(field.name)} />
+              watch={watch} aiReason={aiReasons?.[field.name]} isDocFilled={docFilledFields?.has(field.name)} isAiFilled={aiFilledFields?.has(field.name)} />
           ))}
         </div>
       );
@@ -404,14 +404,14 @@ function SectionFields({ section, register, errors, setValue, watch, aiReasons, 
           {grp.fields.map(field => (
             <FieldRendererWithBadge key={field.name} field={field}
               register={register} errors={errors} setValue={setValue}
-              watch={watch} aiReason={aiReasons?.[field.name]} isDocFilled={docFilledFields?.has(field.name)} />
+              watch={watch} aiReason={aiReasons?.[field.name]} isDocFilled={docFilledFields?.has(field.name)} isAiFilled={aiFilledFields?.has(field.name)} />
           ))}
         </div>
       );
       return (
         <FieldRendererWithBadge key={grp.field.name} field={grp.field}
           register={register} errors={errors} setValue={setValue}
-          watch={watch} aiReason={aiReasons?.[grp.field.name]} isDocFilled={docFilledFields?.has(grp.field.name)} />
+          watch={watch} aiReason={aiReasons?.[grp.field.name]} isDocFilled={docFilledFields?.has(grp.field.name)} isAiFilled={aiFilledFields?.has(grp.field.name)} />
       );
     });
 
@@ -465,23 +465,27 @@ const BADGE_KEYFRAMES = `
   }
 `;
 
-function FieldRendererWithBadge({ field, register, errors, setValue, watch, aiReason, isDocFilled }) {
+function FieldRendererWithBadge({ field, register, errors, setValue, watch, aiReason, isDocFilled, isAiFilled }) {
   const [showTip, setShowTip] = useState(false);
   const [mounted, setMounted] = useState(false);
   const prevAiReason   = useRef(null);
   const prevDocFilled  = useRef(false);
+  const prevAiFilled   = useRef(false);
 
-  // Trigger pop animation only when badge first appears
+  // Trigger pop animation when badge first appears
   useEffect(() => {
-    if ((aiReason && !prevAiReason.current) || (isDocFilled && !prevDocFilled.current)) {
+    if ((isAiFilled && !prevAiFilled.current) || (isDocFilled && !prevDocFilled.current)) {
       setMounted(false);
       requestAnimationFrame(() => setMounted(true));
     }
     prevAiReason.current  = aiReason;
     prevDocFilled.current = isDocFilled;
-  }, [aiReason, isDocFilled]);
+    prevAiFilled.current  = isAiFilled;
+  }, [aiReason, isDocFilled, isAiFilled]);
 
-  const hasBadge = aiReason || isDocFilled;
+  // Show AI badge if field was AI-filled (with or without reason text)
+  const showAiBadge = isAiFilled || !!aiReason;
+  const hasBadge    = showAiBadge || isDocFilled;
 
   return (
     <div style={{ position: "relative" }}>
@@ -495,7 +499,7 @@ function FieldRendererWithBadge({ field, register, errors, setValue, watch, aiRe
       />
 
       {/* ── AI Badge ── */}
-      {aiReason && (
+      {showAiBadge && (
         <div style={{ position: "absolute", top: 2, right: 2, zIndex: 10 }}>
           <div
             onMouseEnter={() => setShowTip("ai")}
@@ -643,8 +647,9 @@ export default function RdsForm({ onSectionChange, jumpToSection, editRecord, on
   const [aiStatus,  setAiStatus]  = useState("idle"); // idle | loading | ready | applied | error
   const [aiData,    setAiData]    = useState(null);   // { recommendations, reasons }
   const [aiReasons, setAiReasons] = useState({});     // active reasons shown on fields
-  const [aiError,       setAiError]       = useState("");     // real error message
-  const [docFilledFields, setDocFilledFields] = useState(new Set()); // doc-extracted field names
+  const [aiFilledFields, setAiFilledFields] = useState(new Set()); // ALL AI-filled fields
+  const [aiError,       setAiError]       = useState("");
+  const [docFilledFields, setDocFilledFields] = useState(new Set());
   const lastRoomRef = useRef("");                      // avoid duplicate calls
 
   const { toasts, addToast } = useToast();
@@ -669,7 +674,7 @@ export default function RdsForm({ onSectionChange, jumpToSection, editRecord, on
         lastRoomRef.current = "";
         setAiStatus("idle");
         setAiData(null);
-        setAiReasons({});
+        setAiReasons({}); setAiFilledFields(new Set());
         setAiError("");
       }
       return;
@@ -681,7 +686,7 @@ export default function RdsForm({ onSectionChange, jumpToSection, editRecord, on
     if (watchedRoomName !== lastRoomRef.current) {
       setAiStatus("idle");
       setAiData(null);
-      setAiReasons({});
+      setAiReasons({}); setAiFilledFields(new Set());
       setAiError("");
     }
 
@@ -692,7 +697,7 @@ export default function RdsForm({ onSectionChange, jumpToSection, editRecord, on
       lastRoomRef.current = watchedRoomName;
       setAiStatus("loading");
       setAiData(null);
-      setAiReasons({});
+      setAiReasons({}); setAiFilledFields(new Set());
       setAiError("");
       try {
         const result = await fetchAiRecommendations(
@@ -758,13 +763,15 @@ export default function RdsForm({ onSectionChange, jumpToSection, editRecord, on
       count++;
     });
     setAiReasons(reasons || {});
+    setAiFilledFields(new Set(Object.keys(recommendations)));
     setAiStatus("applied");
     addToast(`✦ ${count} AI suggestions applied across all sections`, "success");
   }, [aiData, setValue, addToast]);
 
   const handleDismissAi = () => {
     setAiStatus("idle");
-    setAiReasons({});
+    setAiReasons({}); setAiFilledFields(new Set());
+    setAiFilledFields(new Set());
   };
 
   // ── Sync sidebar jump ───────────────────────────────────────────────────────
@@ -915,7 +922,7 @@ export default function RdsForm({ onSectionChange, jumpToSection, editRecord, on
     setEditId(null);
     setAiStatus("idle");
     setAiData(null);
-    setAiReasons({});
+    setAiReasons({}); setAiFilledFields(new Set());
     setAiError("");
     setAiOptIn(null);
     setDocFilledFields(new Set());
@@ -1040,7 +1047,7 @@ export default function RdsForm({ onSectionChange, jumpToSection, editRecord, on
           </span>
           <button
             type="button"
-            onClick={() => { setAiOptIn(false); setAiStatus("idle"); setAiData(null); setAiReasons({}); setDocFilledFields(new Set()); lastRoomRef.current = ""; }}
+            onClick={() => { setAiOptIn(false); setAiStatus("idle"); setAiData(null); setAiReasons({}); setAiFilledFields(new Set()); setDocFilledFields(new Set()); lastRoomRef.current = ""; }}
             style={{ background: "none", border: "none", cursor: "pointer", color: "#7c3aed", fontSize: 18, lineHeight: 1, padding: 0 }}
           >×</button>
         </div>
@@ -1133,6 +1140,7 @@ export default function RdsForm({ onSectionChange, jumpToSection, editRecord, on
             setValue={setValue}
             watch={watch}
             aiReasons={aiReasons}
+            aiFilledFields={aiFilledFields}
             docFilledFields={docFilledFields}
           />
         </SectionCard>
@@ -1204,7 +1212,7 @@ export default function RdsForm({ onSectionChange, jumpToSection, editRecord, on
             setShowSuccess(false); setCurrentIdx(0); reset({});
             setCompletedSections(new Set()); setRoomImage(null);
             setIsEditMode(false); setEditId(null);
-            setAiStatus("idle"); setAiData(null); setAiReasons({});
+            setAiStatus("idle"); setAiData(null); setAiReasons({}); setAiFilledFields(new Set());
             setAiOptIn(null);
             lastRoomRef.current = "";
             if (onEditDone) onEditDone();
