@@ -331,7 +331,7 @@ export default function ValidationPanel({ roomId, roomCode, roomName, onClose, r
       backdropFilter: "blur(4px)",
       zIndex: 9999,
       display: "flex", alignItems: "flex-start", justifyContent: "center",
-      overflowY: "auto", padding: "24px 16px",
+      overflowY: "auto", padding: "24px 16px", minHeight: "100vh",
     }}>
       <div style={{
         background: "#f8fafc", borderRadius: 20,
@@ -433,7 +433,7 @@ export default function ValidationPanel({ roomId, roomCode, roomName, onClose, r
         </div>
 
         {/* Tab Content */}
-        <div style={{ padding: "24px 28px", maxHeight: "55vh", overflowY: "auto" }}>
+        <div style={{ padding: "24px 28px" }}>
 
           {/* OVERVIEW TAB */}
           {activeTab === "overview" && (
