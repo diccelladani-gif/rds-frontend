@@ -33,17 +33,21 @@ export default function ValidationPanel({ roomId, roomCode, roomName, onClose, r
     if (readOnly) fetchSavedReport();
   }, []);
 
+  const [isNotFound, setIsNotFound] = useState(false);
+
   const fetchSavedReport = async () => {
     setStatus("fetching");
     setErrorMsg("");
+    setIsNotFound(false);
     try {
       const { data } = await axios.get(`${API}/validate-rds/${roomId}`);
       setReport(data);
       setStatus("done");
     } catch (e) {
       const is404 = e?.response?.status === 404;
+      setIsNotFound(is404);
       setErrorMsg(is404
-        ? "No validation report found. Open this room form and run AI Validation first."
+        ? "No validation report found for this room yet."
         : (e?.response?.data?.error || e.message || "Failed to load report"));
       setStatus("error");
     }
@@ -239,6 +243,7 @@ export default function ValidationPanel({ roomId, roomCode, roomName, onClose, r
 
   // ── ERROR state ──────────────────────────────────────────────────────────────
   if (status === "error") {
+    const noReport = readOnly && isNotFound;
     return (
       <div style={{
         position: "fixed", inset: 0, background: "rgba(15,23,42,0.7)",
@@ -246,23 +251,52 @@ export default function ValidationPanel({ roomId, roomCode, roomName, onClose, r
         display: "flex", alignItems: "center", justifyContent: "center",
       }}>
         <div style={{
-          background: "#fff", borderRadius: 20, padding: "36px 32px",
-          maxWidth: 420, width: "90%", textAlign: "center",
+          background: "#fff", borderRadius: 20, padding: "40px 36px",
+          maxWidth: 460, width: "90%", textAlign: "center",
+          boxShadow: "0 25px 60px rgba(0,0,0,0.25)",
         }}>
-          <div style={{ fontSize: 48, marginBottom: 12 }}>⚠️</div>
-          <h3 style={{ fontSize: 18, fontWeight: 700, color: "#0f172a", marginBottom: 8 }}>Validation Failed</h3>
-          <p style={{ fontSize: 13, color: "#64748b", marginBottom: 24 }}>{errorMsg}</p>
-          <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
+          <div style={{ fontSize: 52, marginBottom: 16 }}>{noReport ? "🤖" : "⚠️"}</div>
+          <h3 style={{ fontSize: 19, fontWeight: 800, color: "#0f172a", marginBottom: 10 }}>
+            {noReport ? "No Validation Report Yet" : "Validation Failed"}
+          </h3>
+          <p style={{ fontSize: 13.5, color: "#64748b", marginBottom: 8, lineHeight: 1.6 }}>
+            {noReport
+              ? `Room ${roomCode} has not been validated yet.`
+              : errorMsg}
+          </p>
+          {noReport && (
+            <p style={{ fontSize: 13, color: "#94a3b8", marginBottom: 28, lineHeight: 1.6 }}>
+              Run the AI Validation now — 13 agents will analyse all sections,
+              search for the latest standards, and generate a full report.
+              This runs once and is saved permanently.
+            </p>
+          )}
+          {!noReport && (
+            <p style={{ fontSize: 12, color: "#94a3b8", marginBottom: 24 }}>{errorMsg}</p>
+          )}
+          <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
             <button onClick={onClose} style={{
-              padding: "10px 20px", background: "#f1f5f9", color: "#475569",
+              padding: "11px 22px", background: "#f1f5f9", color: "#475569",
               border: "1px solid #e2e8f0", borderRadius: 10, fontSize: 13,
               fontWeight: 600, cursor: "pointer",
             }}>Close</button>
-            <button onClick={readOnly ? fetchSavedReport : runValidation} style={{
-              padding: "10px 20px", background: "#6366f1", color: "#fff",
-              border: "none", borderRadius: 10, fontSize: 13,
-              fontWeight: 600, cursor: "pointer",
-            }}>{readOnly ? "Try Again" : "Retry"}</button>
+            {noReport ? (
+              <button onClick={runValidation} style={{
+                padding: "11px 26px",
+                background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
+                color: "#fff", border: "none", borderRadius: 10,
+                fontSize: 13, fontWeight: 700, cursor: "pointer",
+                boxShadow: "0 4px 14px rgba(99,102,241,0.4)",
+              }}>
+                🚀 Run AI Validation Now
+              </button>
+            ) : (
+              <button onClick={fetchSavedReport} style={{
+                padding: "11px 22px", background: "#6366f1", color: "#fff",
+                border: "none", borderRadius: 10, fontSize: 13,
+                fontWeight: 600, cursor: "pointer",
+              }}>Try Again</button>
+            )}
           </div>
         </div>
       </div>
