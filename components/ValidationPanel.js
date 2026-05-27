@@ -191,7 +191,7 @@ export default function ValidationPanel({ roomId, roomCode, roomName, onClose, r
     const AC=["#818cf8","#34d399","#f472b6","#facc15","#38bdf8","#fb923c","#a78bfa","#4ade80","#e879f9","#67e8f9","#fca5a5","#86efac","#fde68a"];
     const ST=["Scanning data...","Web searching...","Cross-validating...","Analysing trends...","Generating report..."];
     return (
-      <div style={{position:"fixed",inset:0,zIndex:9999,background:"linear-gradient(135deg,#020617 0%,#0d1b3e 40%,#0f0a2e 100%)",display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden",fontFamily:"system-ui,sans-serif"}}>
+      <div style={{position:"fixed",inset:0,zIndex:9999,background:"linear-gradient(135deg,#020617 0%,#0d1b3e 40%,#0f0a2e 100%)",display:"flex",alignItems:"flex-start",justifyContent:"center",overflowY:"auto",fontFamily:"system-ui,sans-serif"}}>
         <style>{`
           @keyframes cSpin{to{transform:rotate(360deg)}}
           @keyframes cSpinR{to{transform:rotate(-360deg)}}
@@ -209,7 +209,7 @@ export default function ValidationPanel({ roomId, roomCode, roomName, onClose, r
         {[...Array(22)].map((_,i)=><div key={i} style={{position:"absolute",borderRadius:"50%",width:i%5===0?3:i%3===0?2:1.5,height:i%5===0?3:i%3===0?2:1.5,background:["#a5b4fc","#7dd3fc","#c4b5fd","#e0f2fe","#fff"][i%5],left:`${(i*13+7)%100}%`,top:`${(i*19+11)%100}%`,animation:`cStar ${2+i*0.25}s ease-in-out infinite`,animationDelay:`${i*0.14}s`,pointerEvents:"none"}}/>)}
         {[...Array(5)].map((_,i)=><div key={i} style={{position:"absolute",fontSize:80+i*22,color:"rgba(99,102,241,0.05)",left:`${i*22}%`,top:`${i%2===0?8:52}%`,animation:`cHex ${4+i}s ease-in-out infinite`,animationDelay:`${i*0.7}s`,pointerEvents:"none",userSelect:"none"}}>&#x2B21;</div>)}
         <div style={{position:"absolute",left:0,right:0,height:2,pointerEvents:"none",background:"linear-gradient(90deg,transparent,rgba(99,102,241,0.6),rgba(139,92,246,0.6),transparent)",animation:"cScan 3s linear infinite",zIndex:1}}/>
-        <div style={{position:"relative",zIndex:10,width:"100%",maxWidth:740,padding:"0 20px",display:"flex",flexDirection:"column",alignItems:"center",gap:22,animation:"cFadeIn 0.5s ease both"}}>
+        <div style={{position:"relative",zIndex:10,width:"100%",maxWidth:740,padding:"32px 20px",display:"flex",flexDirection:"column",alignItems:"center",gap:22,animation:"cFadeIn 0.5s ease both"}}>
           <div style={{textAlign:"center"}}>
             <div style={{position:"relative",width:138,height:138,margin:"0 auto 16px"}}>
               <div style={{position:"absolute",inset:-18,border:"1px solid rgba(99,102,241,0.1)",borderRadius:"50%",animation:"cSpinR 12s linear infinite"}}>
