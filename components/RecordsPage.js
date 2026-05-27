@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
+import ValidationPanel from "./ValidationPanel";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
@@ -48,6 +49,7 @@ export default function RecordsPage({ onBack, onEdit }) {
   const [auditLog,    setAuditLog]    = useState({});
   const [auditOpen,   setAuditOpen]   = useState({});
   const [auditLoading,setAuditLoading]= useState(null);
+  const [validationRoom, setValidationRoom] = useState(null); // { id, code, name }
 
   const fetchAuditLog = async (roomId) => {
     if (auditLog[roomId]) { // already loaded, just toggle
@@ -368,6 +370,18 @@ export default function RecordsPage({ onBack, onEdit }) {
                             {auditLoading === row.id ? "⏳" : "📋"}
                           </button>
 
+                          {/* AI VALIDATION */}
+                          <button
+                            title="View AI Validation Report"
+                            onClick={() => setValidationRoom({ id: row.id, code: getRoomCode(row), name: getRoomName(row) })}
+                            style={{
+                              fontSize:13, padding:"5px 8px",
+                              background:"#f5f3ff", color:"#7c3aed",
+                              border:"1px solid #ddd6fe", borderRadius:7, cursor:"pointer",
+                            }}>
+                            🤖
+                          </button>
+
                           {/* DELETE */}
                           <button
                             title="Delete"
@@ -453,6 +467,16 @@ export default function RecordsPage({ onBack, onEdit }) {
                                 fontSize:13, fontWeight:600,
                               }}>
                               📊 Download Excel
+                            </button>
+                            <button
+                              onClick={() => setValidationRoom({ id: row.id, code: getRoomCode(row), name: getRoomName(row) })}
+                              style={{
+                                padding:"8px 18px", background:"#f5f3ff", color:"#7c3aed",
+                                border:"1px solid #ddd6fe", borderRadius:8, cursor:"pointer",
+                                fontSize:13, fontWeight:700,
+                                display:"flex", alignItems:"center", gap:6,
+                              }}>
+                              🤖 View AI Validation
                             </button>
                           </div>
 
@@ -593,6 +617,17 @@ export default function RecordsPage({ onBack, onEdit }) {
             Next →
           </button>
         </div>
+      )}
+
+      {/* ── AI VALIDATION PANEL (read-only, fetches saved report) ── */}
+      {validationRoom && (
+        <ValidationPanel
+          roomId={validationRoom.id}
+          roomCode={validationRoom.code}
+          roomName={validationRoom.name}
+          readOnly={true}
+          onClose={() => setValidationRoom(null)}
+        />
       )}
 
       <style>{`

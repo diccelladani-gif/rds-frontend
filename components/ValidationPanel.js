@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "";
@@ -20,12 +20,34 @@ const PRIORITY_STYLES = {
   Low:    { bg: "#f0fdf4", color: "#16a34a", border: "#86efac" },
 };
 
-export default function ValidationPanel({ roomId, roomCode, roomName, onClose }) {
-  const [status, setStatus]   = useState("idle"); // idle | loading | done | error
-  const [report, setReport]   = useState(null);
+export default function ValidationPanel({ roomId, roomCode, roomName, onClose, readOnly = false }) {
+  // readOnly=true  → fetch saved report instantly, zero AI tokens
+  // readOnly=false → show Run button, user triggers AI validation
+  const [status, setStatus]     = useState(readOnly ? "fetching" : "idle");
+  const [report, setReport]     = useState(null);
   const [errorMsg, setErrorMsg] = useState("");
-  const [expanded, setExpanded] = useState(new Set([1])); // section 1 open by default
-  const [activeTab, setActiveTab] = useState("overview"); // overview | sections
+  const [expanded, setExpanded] = useState(new Set([1]));
+  const [activeTab, setActiveTab] = useState("overview");
+
+  useEffect(() => {
+    if (readOnly) fetchSavedReport();
+  }, []);
+
+  const fetchSavedReport = async () => {
+    setStatus("fetching");
+    setErrorMsg("");
+    try {
+      const { data } = await axios.get(`${API}/validate-rds/${roomId}`);
+      setReport(data);
+      setStatus("done");
+    } catch (e) {
+      const is404 = e?.response?.status === 404;
+      setErrorMsg(is404
+        ? "No validation report found. Open this room form and run AI Validation first."
+        : (e?.response?.data?.error || e.message || "Failed to load report"));
+      setStatus("error");
+    }
+  };
 
   const runValidation = async () => {
     setStatus("loading");
@@ -55,6 +77,36 @@ export default function ValidationPanel({ roomId, roomCode, roomName, onClose })
     if (score >= 40) return "#d97706";
     return "#dc2626";
   };
+
+  // ── FETCHING saved report state ──────────────────────────────────────────────
+  if (status === "fetching") {
+    return (
+      <div style={{
+        position:"fixed", inset:0, background:"rgba(15,23,42,0.75)",
+        backdropFilter:"blur(4px)", zIndex:9999,
+        display:"flex", alignItems:"center", justifyContent:"center",
+      }}>
+        <div style={{
+          background:"#fff", borderRadius:20, padding:"44px 40px",
+          maxWidth:360, width:"90%", textAlign:"center",
+          boxShadow:"0 25px 60px rgba(0,0,0,0.25)",
+        }}>
+          <div style={{
+            width:52, height:52, margin:"0 auto 20px",
+            border:"5px solid #e2e8f0", borderTopColor:"#7c3aed",
+            borderRadius:"50%", animation:"spin 0.8s linear infinite",
+          }} />
+          <h3 style={{ fontSize:17, fontWeight:800, color:"#0f172a", marginBottom:8 }}>
+            Loading Validation Report
+          </h3>
+          <p style={{ fontSize:13, color:"#64748b" }}>
+            Fetching saved report for {roomName || roomCode}…
+          </p>
+          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        </div>
+      </div>
+    );
+  }
 
   // ── IDLE state ───────────────────────────────────────────────────────────────
   if (status === "idle") {
@@ -206,11 +258,11 @@ export default function ValidationPanel({ roomId, roomCode, roomName, onClose })
               border: "1px solid #e2e8f0", borderRadius: 10, fontSize: 13,
               fontWeight: 600, cursor: "pointer",
             }}>Close</button>
-            <button onClick={runValidation} style={{
+            <button onClick={readOnly ? fetchSavedReport : runValidation} style={{
               padding: "10px 20px", background: "#6366f1", color: "#fff",
               border: "none", borderRadius: 10, fontSize: 13,
               fontWeight: 600, cursor: "pointer",
-            }}>Retry</button>
+            }}>{readOnly ? "Try Again" : "Retry"}</button>
           </div>
         </div>
       </div>
