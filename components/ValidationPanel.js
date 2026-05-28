@@ -316,7 +316,7 @@ export default function ValidationPanel({ roomId, roomCode, roomName, onClose, r
   }
 
   // ── DONE state — Full Report ─────────────────────────────────────────────────
-    const statusStyle = STATUS_COLORS[report.overallStatus] || STATUS_COLORS["Good"];
+  const statusStyle = STATUS_COLORS[report.overallStatus] || STATUS_COLORS["Good"];
   const allSuggestions = report.sections.flatMap(s =>
     (s.suggestions || []).map(sg => ({ ...sg, section: s.section, sectionId: s.sectionId }))
   ).sort((a, b) => {
@@ -324,215 +324,179 @@ export default function ValidationPanel({ roomId, roomCode, roomName, onClose, r
     return (p[a.priority] ?? 1) - (p[b.priority] ?? 1);
   });
 
-  const SC  = score => score>=80?"#10b981":score>=60?"#6366f1":score>=40?"#f59e0b":"#ef4444";
-  const SCG = score => score>=80?"90deg,#10b981,#059669":score>=60?"90deg,#6366f1,#8b5cf6":score>=40?"90deg,#f59e0b,#d97706":"90deg,#ef4444,#dc2626";
-  const PRI = {
-    High:   { g:"135deg,#3b0a0a,#1a0404", border:"rgba(239,68,68,0.3)",  glow:"rgba(239,68,68,0.12)",  dot:"#ef4444", text:"#fca5a5", label:"#f87171" },
-    Medium: { g:"135deg,#3b1a03,#1a0c00", border:"rgba(245,158,11,0.3)", glow:"rgba(245,158,11,0.1)",  dot:"#f59e0b", text:"#fcd34d", label:"#fbbf24" },
-    Low:    { g:"135deg,#042713,#021409", border:"rgba(16,185,129,0.25)", glow:"rgba(16,185,129,0.08)", dot:"#10b981", text:"#6ee7b7", label:"#34d399" },
-  };
-
-  const [hoveredSection, setHoveredSection] = React.useState ? null : null;
-  const [hs, setHs] = useState(null);
-
-  const REPORT_CSS = `
-    @keyframes rp-in    { from{opacity:0;transform:scale(0.97) translateY(14px)} to{opacity:1;transform:none} }
-    @keyframes rp-slide { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:none} }
-    @keyframes rp-glow  { 0%,100%{opacity:0.35} 50%{opacity:0.9} }
-    @keyframes rp-hdr   { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
-    @keyframes rp-grid  { from{background-position:0 0} to{background-position:48px 48px} }
-    @keyframes rp-float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)} }
-    @keyframes rp-bar   { from{width:0} to{width:100%} }
-    .rp-sec:hover  { border-color:rgba(99,102,241,0.35)!important; background:rgba(20,30,60,0.85)!important }
-    .rp-card:hover { transform:translateY(-1px); box-shadow:0 8px 32px rgba(0,0,0,0.5)!important }
-    .rp-src:hover  { background:rgba(99,102,241,0.18)!important; color:#c7d2fe!important }
-    .rp-tab:hover  { background:rgba(99,102,241,0.1)!important; color:#c7d2fe!important }
-    .rp-x:hover    { background:rgba(255,255,255,0.12)!important; transform:rotate(90deg) }
-    .rp-re:hover   { background:rgba(99,102,241,0.18)!important }
-    .rp-dn:hover   { filter:brightness(1.18); transform:translateY(-1px) }
-    ::-webkit-scrollbar{width:3px} ::-webkit-scrollbar-track{background:transparent} ::-webkit-scrollbar-thumb{background:rgba(99,102,241,0.35);border-radius:99px}
-  `;
-
   return (
     <div style={{
-      position:"fixed", inset:0, zIndex:9999,
-      background:"rgba(2,6,23,0.92)",
-      backdropFilter:"blur(16px)",
-      display:"flex", alignItems:"flex-start", justifyContent:"center",
-      overflowY:"auto", padding:"20px 16px", minHeight:"100vh",
+      position: "fixed", inset: 0,
+      background: "rgba(15,23,42,0.75)",
+      backdropFilter: "blur(4px)",
+      zIndex: 9999,
+      display: "flex", alignItems: "flex-start", justifyContent: "center",
+      overflowY: "auto", padding: "24px 16px", minHeight: "100vh",
     }}>
-      <style>{REPORT_CSS}</style>
-
       <div style={{
-        width:"100%", maxWidth:940,
-        borderRadius:24, overflow:"hidden",
-        boxShadow:"0 0 0 1px rgba(99,102,241,0.18),0 40px 100px rgba(0,0,0,0.88),0 0 100px rgba(99,102,241,0.05)",
-        animation:"rp-in 0.45s cubic-bezier(0.16,1,0.3,1) both",
+        background: "#f8fafc", borderRadius: 20,
+        maxWidth: 820, width: "100%",
+        boxShadow: "0 25px 60px rgba(0,0,0,0.3)",
+        overflow: "hidden",
       }}>
 
-        {/* ═══ HEADER ════════════════════════════════════════════════════════ */}
+        {/* Header */}
         <div style={{
-          position:"relative", overflow:"hidden",
-          padding:"30px 36px 26px",
-          background:"linear-gradient(135deg,#0b0820 0%,#110a2e 45%,#0c1a3a 100%)",
-          borderBottom:"1px solid rgba(99,102,241,0.12)",
+          background: "linear-gradient(135deg, #1e1b4b, #312e81)",
+          padding: "24px 28px",
+          display: "flex", alignItems: "flex-start", justifyContent: "space-between",
         }}>
-          {/* Animated shimmer */}
-          <div style={{position:"absolute",inset:0,background:"linear-gradient(270deg,rgba(99,102,241,0.07),rgba(139,92,246,0.07),rgba(59,130,246,0.04),rgba(99,102,241,0.07))",backgroundSize:"400% 400%",animation:"rp-hdr 9s ease infinite"}}/>
-          {/* Grid */}
-          <div style={{position:"absolute",inset:0,backgroundImage:"linear-gradient(rgba(99,102,241,0.05) 1px,transparent 1px),linear-gradient(90deg,rgba(99,102,241,0.05) 1px,transparent 1px)",backgroundSize:"40px 40px",animation:"rp-grid 8s linear infinite",opacity:0.5}}/>
-          {/* Top accent */}
-          <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,transparent 0%,#6366f1 30%,#8b5cf6 60%,#3b82f6 80%,transparent 100%)"}}/>
-          {/* Glow orbs */}
-          <div style={{position:"absolute",top:-50,right:80,width:240,height:240,borderRadius:"50%",background:"radial-gradient(circle,rgba(99,102,241,0.14),transparent 65%)",pointerEvents:"none"}}/>
-          <div style={{position:"absolute",bottom:-70,left:30,width:200,height:200,borderRadius:"50%",background:"radial-gradient(circle,rgba(139,92,246,0.09),transparent 65%)",pointerEvents:"none"}}/>
-
-          <div style={{position:"relative",display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:16}}>
-            <div>
-              {/* Live indicator */}
-              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}>
-                <div style={{display:"flex",gap:5,alignItems:"center"}}>
-                  {["#6366f1","#8b5cf6","#3b82f6"].map((c,i)=>(
-                    <div key={i} style={{width:5,height:5,borderRadius:"50%",background:c,boxShadow:`0 0 8px ${c}`,animation:`rp-glow 2s ease-in-out infinite`,animationDelay:`${i*0.35}s`}}/>
-                  ))}
-                </div>
-                <span style={{fontSize:9,letterSpacing:3.5,color:"#6366f1",fontWeight:700}}>AI VALIDATION REPORT</span>
-              </div>
-              {/* Title */}
-              <h1 style={{fontSize:26,fontWeight:900,color:"#fff",marginBottom:10,letterSpacing:"-0.3px",textShadow:"0 0 40px rgba(99,102,241,0.35)"}}>
-                {report.roomName || report.roomCode}
-              </h1>
-              {/* Tags */}
-              <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
-                {[report.roomTypology, report.department].filter(Boolean).map((t,i)=>(
-                  <span key={i} style={{fontSize:11,color:"#a5b4fc",background:"rgba(99,102,241,0.12)",border:"1px solid rgba(99,102,241,0.28)",padding:"3px 12px",borderRadius:99,fontWeight:500,letterSpacing:0.2}}>{t}</span>
-                ))}
-                <span style={{fontSize:11,color:"#1e293b",marginLeft:2}}>
-                  · Validated {new Date(report.validatedAt).toLocaleString("en-IN")}
-                </span>
-              </div>
+          <div>
+            <div style={{ fontSize: 12, color: "#a5b4fc", fontWeight: 600, marginBottom: 4 }}>
+              AI VALIDATION REPORT
             </div>
-            <button onClick={onClose} className="rp-x" style={{
-              width:36,height:36,borderRadius:"50%",flexShrink:0,
-              background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",
-              color:"#64748b",fontSize:16,cursor:"pointer",
-              display:"flex",alignItems:"center",justifyContent:"center",transition:"all 0.25s",
-            }}>✕</button>
+            <h2 style={{ fontSize: 20, fontWeight: 800, color: "#fff", marginBottom: 4 }}>
+              {report.roomName || report.roomCode}
+            </h2>
+            <div style={{ fontSize: 12, color: "#c7d2fe" }}>
+              {report.roomTypology} · {report.department} · Validated {new Date(report.validatedAt).toLocaleString("en-IN")}
+            </div>
           </div>
+          <button onClick={onClose} style={{
+            width: 34, height: 34, borderRadius: "50%",
+            background: "rgba(255,255,255,0.1)", border: "none",
+            color: "#fff", fontSize: 18, cursor: "pointer", flexShrink: 0,
+          }}>✕</button>
         </div>
 
-        {/* ═══ SCORE CARDS ═══════════════════════════════════════════════════ */}
-        <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",background:"#04070e",borderBottom:"1px solid rgba(99,102,241,0.08)"}}>
+        {/* Score bar */}
+        <div style={{
+          background: "#fff", borderBottom: "1px solid #e2e8f0",
+          padding: "20px 28px",
+          display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12,
+        }}>
           {[
-            {label:"OVERALL SCORE", value:`${report.overallScore}%`, sub:report.overallStatus,                         color:SC(report.overallScore)},
-            {label:"ISSUES FOUND",  value:report.summary.totalIssues, sub:"across all sections",                       color:report.summary.totalIssues>10?"#ef4444":report.summary.totalIssues>5?"#f59e0b":"#10b981"},
-            {label:"SUGGESTIONS",   value:report.summary.totalSuggestions, sub:`${report.summary.highPriorityCount} high priority`, color:"#818cf8"},
-            {label:"SECTIONS",      value:"13 / 13", sub:"fully validated",                                            color:"#38bdf8"},
-          ].map((card,i)=>(
-            <div key={i} style={{
-              padding:"20px 24px",position:"relative",overflow:"hidden",
-              borderRight:i<3?"1px solid rgba(99,102,241,0.07)":"none",
-              background:"linear-gradient(180deg,#050912,#030608)",
+            {
+              label: "Overall Score",
+              value: `${report.overallScore}%`,
+              sub: report.overallStatus,
+              color: scoreColor(report.overallScore),
+            },
+            {
+              label: "Issues Found",
+              value: report.summary.totalIssues,
+              sub: "across all sections",
+              color: report.summary.totalIssues > 10 ? "#dc2626" : report.summary.totalIssues > 5 ? "#d97706" : "#16a34a",
+            },
+            {
+              label: "Suggestions",
+              value: report.summary.totalSuggestions,
+              sub: `${report.summary.highPriorityCount} high priority`,
+              color: "#6366f1",
+            },
+            {
+              label: "Sections",
+              value: "13 / 13",
+              sub: "fully validated",
+              color: "#0369a1",
+            },
+          ].map(card => (
+            <div key={card.label} style={{
+              background: "#f8fafc", border: "1px solid #e2e8f0",
+              borderRadius: 12, padding: "14px 16px",
             }}>
-              {/* Top accent per card */}
-              <div style={{position:"absolute",top:0,left:0,right:0,height:1.5,background:`linear-gradient(90deg,transparent,${card.color}80,transparent)`}}/>
-              {/* Subtle radial bg */}
-              <div style={{position:"absolute",bottom:-15,right:-5,width:80,height:80,borderRadius:"50%",background:`radial-gradient(circle,${card.color}12,transparent)`,pointerEvents:"none"}}/>
-              <div style={{fontSize:8,letterSpacing:2.5,color:"#1e293b",fontWeight:700,marginBottom:9}}>{card.label}</div>
-              <div style={{fontSize:30,fontWeight:900,color:card.color,lineHeight:1,marginBottom:5,textShadow:`0 0 24px ${card.color}60`}}>{card.value}</div>
-              <div style={{fontSize:10,color:"#1e293b",letterSpacing:0.2}}>{card.sub}</div>
+              <div style={{ fontSize: 11, color: "#94a3b8", fontWeight: 600, marginBottom: 4 }}>
+                {card.label.toUpperCase()}
+              </div>
+              <div style={{ fontSize: 24, fontWeight: 800, color: card.color }}>{card.value}</div>
+              <div style={{ fontSize: 11, color: "#64748b", marginTop: 2 }}>{card.sub}</div>
             </div>
           ))}
         </div>
 
-        {/* ═══ TABS ═══════════════════════════════════════════════════════════ */}
-        <div style={{display:"flex",background:"#030609",borderBottom:"1px solid rgba(99,102,241,0.1)",padding:"0 28px",gap:2}}>
+        {/* Tabs */}
+        <div style={{
+          background: "#fff", borderBottom: "1px solid #e2e8f0",
+          padding: "0 28px",
+          display: "flex", gap: 4,
+        }}>
           {[
-            {id:"overview", icon:"◈", label:"Overview"},
-            {id:"sections", icon:"≡", label:"Sections (13)"},
-            {id:"upgrades", icon:"↑", label:`Upgrades (${report.summary.totalSuggestions})`},
-          ].map(tab=>(
-            <button key={tab.id} onClick={()=>setActiveTab(tab.id)} className="rp-tab" style={{
-              padding:"13px 22px",border:"none",cursor:"pointer",letterSpacing:0.3,
-              background:activeTab===tab.id?"rgba(99,102,241,0.1)":"transparent",
-              color:activeTab===tab.id?"#a5b4fc":"#334155",
-              borderBottom:activeTab===tab.id?"2px solid #6366f1":"2px solid transparent",
-              fontSize:12,fontWeight:600,transition:"all 0.18s",
-              display:"flex",alignItems:"center",gap:7,
+            { id: "overview",  label: "📊 Overview" },
+            { id: "sections",  label: "📋 Sections (13)" },
+            { id: "upgrades",  label: `💡 All Suggestions (${report.summary.totalSuggestions})` },
+          ].map(tab => (
+            <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={{
+              padding: "13px 18px", border: "none", background: "none",
+              fontSize: 13, fontWeight: 600, cursor: "pointer",
+              color: activeTab === tab.id ? "#6366f1" : "#64748b",
+              borderBottom: activeTab === tab.id ? "2px solid #6366f1" : "2px solid transparent",
+              transition: "all 0.15s",
             }}>
-              <span style={{fontSize:10,opacity:0.55}}>{tab.icon}</span>{tab.label}
+              {tab.label}
             </button>
           ))}
         </div>
 
-        {/* ═══ CONTENT ════════════════════════════════════════════════════════ */}
-        <div style={{background:"#030609",padding:"28px 32px"}}>
+        {/* Tab Content */}
+        <div style={{ padding: "24px 28px" }}>
 
-          {/* ── OVERVIEW ───────────────────────────────────────────────── */}
-          {activeTab==="overview" && (
-            <div style={{display:"flex",flexDirection:"column",gap:30}}>
-
-              {/* Section score rows */}
-              <div>
-                <div style={{fontSize:8,letterSpacing:3,color:"#1e293b",fontWeight:700,marginBottom:14}}>SECTION ANALYSIS</div>
-                <div style={{display:"flex",flexDirection:"column",gap:5}}>
-                  {report.sections.map((s,idx)=>(
-                    <div key={s.sectionId}
-                      onMouseEnter={()=>setHs(s.sectionId)}
-                      onMouseLeave={()=>setHs(null)}
-                      style={{
-                        display:"flex",alignItems:"center",gap:12,
-                        padding:"11px 16px",
-                        background:hs===s.sectionId?"rgba(20,30,60,0.85)":"rgba(10,15,35,0.6)",
-                        border:`1px solid ${hs===s.sectionId?"rgba(99,102,241,0.35)":"rgba(99,102,241,0.07)"}`,
-                        borderRadius:11,transition:"all 0.18s",
-                        animation:"rp-slide 0.3s ease both",animationDelay:`${idx*0.03}s`,
-                      }}>
-                      <span style={{fontSize:14,width:22,textAlign:"center",flexShrink:0}}>{SECTION_ICONS[s.sectionId-1]}</span>
-                      <div style={{fontSize:11,color:"#475569",width:215,flexShrink:0,lineHeight:1.3}}>{s.section}</div>
-                      <div style={{flex:1,height:4,background:"rgba(255,255,255,0.04)",borderRadius:99,overflow:"hidden"}}>
-                        <div style={{
-                          width:`${s.confidence}%`,height:"100%",
-                          background:`linear-gradient(${SCG(s.confidence)})`,
-                          borderRadius:99,
-                          boxShadow:`0 0 8px ${SC(s.confidence)}55`,
-                          transition:"width 0.9s cubic-bezier(0.16,1,0.3,1)",
-                        }}/>
+          {/* OVERVIEW TAB */}
+          {activeTab === "overview" && (
+            <div>
+              {/* Section score grid */}
+              <div style={{ marginBottom: 20 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: "#334155", marginBottom: 12 }}>
+                  Section Scores
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {report.sections.map((s) => (
+                    <div key={s.sectionId} style={{
+                      display: "flex", alignItems: "center", gap: 12,
+                    }}>
+                      <div style={{ width: 24, fontSize: 14 }}>{SECTION_ICONS[s.sectionId - 1]}</div>
+                      <div style={{ fontSize: 12, color: "#475569", width: 220, flexShrink: 0 }}>
+                        {s.section}
                       </div>
-                      <div style={{fontSize:12,fontWeight:800,width:34,textAlign:"right",color:SC(s.confidence),textShadow:`0 0 10px ${SC(s.confidence)}66`}}>{s.confidence}%</div>
-                      <div style={{width:18,textAlign:"center",fontSize:12,flexShrink:0}}>
-                        {(s.issues?.length||0)>0
-                          ? <span style={{color:"#f59e0b"}}>⚠</span>
-                          : <span style={{color:"#10b981"}}>✓</span>}
+                      <div style={{
+                        flex: 1, height: 8, background: "#e2e8f0",
+                        borderRadius: 99, overflow: "hidden",
+                      }}>
+                        <div style={{
+                          width: `${s.confidence}%`, height: "100%",
+                          background: `linear-gradient(90deg, ${scoreColor(s.confidence)}, ${scoreColor(s.confidence)}aa)`,
+                          borderRadius: 99, transition: "width 0.6s ease",
+                        }} />
+                      </div>
+                      <div style={{
+                        fontSize: 12, fontWeight: 700, width: 36,
+                        color: scoreColor(s.confidence), textAlign: "right",
+                      }}>
+                        {s.confidence}%
+                      </div>
+                      <div style={{
+                        fontSize: 11, color: "#94a3b8", width: 16, textAlign: "center",
+                      }}>
+                        {(s.issues?.length || 0) > 0 ? `⚠️` : "✅"}
                       </div>
                     </div>
                   ))}
                 </div>
               </div>
 
-              {/* High priority */}
-              {report.summary.highPriorityCount>0 && (
+              {/* High priority highlights */}
+              {report.summary.highPriorityCount > 0 && (
                 <div>
-                  <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:14}}>
-                    <div style={{width:3,height:18,borderRadius:99,background:"linear-gradient(180deg,#ef4444,#dc2626)",boxShadow:"0 0 10px #ef444466"}}/>
-                    <div style={{fontSize:8,letterSpacing:3,color:"#f87171",fontWeight:700}}>HIGH PRIORITY RECOMMENDATIONS</div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: "#334155", marginBottom: 12 }}>
+                    🔴 High Priority Recommendations
                   </div>
-                  <div style={{display:"flex",flexDirection:"column",gap:8}}>
-                    {allSuggestions.filter(s=>s.priority==="High").slice(0,5).map((s,i)=>(
-                      <div key={i} className="rp-card" style={{
-                        background:`linear-gradient(${PRI.High.g})`,
-                        border:`1px solid ${PRI.High.border}`,
-                        borderLeft:"3px solid #ef4444",
-                        borderRadius:12,padding:"14px 18px",
-                        boxShadow:`0 0 20px ${PRI.High.glow}`,
-                        transition:"all 0.2s",
-                        animation:"rp-slide 0.3s ease both",animationDelay:`${i*0.06}s`,
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    {allSuggestions.filter(s => s.priority === "High").slice(0, 6).map((s, i) => (
+                      <div key={i} style={{
+                        background: "#fef2f2", border: "1px solid #fca5a5",
+                        borderRadius: 10, padding: "12px 14px",
                       }}>
-                        <div style={{fontSize:9,color:"#f87171",fontWeight:700,letterSpacing:0.5,marginBottom:6}}>
-                          {SECTION_ICONS[s.sectionId-1]} {s.section}
+                        <div style={{ fontSize: 11, color: "#dc2626", fontWeight: 700, marginBottom: 4 }}>
+                          {SECTION_ICONS[s.sectionId - 1]} {s.section} · HIGH PRIORITY
                         </div>
-                        <div style={{fontSize:13,fontWeight:700,color:"#fef2f2",marginBottom:4,lineHeight:1.4}}>{s.recommendation}</div>
-                        <div style={{fontSize:12,color:"#7f1d1d",lineHeight:1.55}}>{s.reason}</div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: "#1e293b", marginBottom: 3 }}>
+                          {s.recommendation}
+                        </div>
+                        <div style={{ fontSize: 12, color: "#64748b" }}>{s.reason}</div>
                       </div>
                     ))}
                   </div>
@@ -541,86 +505,120 @@ export default function ValidationPanel({ roomId, roomCode, roomName, onClose, r
             </div>
           )}
 
-          {/* ── SECTIONS ───────────────────────────────────────────────── */}
-          {activeTab==="sections" && (
-            <div style={{display:"flex",flexDirection:"column",gap:7}}>
-              {report.sections.map((s)=>(
-                <div key={s.sectionId} className="rp-sec" style={{
-                  background:"rgba(10,15,35,0.7)",
-                  border:"1px solid rgba(99,102,241,0.1)",
-                  borderRadius:14,overflow:"hidden",
-                  transition:"all 0.22s",
-                  boxShadow:"0 2px 16px rgba(0,0,0,0.45)",
+          {/* SECTIONS TAB */}
+          {activeTab === "sections" && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {report.sections.map((s) => (
+                <div key={s.sectionId} style={{
+                  background: "#fff", border: "1px solid #e2e8f0",
+                  borderRadius: 14, overflow: "hidden",
                 }}>
-                  <button onClick={()=>toggleSection(s.sectionId)} style={{
-                    width:"100%",padding:"15px 20px",
-                    display:"flex",alignItems:"center",gap:12,
-                    background:"none",border:"none",cursor:"pointer",textAlign:"left",
+                  {/* Section header — clickable */}
+                  <button onClick={() => toggleSection(s.sectionId)} style={{
+                    width: "100%", padding: "14px 18px",
+                    display: "flex", alignItems: "center", gap: 12,
+                    background: "none", border: "none", cursor: "pointer", textAlign: "left",
                   }}>
-                    <span style={{fontSize:17,width:24,flexShrink:0}}>{SECTION_ICONS[s.sectionId-1]}</span>
-                    <span style={{flex:1,fontSize:13,fontWeight:700,color:"#e2e8f0"}}>{s.sectionId}. {s.section}</span>
-                    {(s.issues?.length||0)>0 && (
-                      <span style={{fontSize:9,fontWeight:700,color:"#f87171",background:"rgba(239,68,68,0.1)",border:"1px solid rgba(239,68,68,0.25)",padding:"2px 9px",borderRadius:99,flexShrink:0,letterSpacing:0.3}}>
-                        {s.issues.length} issue{s.issues.length>1?"s":""}
+                    <span style={{ fontSize: 18 }}>{SECTION_ICONS[s.sectionId - 1]}</span>
+                    <span style={{ flex: 1, fontSize: 14, fontWeight: 700, color: "#1e293b" }}>
+                      {s.sectionId}. {s.section}
+                    </span>
+                    {/* Issues badge */}
+                    {(s.issues?.length || 0) > 0 && (
+                      <span style={{
+                        background: "#fef2f2", color: "#dc2626", border: "1px solid #fca5a5",
+                        fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 99,
+                      }}>
+                        {s.issues.length} issue{s.issues.length > 1 ? "s" : ""}
                       </span>
                     )}
-                    {(s.suggestions?.length||0)>0 && (
-                      <span style={{fontSize:9,fontWeight:700,color:"#818cf8",background:"rgba(99,102,241,0.1)",border:"1px solid rgba(99,102,241,0.25)",padding:"2px 9px",borderRadius:99,flexShrink:0,letterSpacing:0.3}}>
-                        {s.suggestions.length} suggestion{s.suggestions.length>1?"s":""}
+                    {/* Suggestions badge */}
+                    {(s.suggestions?.length || 0) > 0 && (
+                      <span style={{
+                        background: "#eff6ff", color: "#2563eb", border: "1px solid #93c5fd",
+                        fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 99,
+                      }}>
+                        {s.suggestions.length} suggestion{s.suggestions.length > 1 ? "s" : ""}
                       </span>
                     )}
-                    <span style={{fontSize:13,fontWeight:800,minWidth:36,textAlign:"right",color:SC(s.confidence),flexShrink:0,textShadow:`0 0 10px ${SC(s.confidence)}55`}}>
+                    {/* Score */}
+                    <span style={{
+                      fontSize: 13, fontWeight: 800,
+                      color: scoreColor(s.confidence), minWidth: 38, textAlign: "right",
+                    }}>
                       {s.confidence}%
                     </span>
-                    <span style={{color:"#1e293b",fontSize:10,marginLeft:2,flexShrink:0}}>{expanded.has(s.sectionId)?"▲":"▼"}</span>
+                    <span style={{ color: "#94a3b8", fontSize: 12 }}>
+                      {expanded.has(s.sectionId) ? "▲" : "▼"}
+                    </span>
                   </button>
 
+                  {/* Expanded content */}
                   {expanded.has(s.sectionId) && (
-                    <div style={{padding:"0 20px 18px",borderTop:"1px solid rgba(99,102,241,0.08)"}}>
-                      <p style={{fontSize:12.5,color:"#475569",margin:"12px 0 16px",lineHeight:1.7}}>{s.summary}</p>
+                    <div style={{
+                      padding: "0 18px 16px", borderTop: "1px solid #f1f5f9",
+                    }}>
+                      {/* Summary */}
+                      <p style={{ fontSize: 13, color: "#475569", margin: "12px 0", lineHeight: 1.6 }}>
+                        {s.summary}
+                      </p>
 
                       {/* Issues */}
-                      {(s.issues?.length||0)>0 && (
-                        <div style={{marginBottom:14}}>
-                          <div style={{fontSize:8,letterSpacing:2,color:"#f87171",fontWeight:700,marginBottom:10}}>⚠ ISSUES</div>
-                          {s.issues.map((issue,i)=>(
+                      {(s.issues?.length || 0) > 0 && (
+                        <div style={{ marginBottom: 12 }}>
+                          <div style={{ fontSize: 12, fontWeight: 700, color: "#dc2626", marginBottom: 8 }}>
+                            ⚠️ Issues
+                          </div>
+                          {s.issues.map((issue, i) => (
                             <div key={i} style={{
-                              background:"rgba(239,68,68,0.06)",
-                              border:"1px solid rgba(239,68,68,0.18)",
-                              borderLeft:"2px solid #ef4444",
-                              borderRadius:9,padding:"10px 14px",marginBottom:6,
+                              background: "#fef2f2", border: "1px solid #fecaca",
+                              borderRadius: 8, padding: "10px 12px", marginBottom: 6,
                             }}>
-                              <div style={{fontSize:12,fontWeight:700,color:"#fca5a5",marginBottom:3}}>
+                              <div style={{ fontSize: 12, fontWeight: 700, color: "#374151" }}>
                                 {issue.field}
-                                {issue.current && <span style={{fontWeight:400,color:"#334155"}}> — current: <em style={{color:"#475569"}}>{issue.current}</em></span>}
+                                {issue.current && (
+                                  <span style={{ fontWeight: 400, color: "#6b7280" }}>
+                                    {" "}— current: <em>{issue.current}</em>
+                                  </span>
+                                )}
                               </div>
-                              <div style={{fontSize:12,color:"#ef4444",lineHeight:1.5}}>{issue.problem}</div>
+                              <div style={{ fontSize: 12, color: "#dc2626", marginTop: 3 }}>
+                                {issue.problem}
+                              </div>
                             </div>
                           ))}
                         </div>
                       )}
 
                       {/* Suggestions */}
-                      {(s.suggestions?.length||0)>0 && (
-                        <div style={{marginBottom:14}}>
-                          <div style={{fontSize:8,letterSpacing:2,color:"#818cf8",fontWeight:700,marginBottom:10}}>💡 SUGGESTIONS</div>
-                          {s.suggestions.map((sg,i)=>{
-                            const p = PRI[sg.priority] || PRI.Medium;
+                      {(s.suggestions?.length || 0) > 0 && (
+                        <div style={{ marginBottom: 12 }}>
+                          <div style={{ fontSize: 12, fontWeight: 700, color: "#2563eb", marginBottom: 8 }}>
+                            💡 Suggestions
+                          </div>
+                          {s.suggestions.map((sg, i) => {
+                            const ps = PRIORITY_STYLES[sg.priority] || PRIORITY_STYLES.Medium;
                             return (
                               <div key={i} style={{
-                                background:`linear-gradient(${p.g})`,
-                                border:`1px solid ${p.border}`,
-                                borderLeft:`2px solid ${p.dot}`,
-                                borderRadius:9,padding:"11px 14px",marginBottom:6,
-                                boxShadow:`0 0 12px ${p.glow}`,
+                                background: ps.bg, border: `1px solid ${ps.border}`,
+                                borderRadius: 8, padding: "10px 12px", marginBottom: 6,
                               }}>
-                                <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:8,marginBottom:4}}>
-                                  <div style={{fontSize:13,fontWeight:700,color:"#e2e8f0",lineHeight:1.4}}>{sg.recommendation}</div>
-                                  <span style={{fontSize:8,fontWeight:700,color:p.label,background:"rgba(0,0,0,0.35)",border:`1px solid ${p.border}`,padding:"2px 8px",borderRadius:99,flexShrink:0,letterSpacing:1}}>
-                                    {sg.priority?.toUpperCase()}
+                                <div style={{
+                                  display: "flex", justifyContent: "space-between",
+                                  alignItems: "flex-start", gap: 8, marginBottom: 4,
+                                }}>
+                                  <div style={{ fontSize: 13, fontWeight: 700, color: "#1e293b" }}>
+                                    {sg.recommendation}
+                                  </div>
+                                  <span style={{
+                                    fontSize: 10, fontWeight: 700, color: ps.color,
+                                    background: "#fff", border: `1px solid ${ps.border}`,
+                                    padding: "2px 7px", borderRadius: 99, flexShrink: 0,
+                                  }}>
+                                    {sg.priority}
                                   </span>
                                 </div>
-                                <div style={{fontSize:12,color:"#475569",lineHeight:1.55}}>{sg.reason}</div>
+                                <div style={{ fontSize: 12, color: "#64748b" }}>{sg.reason}</div>
                               </div>
                             );
                           })}
@@ -628,18 +626,23 @@ export default function ValidationPanel({ roomId, roomCode, roomName, onClose, r
                       )}
 
                       {/* Sources */}
-                      {(s.sources?.length||0)>0 && (
+                      {(s.sources?.length || 0) > 0 && (
                         <div>
-                          <div style={{fontSize:8,letterSpacing:2,color:"#1e293b",fontWeight:700,marginBottom:8}}>🌐 SOURCES</div>
-                          <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
-                            {s.sources.filter(src=>src.url).map((src,i)=>(
-                              <a key={i} href={src.url} target="_blank" rel="noopener noreferrer" className="rp-src" style={{
-                                fontSize:10,color:"#6366f1",
-                                background:"rgba(99,102,241,0.07)",border:"1px solid rgba(99,102,241,0.2)",
-                                padding:"3px 12px",borderRadius:99,textDecoration:"none",
-                                maxWidth:220,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",
-                                transition:"all 0.18s",
-                              }}>{src.title||src.url}</a>
+                          <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", marginBottom: 6 }}>
+                            🌐 Sources
+                          </div>
+                          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                            {s.sources.filter(src => src.url).map((src, i) => (
+                              <a key={i} href={src.url} target="_blank" rel="noopener noreferrer"
+                                style={{
+                                  fontSize: 11, color: "#3b82f6",
+                                  background: "#eff6ff", border: "1px solid #bfdbfe",
+                                  padding: "3px 10px", borderRadius: 99,
+                                  textDecoration: "none", maxWidth: 200,
+                                  overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                                }}>
+                                {src.title || src.url}
+                              </a>
                             ))}
                           </div>
                         </div>
@@ -651,37 +654,45 @@ export default function ValidationPanel({ roomId, roomCode, roomName, onClose, r
             </div>
           )}
 
-          {/* ── UPGRADES ───────────────────────────────────────────────── */}
-          {activeTab==="upgrades" && (
-            <div style={{display:"flex",flexDirection:"column",gap:22}}>
-              {["High","Medium","Low"].map(priority=>{
-                const items = allSuggestions.filter(s=>s.priority===priority);
-                if(!items.length) return null;
-                const p = PRI[priority];
+          {/* UPGRADES / ALL SUGGESTIONS TAB */}
+          {activeTab === "upgrades" && (
+            <div>
+              {["High", "Medium", "Low"].map(priority => {
+                const items = allSuggestions.filter(s => s.priority === priority);
+                if (!items.length) return null;
+                const ps = PRIORITY_STYLES[priority];
                 return (
-                  <div key={priority}>
-                    <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12}}>
-                      <div style={{width:8,height:8,borderRadius:"50%",background:p.dot,boxShadow:`0 0 10px ${p.dot}aa`}}/>
-                      <div style={{fontSize:8,letterSpacing:3,color:p.label,fontWeight:700}}>
-                        {priority.toUpperCase()} PRIORITY — {items.length} ITEM{items.length>1?"S":""}
-                      </div>
+                  <div key={priority} style={{ marginBottom: 20 }}>
+                    <div style={{
+                      fontSize: 13, fontWeight: 700,
+                      color: ps.color, marginBottom: 10,
+                      display: "flex", alignItems: "center", gap: 8,
+                    }}>
+                      <span style={{
+                        background: ps.bg, border: `1px solid ${ps.border}`,
+                        padding: "3px 12px", borderRadius: 99, fontSize: 12,
+                      }}>
+                        {priority} Priority — {items.length} item{items.length > 1 ? "s" : ""}
+                      </span>
                     </div>
-                    <div style={{display:"flex",flexDirection:"column",gap:6}}>
-                      {items.map((s,i)=>(
-                        <div key={i} className="rp-card" style={{
-                          background:`linear-gradient(${p.g})`,
-                          border:`1px solid ${p.border}`,
-                          borderLeft:`3px solid ${p.dot}`,
-                          borderRadius:12,padding:"14px 18px",
-                          boxShadow:`0 0 16px ${p.glow}`,
-                          transition:"all 0.2s",
-                          animation:"rp-slide 0.3s ease both",animationDelay:`${i*0.04}s`,
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                      {items.map((s, i) => (
+                        <div key={i} style={{
+                          background: "#fff", border: `1px solid ${ps.border}`,
+                          borderRadius: 12, padding: "14px 16px",
                         }}>
-                          <div style={{fontSize:9,color:p.label,fontWeight:700,marginBottom:6,letterSpacing:0.3,opacity:0.8}}>
-                            {SECTION_ICONS[s.sectionId-1]} {s.section}{s.field&&` · ${s.field}`}
+                          <div style={{
+                            fontSize: 11, color: "#94a3b8", fontWeight: 600, marginBottom: 5,
+                          }}>
+                            {SECTION_ICONS[s.sectionId - 1]} {s.section}
+                            {s.field && ` · ${s.field}`}
                           </div>
-                          <div style={{fontSize:13,fontWeight:700,color:"#f1f5f9",marginBottom:5,lineHeight:1.4}}>{s.recommendation}</div>
-                          <div style={{fontSize:12,color:"#475569",lineHeight:1.6}}>{s.reason}</div>
+                          <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a", marginBottom: 5 }}>
+                            {s.recommendation}
+                          </div>
+                          <div style={{ fontSize: 13, color: "#475569", lineHeight: 1.5 }}>
+                            {s.reason}
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -692,37 +703,33 @@ export default function ValidationPanel({ roomId, roomCode, roomName, onClose, r
           )}
         </div>
 
-        {/* ═══ FOOTER ════════════════════════════════════════════════════════ */}
+        {/* Footer */}
         <div style={{
-          background:"#020508",
-          borderTop:"1px solid rgba(99,102,241,0.08)",
-          padding:"13px 32px",
-          display:"flex",justifyContent:"space-between",alignItems:"center",
+          background: "#fff", borderTop: "1px solid #e2e8f0",
+          padding: "16px 28px",
+          display: "flex", justifyContent: "space-between", alignItems: "center",
         }}>
-          <div style={{display:"flex",alignItems:"center",gap:8}}>
-            <div style={{width:5,height:5,borderRadius:"50%",background:"#10b981",boxShadow:"0 0 7px #10b981",animation:"rp-glow 2s ease-in-out infinite"}}/>
-            <span style={{fontSize:10,color:"#1e293b",letterSpacing:0.3}}>
-              Groq Llama 3.3 70B · Tavily Web Search · 13 Agents · {new Date(report.validatedAt).toLocaleTimeString("en-IN")}
-            </span>
+          <div style={{ fontSize: 12, color: "#94a3b8" }}>
+            Powered by Groq (Llama 3.3 70B) + Tavily Web Search · 13 agents · {new Date(report.validatedAt).toLocaleTimeString("en-IN")}
           </div>
-          <div style={{display:"flex",gap:8}}>
-            <button onClick={runValidation} className="rp-re" style={{
-              padding:"8px 16px",
-              background:"rgba(99,102,241,0.07)",color:"#6366f1",
-              border:"1px solid rgba(99,102,241,0.2)",borderRadius:8,
-              fontSize:11,fontWeight:600,cursor:"pointer",transition:"all 0.2s",
-              display:"flex",alignItems:"center",gap:5,
-            }}>↺ Re-validate</button>
-            <button onClick={onClose} className="rp-dn" style={{
-              padding:"8px 20px",
-              background:"linear-gradient(135deg,#6366f1,#7c3aed)",color:"#fff",
-              border:"none",borderRadius:8,fontSize:11,fontWeight:700,
-              cursor:"pointer",transition:"all 0.2s",
-              boxShadow:"0 4px 16px rgba(99,102,241,0.4)",
-            }}>Done ✓</button>
+          <div style={{ display: "flex", gap: 8 }}>
+            <button onClick={runValidation} style={{
+              padding: "9px 18px", background: "#f1f5f9", color: "#475569",
+              border: "1px solid #e2e8f0", borderRadius: 8, fontSize: 13,
+              fontWeight: 600, cursor: "pointer",
+            }}>
+              🔄 Re-validate
+            </button>
+            <button onClick={onClose} style={{
+              padding: "9px 18px",
+              background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
+              color: "#fff", border: "none", borderRadius: 8,
+              fontSize: 13, fontWeight: 700, cursor: "pointer",
+            }}>
+              Done ✓
+            </button>
           </div>
         </div>
-
       </div>
     </div>
   );
