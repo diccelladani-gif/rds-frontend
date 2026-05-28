@@ -16,7 +16,8 @@ const AGENT_COLORS = [
 const GLOBAL_STYLES = `
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
 
-  :root {
+  /* ─── All CSS vars scoped to .vp-root ONLY — never pollutes :root ── */
+  .vp-root {
     --void: #020617;
     --deep: #060d1f;
     --surface: #0d1b3e;
@@ -36,14 +37,97 @@ const GLOBAL_STYLES = `
     --glow-indigo: rgba(99,102,241,0.35);
     --glow-violet: rgba(139,92,246,0.35);
     --glow-cyan: rgba(34,211,238,0.25);
-  }
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-
-  .vp-root {
     font-family: 'Inter', system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
+    box-sizing: border-box;
   }
+
+  /* box-sizing scoped only inside vp-root — no global reset */
+  .vp-root *, .vp-root *::before, .vp-root *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* ─── ANIMATIONS ─────────────────────────────────────────────────── */
+  @keyframes vp-spin        { to { transform: rotate(360deg) } }
+  @keyframes vp-spin-r      { to { transform: rotate(-360deg) } }
+  @keyframes vp-pulse       { 0%,100%{transform:scale(1)} 50%{transform:scale(1.08)} }
+  @keyframes vp-pulse-glow  { 0%,100%{box-shadow:0 0 12px var(--glow-indigo)} 50%{box-shadow:0 0 32px var(--glow-indigo),0 0 60px rgba(99,102,241,0.15)} }
+  @keyframes vp-fade-up     { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes vp-fade-in     { from{opacity:0} to{opacity:1} }
+  @keyframes vp-slide-in    { from{opacity:0;transform:translateX(-12px)} to{opacity:1;transform:none} }
+  @keyframes vp-pop         { from{opacity:0;transform:scale(0.88) translateY(6px)} to{opacity:1;transform:scale(1) translateY(0)} }
+  @keyframes vp-grid-move   { from{background-position:0 0} to{background-position:60px 60px} }
+  @keyframes vp-scan-h      { 0%{top:-4px} 100%{top:100%} }
+  @keyframes vp-scan-v      { 0%{left:-4px} 100%{left:100%} }
+  @keyframes vp-star        { 0%,100%{opacity:0.06} 50%{opacity:0.55} }
+  @keyframes vp-orbit       { from{transform:rotate(0deg) translateX(var(--r,60px)) rotate(0deg)} to{transform:rotate(360deg) translateX(var(--r,60px)) rotate(-360deg)} }
+  @keyframes vp-bar-load    { from{width:0%} to{width:var(--w,80%)} }
+  @keyframes vp-tick        { 0%{opacity:0;transform:translateY(-3px)} 40%{opacity:1} 100%{opacity:0;transform:translateY(3px)} }
+  @keyframes vp-flicker     { 0%,100%{opacity:1} 92%{opacity:1} 93%{opacity:0.85} 94%{opacity:1} }
+  @keyframes vp-particle    { 0%{transform:translateY(0) translateX(0);opacity:0.6} 100%{transform:translateY(-120px) translateX(var(--dx,10px));opacity:0} }
+  @keyframes vp-shimmer     { from{background-position:-200% 0} to{background-position:200% 0} }
+  @keyframes vp-float       { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+  @keyframes vp-ring-pulse  { 0%{transform:scale(1);opacity:0.6} 100%{transform:scale(2.2);opacity:0} }
+  @keyframes vp-typewriter  { from{width:0} to{width:100%} }
+  @keyframes vp-number-roll { from{transform:translateY(100%);opacity:0} to{transform:translateY(0);opacity:1} }
+  @keyframes vp-tab-slide   { from{transform:scaleX(0)} to{transform:scaleX(1)} }
+  @keyframes vp-card-reveal { from{opacity:0;transform:translateY(24px) scale(0.97)} to{opacity:1;transform:translateY(0) scale(1)} }
+  @keyframes vp-glow-pulse  { 0%,100%{opacity:0.5} 50%{opacity:1} }
+  @keyframes vp-rotate-bg   { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+  @keyframes vp-progress-fill { from{width:0} to{width:var(--pw,50%)} }
+  @keyframes vp-node-appear { from{transform:scale(0) rotate(-90deg);opacity:0} to{transform:scale(1) rotate(0deg);opacity:1} }
+
+  /* ─── SCROLLBAR ───────────────────────────────────────────────────── */
+  .vp-scroll::-webkit-scrollbar { width: 4px }
+  .vp-scroll::-webkit-scrollbar-track { background: transparent }
+  .vp-scroll::-webkit-scrollbar-thumb { background: rgba(99,102,241,0.35); border-radius: 99px }
+  .vp-scroll::-webkit-scrollbar-thumb:hover { background: rgba(99,102,241,0.6) }
+
+  /* ─── INTERACTIVE STATES ─────────────────────────────────────────── */
+  .vp-btn { transition: all 0.22s cubic-bezier(0.34,1.56,0.64,1) !important }
+  .vp-btn:hover { transform: translateY(-2px) !important; filter: brightness(1.1) !important }
+  .vp-btn:active { transform: translateY(0) !important; filter: brightness(0.95) !important }
+
+  .vp-section-card { transition: all 0.25s ease !important }
+  .vp-section-card:hover { border-color: rgba(99,102,241,0.35) !important; transform: translateY(-1px) !important }
+
+  .vp-tab-btn { transition: all 0.2s ease !important }
+  .vp-tab-btn:hover { color: var(--text-primary) !important; background: rgba(99,102,241,0.08) !important }
+
+  .vp-issue-card { transition: all 0.2s ease !important }
+  .vp-issue-card:hover { transform: translateX(3px) !important; border-left-width: 3px !important }
+
+  .vp-suggestion-card { transition: all 0.2s ease !important }
+  .vp-suggestion-card:hover { transform: translateY(-2px) !important }
+
+  .vp-score-bar { animation: vp-progress-fill 1.4s cubic-bezier(0.16,1,0.3,1) both }
+  .vp-score-bar:nth-child(1) { animation-delay: 0.1s }
+
+  .vp-stat-num { 
+    animation: vp-number-roll 0.6s cubic-bezier(0.34,1.56,0.64,1) both;
+    display: inline-block;
+    overflow: hidden;
+  }
+
+  .vp-card-reveal { animation: vp-card-reveal 0.5s cubic-bezier(0.34,1.2,0.64,1) both }
+
+  .vp-shimmer-text {
+    background: linear-gradient(90deg, #94a3b8 25%, #f1f5f9 50%, #94a3b8 75%);
+    background-size: 200% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: vp-shimmer 3s linear infinite;
+  }
+
+  .vp-glow-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    animation: vp-glow-pulse 1.5s ease-in-out infinite;
+  }
+`;
 
   /* ─── ANIMATIONS ─────────────────────────────────────────────────── */
   @keyframes vp-spin        { to { transform: rotate(360deg) } }
