@@ -515,7 +515,7 @@ function LoadingState({ roomName, roomCode }) {
                   animation: `vp-bar-load ${2.2 + i * 0.18}s ease-in-out infinite alternate`,
                   animationDelay: `${i * 0.08}s`,
                   "--w": "100%",
-                } as any} />
+                }} />
                 <div style={{ display: "flex", alignItems: "flex-start", gap: 9 }}>
                   <div style={{
                     width: 8, height: 8, borderRadius: "50%", flexShrink: 0, marginTop: 3,
@@ -717,7 +717,7 @@ function ScoreBarRow({ section, icon, score, hasIssues, index }) {
           "--pw": `${score}%`,
           animation: `vp-progress-fill 1.2s cubic-bezier(0.16,1,0.3,1) both`,
           animationDelay: `${0.2 + index * 0.04}s`,
-        } as any} />
+        }} />
       </div>
       <div style={{
         fontSize: 12, fontWeight: 700, width: 36,
