@@ -16,7 +16,7 @@ const AGENT_COLORS = [
 const GLOBAL_STYLES = `
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
 
-  /* All vars scoped to .vp-root — never touches :root, never conflicts with app styles */
+  /* All vars scoped to .vp-root — never conflicts with app :root */
   .vp-root {
     --vp-void: #020617;
     --vp-deep: #060d1f;
@@ -41,7 +41,7 @@ const GLOBAL_STYLES = `
     -webkit-font-smoothing: antialiased;
   }
 
-  /* Reset scoped inside vp-root only */
+  /* Reset scoped inside vp-root only — does not affect rest of the page */
   .vp-root *, .vp-root *::before, .vp-root *::after {
     box-sizing: border-box;
     margin: 0;
@@ -77,6 +77,18 @@ const GLOBAL_STYLES = `
   @keyframes vp-rotate-bg   { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
   @keyframes vp-progress-fill { from{width:0} to{width:var(--pw,50%)} }
   @keyframes vp-node-appear { from{transform:scale(0) rotate(-90deg);opacity:0} to{transform:scale(1) rotate(0deg);opacity:1} }
+
+  /* ─── ENHANCED AGENT ACTIVITY KEYFRAMES ─────────────────────────── */
+  @keyframes vp-data-flow    { 0%{stroke-dashoffset:120} 100%{stroke-dashoffset:0} }
+  @keyframes vp-token-count  { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes vp-border-race  { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+  @keyframes vp-thought-in   { from{opacity:0;transform:translateX(-6px)} to{opacity:0.85;transform:translateX(0)} }
+  @keyframes vp-progress-bar { from{width:0%} to{width:var(--vp-prog,60%)} }
+  @keyframes vp-ping         { 0%{transform:scale(1);opacity:0.8} 70%{transform:scale(2.2);opacity:0} 100%{transform:scale(2.2);opacity:0} }
+  @keyframes vp-wave         { 0%,100%{transform:scaleY(0.4)} 50%{transform:scaleY(1)} }
+  @keyframes vp-global-fill  { from{width:0%} to{width:var(--vp-gfill,0%)} }
+  @keyframes vp-neural-pulse { 0%,100%{opacity:0.15;r:3} 50%{opacity:0.9;r:5} }
+  @keyframes vp-conn-dash    { to{stroke-dashoffset:-40} }
 
   /* ─── SCROLLBAR ───────────────────────────────────────────────────── */
   .vp-scroll::-webkit-scrollbar { width: 4px }
@@ -438,10 +450,110 @@ const AGENT_STATUS_POOL = [
 
 function LoadingState({ roomName, roomCode }) {
   const [tick, setTick] = useState(0);
+  const [elapsed, setElapsed] = useState(0);
+  const [agentProgress, setAgentProgress] = useState(() => Array(13).fill(0));
+  const [agentPhase, setAgentPhase] = useState(() => Array(13).fill(0));
+  const [globalProgress, setGlobalProgress] = useState(0);
+  const [thoughtIdx, setThoughtIdx] = useState(0);
+  const [tokenCounts, setTokenCounts] = useState(() => Array(13).fill(0));
+  const [dataPackets, setDataPackets] = useState([]);
+  const startRef = useRef(Date.now());
+
+  const AGENT_PHASES = [
+    "Initialising…", "Scanning fields…", "Web-searching…",
+    "Cross-validating…", "Analysing trends…", "Querying FGI…",
+    "Checking compliance…", "Synthesising…", "Generating report…", "✓ Complete"
+  ];
+
+  const AI_THOUGHTS = [
+    "Comparing net area against FGI 2022 Table 2.1-1 minimum requirements…",
+    "Evaluating infection risk category against ASHRAE 170 ventilation targets…",
+    "Cross-referencing door width with accessibility compliance standards…",
+    "Checking MEP load capacity against room criticality classification…",
+    "Validating adjacency matrix against workflow efficiency benchmarks…",
+    "Scanning HTMQ guidelines for clinical functionality requirements…",
+    "Analysing lighting levels against EN 12464-1 medical task standards…",
+    "Evaluating fire safety matrix against NFPA 101 Life Safety Code…",
+    "Querying Tavily for latest 2024 healthcare facility design updates…",
+    "Correlating stakeholder groups with staffing density norms…",
+    "Verifying radiation shielding spec against room typology risk level…",
+    "Benchmarking furniture layout against ergonomic workflow guidelines…",
+  ];
+
   useEffect(() => {
     const t = setInterval(() => setTick(n => n + 1), 2800);
     return () => clearInterval(t);
   }, []);
+
+  // Elapsed timer
+  useEffect(() => {
+    const t = setInterval(() => setElapsed(Math.floor((Date.now() - startRef.current) / 1000)), 1000);
+    return () => clearInterval(t);
+  }, []);
+
+  // Cycle AI thoughts
+  useEffect(() => {
+    const t = setInterval(() => setThoughtIdx(n => (n + 1) % AI_THOUGHTS.length), 3200);
+    return () => clearInterval(t);
+  }, []);
+
+  // Animate agent progress bars independently
+  useEffect(() => {
+    const intervals = Array(13).fill(null).map((_, i) => {
+      return setInterval(() => {
+        setAgentProgress(prev => {
+          const next = [...prev];
+          const increment = 0.8 + Math.random() * 1.4;
+          next[i] = Math.min(98, next[i] + increment);
+          return next;
+        });
+        setTokenCounts(prev => {
+          const next = [...prev];
+          next[i] = next[i] + Math.floor(Math.random() * 18 + 4);
+          return next;
+        });
+      }, 280 + i * 40);
+    });
+    return () => intervals.forEach(clearInterval);
+  }, []);
+
+  // Phase progression per agent
+  useEffect(() => {
+    const intervals = Array(13).fill(null).map((_, i) => {
+      return setInterval(() => {
+        setAgentPhase(prev => {
+          const next = [...prev];
+          if (next[i] < AGENT_PHASES.length - 2) next[i] += 1;
+          return next;
+        });
+      }, 2600 + i * 180);
+    });
+    return () => intervals.forEach(clearInterval);
+  }, []);
+
+  // Global progress
+  useEffect(() => {
+    const t = setInterval(() => {
+      setGlobalProgress(prev => Math.min(97, prev + 0.45 + Math.random() * 0.3));
+    }, 200);
+    return () => clearInterval(t);
+  }, []);
+
+  // Data packets flying between agents
+  useEffect(() => {
+    const t = setInterval(() => {
+      const from = Math.floor(Math.random() * 13);
+      const to = Math.floor(Math.random() * 13);
+      if (from !== to) {
+        const id = Date.now();
+        setDataPackets(prev => [...prev.slice(-6), { id, from, to }]);
+        setTimeout(() => setDataPackets(prev => prev.filter(p => p.id !== id)), 1800);
+      }
+    }, 900);
+    return () => clearInterval(t);
+  }, []);
+
+  const formatTime = (s) => `${String(Math.floor(s / 60)).padStart(2,"0")}:${String(s % 60).padStart(2,"0")}`;
 
   return (
     <div className="vp-root" style={{
@@ -463,12 +575,13 @@ function LoadingState({ roomName, roomCode }) {
 
       <div style={{
         position: "relative", zIndex: 10,
-        width: "100%", maxWidth: 760,
-        padding: "36px 20px 40px",
-        display: "flex", flexDirection: "column", alignItems: "center", gap: 28,
+        width: "100%", maxWidth: 820,
+        padding: "36px 20px 48px",
+        display: "flex", flexDirection: "column", alignItems: "center", gap: 22,
         animation: "vp-fade-up 0.5s ease both",
       }}>
-        {/* Header */}
+
+        {/* Header — unchanged */}
         <div style={{ textAlign: "center" }}>
           <AIOrb size={130} />
           <div style={{ marginTop: 20 }}>
@@ -491,27 +604,137 @@ function LoadingState({ roomName, roomCode }) {
           </div>
         </div>
 
-        {/* Agent grid */}
+        {/* ── NEW: Global progress bar ───────────────────────────────── */}
+        <div style={{ width: "100%", padding: "0 2px" }}>
+          <div style={{
+            display: "flex", justifyContent: "space-between", alignItems: "center",
+            marginBottom: 8,
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              {/* Waveform bars */}
+              {[0.5,1,0.7,1,0.4,0.8,0.6,1,0.5,0.9].map((h, i) => (
+                <div key={i} style={{
+                  width: 3, height: 14, borderRadius: 2,
+                  background: `rgba(99,102,241,${0.4 + h * 0.5})`,
+                  transformOrigin: "bottom",
+                  animation: `vp-wave ${0.6 + i * 0.07}s ease-in-out infinite`,
+                  animationDelay: `${i * 0.06}s`,
+                }} />
+              ))}
+              <span style={{ fontSize: 10, color: "#6366f1", fontWeight: 700, letterSpacing: 1, fontFamily: "'Syne', sans-serif", marginLeft: 4 }}>
+                PARALLEL EXECUTION
+              </span>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+              <span style={{ fontSize: 10, color: "#334155", fontFamily: "'Syne', sans-serif", letterSpacing: 0.5 }}>
+                ⏱ {formatTime(elapsed)}
+              </span>
+              <span style={{
+                fontSize: 12, fontWeight: 800, fontFamily: "'Syne', sans-serif",
+                background: "linear-gradient(90deg,#6366f1,#22d3ee)",
+                WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
+              }}>
+                {Math.floor(globalProgress)}%
+              </span>
+            </div>
+          </div>
+          {/* Track */}
+          <div style={{
+            height: 6, background: "rgba(255,255,255,0.05)", borderRadius: 99,
+            overflow: "hidden", position: "relative",
+          }}>
+            <div style={{
+              height: "100%", borderRadius: 99,
+              background: "linear-gradient(90deg,#6366f1,#8b5cf6,#22d3ee,#10b981)",
+              backgroundSize: "300% 100%",
+              width: `${globalProgress}%`,
+              transition: "width 0.3s ease",
+              animation: "vp-border-race 3s ease infinite",
+              boxShadow: "0 0 12px rgba(99,102,241,0.6), 0 0 24px rgba(34,211,238,0.3)",
+            }} />
+            {/* Leading orb */}
+            <div style={{
+              position: "absolute", top: "50%", left: `${globalProgress}%`,
+              transform: "translate(-50%,-50%)",
+              width: 10, height: 10, borderRadius: "50%",
+              background: "#fff",
+              boxShadow: "0 0 8px rgba(99,102,241,1), 0 0 20px rgba(34,211,238,0.8)",
+              transition: "left 0.3s ease",
+            }} />
+          </div>
+        </div>
+
+        {/* ── NEW: Live AI thought stream ────────────────────────────── */}
+        <div style={{
+          width: "100%",
+          background: "rgba(6,13,31,0.6)",
+          border: "1px solid rgba(99,102,241,0.12)",
+          borderRadius: 10, padding: "10px 16px",
+          display: "flex", alignItems: "center", gap: 10,
+          backdropFilter: "blur(8px)",
+          overflow: "hidden",
+        }}>
+          {/* Animated brain icon */}
+          <div style={{
+            fontSize: 14, flexShrink: 0,
+            animation: "vp-pulse 1.5s ease-in-out infinite",
+          }}>🧠</div>
+          {/* Cursor blink */}
+          <div style={{
+            width: 6, height: 6, borderRadius: "50%", flexShrink: 0,
+            background: "#22d3ee",
+            boxShadow: "0 0 8px #22d3ee",
+            animation: "vp-glow-pulse 0.8s ease-in-out infinite",
+          }} />
+          <div style={{
+            fontSize: 10.5, color: "#94a3b8", flex: 1,
+            fontFamily: "'IBM Plex Sans', monospace",
+            whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+            animation: "vp-thought-in 0.4s ease both",
+            key: thoughtIdx,
+          }}>
+            {AI_THOUGHTS[thoughtIdx]}
+          </div>
+          <div style={{
+            fontSize: 9, color: "#1e293b", fontFamily: "'Syne', sans-serif",
+            letterSpacing: 1, flexShrink: 0,
+          }}>LIVE</div>
+        </div>
+
+        {/* Agent grid — enhanced */}
         <div style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fill,minmax(210px,1fr))",
+          gridTemplateColumns: "repeat(auto-fill,minmax(220px,1fr))",
           gap: 8, width: "100%",
         }}>
           {SECTIONS_LIST.map((sec, i) => {
             const col = AGENT_COLORS[i];
             const statusIdx = (tick + i) % AGENT_STATUS_POOL.length;
+            const prog = agentProgress[i];
+            const phase = agentPhase[i];
+            const tokens = tokenCounts[i];
+            const isActive = phase < AGENT_PHASES.length - 1;
+            const hasPacket = dataPackets.some(p => p.from === i || p.to === i);
+
             return (
               <div key={i} style={{
-                background: "rgba(6,13,31,0.7)",
-                border: `1px solid ${col}22`,
+                background: hasPacket
+                  ? `rgba(6,13,31,0.85)`
+                  : "rgba(6,13,31,0.7)",
+                border: hasPacket
+                  ? `1px solid ${col}55`
+                  : `1px solid ${col}22`,
                 borderRadius: 12, padding: "12px 14px",
                 position: "relative", overflow: "hidden",
                 backdropFilter: "blur(10px)",
                 animation: `vp-pop 0.45s ease both`,
                 animationDelay: `${i * 0.05}s`,
-                boxShadow: `0 4px 20px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.03)`,
+                boxShadow: hasPacket
+                  ? `0 4px 24px ${col}22, 0 0 0 1px ${col}22, inset 0 1px 0 rgba(255,255,255,0.05)`
+                  : `0 4px 20px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.03)`,
+                transition: "border-color 0.3s ease, box-shadow 0.3s ease",
               }}>
-                {/* Animated bottom bar */}
+                {/* Existing animated bottom bar */}
                 <div style={{
                   position: "absolute", bottom: 0, left: 0, height: 2,
                   background: `linear-gradient(90deg,${col},transparent)`,
@@ -519,7 +742,38 @@ function LoadingState({ roomName, roomCode }) {
                   animationDelay: `${i * 0.08}s`,
                   "--w": "100%",
                 }} />
+
+                {/* ── NEW: Progress bar track ── */}
+                <div style={{
+                  position: "absolute", top: 0, left: 0, right: 0, height: 2,
+                  background: "rgba(255,255,255,0.04)",
+                }}>
+                  <div style={{
+                    height: "100%", borderRadius: "2px 0 0 0",
+                    background: `linear-gradient(90deg,${col},${col}88)`,
+                    width: `${prog}%`,
+                    transition: "width 0.4s ease",
+                    boxShadow: `0 0 6px ${col}80`,
+                  }} />
+                </div>
+
+                {/* ── NEW: Data packet ping indicator ── */}
+                {hasPacket && (
+                  <div style={{
+                    position: "absolute", top: 8, right: 8,
+                    width: 6, height: 6, borderRadius: "50%",
+                    background: col, zIndex: 2,
+                  }}>
+                    <div style={{
+                      position: "absolute", inset: 0, borderRadius: "50%",
+                      background: col,
+                      animation: "vp-ping 1s ease-out infinite",
+                    }} />
+                  </div>
+                )}
+
                 <div style={{ display: "flex", alignItems: "flex-start", gap: 9 }}>
+                  {/* Existing pulse dot */}
                   <div style={{
                     width: 8, height: 8, borderRadius: "50%", flexShrink: 0, marginTop: 3,
                     background: col,
@@ -527,26 +781,64 @@ function LoadingState({ roomName, roomCode }) {
                     animation: `vp-pulse ${1.3 + i * 0.09}s ease-in-out infinite`,
                   }} />
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{
-                      fontSize: 9, color: "#334155", fontWeight: 700,
-                      marginBottom: 2, letterSpacing: 1, fontFamily: "'Syne', sans-serif",
-                    }}>
-                      AGENT {String(i + 1).padStart(2, "0")}
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                      <div style={{
+                        fontSize: 9, color: "#334155", fontWeight: 700,
+                        letterSpacing: 1, fontFamily: "'Syne', sans-serif",
+                      }}>
+                        AGENT {String(i + 1).padStart(2, "0")}
+                      </div>
+                      {/* ── NEW: Token counter ── */}
+                      <div style={{
+                        fontSize: 8, color: col, fontFamily: "'IBM Plex Sans', monospace",
+                        opacity: 0.7, letterSpacing: 0.3,
+                        animation: "vp-token-count 0.3s ease both",
+                      }}>
+                        {tokens.toLocaleString()}t
+                      </div>
                     </div>
+
                     <div style={{
                       fontSize: 11, color: "#cbd5e1", fontWeight: 600,
                       lineHeight: 1.3, whiteSpace: "nowrap",
                       overflow: "hidden", textOverflow: "ellipsis",
+                      marginTop: 2,
                     }}>
                       {SECTION_ICONS[i]} {sec}
                     </div>
+
+                    {/* ── NEW: Phase label replaces status ── */}
                     <div style={{
-                      fontSize: 9, color: col, marginTop: 5,
+                      fontSize: 9, color: col, marginTop: 4,
                       letterSpacing: 0.3,
                       animation: `vp-tick ${1.7 + i * 0.11}s ease-in-out infinite`,
                       animationDelay: `${i * 0.07}s`,
                     }}>
-                      ◈ {AGENT_STATUS_POOL[statusIdx]}
+                      ◈ {AGENT_PHASES[phase]}
+                    </div>
+
+                    {/* ── NEW: Mini progress bar per agent ── */}
+                    <div style={{
+                      marginTop: 7, height: 3,
+                      background: "rgba(255,255,255,0.05)", borderRadius: 99,
+                      overflow: "hidden",
+                    }}>
+                      <div style={{
+                        height: "100%", borderRadius: 99,
+                        background: `linear-gradient(90deg,${col}cc,${col})`,
+                        width: `${prog}%`,
+                        transition: "width 0.4s ease",
+                        boxShadow: `0 0 4px ${col}60`,
+                      }} />
+                    </div>
+
+                    {/* ── NEW: % complete label ── */}
+                    <div style={{
+                      marginTop: 4, fontSize: 8,
+                      color: "#1e293b", fontFamily: "'Syne', sans-serif",
+                      letterSpacing: 0.5,
+                    }}>
+                      {Math.floor(prog)}% · {isActive ? "ACTIVE" : "DONE"}
                     </div>
                   </div>
                 </div>
@@ -555,7 +847,35 @@ function LoadingState({ roomName, roomCode }) {
           })}
         </div>
 
-        {/* Status bar */}
+        {/* ── NEW: Live data flow summary strip ─────────────────────── */}
+        <div style={{
+          width: "100%",
+          background: "rgba(6,13,31,0.5)",
+          border: "1px solid rgba(34,211,238,0.1)",
+          borderRadius: 10, padding: "10px 18px",
+          display: "flex", gap: 24, alignItems: "center",
+          backdropFilter: "blur(8px)",
+          flexWrap: "wrap",
+        }}>
+          {[
+            { label: "AGENTS ACTIVE", value: "13 / 13", color: "#4ade80" },
+            { label: "WEB REQUESTS", value: `${Math.floor(elapsed * 1.8 + 12)}`, color: "#38bdf8" },
+            { label: "TOKENS USED", value: `${(tokenCounts.reduce((a,b)=>a+b,0)/1000).toFixed(1)}k`, color: "#a78bfa" },
+            { label: "DATA PACKETS", value: `${dataPackets.length + Math.floor(elapsed * 3)}`, color: "#f472b6" },
+            { label: "ELAPSED", value: formatTime(elapsed), color: "#facc15" },
+          ].map(({ label, value, color }) => (
+            <div key={label} style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+              <div style={{ fontSize: 8, color: "#1e293b", fontFamily: "'Syne', sans-serif", letterSpacing: 1.2 }}>{label}</div>
+              <div style={{
+                fontSize: 13, fontWeight: 800, color, fontFamily: "'Syne', sans-serif",
+                letterSpacing: 0.5,
+                textShadow: `0 0 12px ${color}60`,
+              }}>{value}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Status bar — original unchanged */}
         <div style={{
           width: "100%",
           background: "rgba(6,13,31,0.7)",
