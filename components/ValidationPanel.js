@@ -315,176 +315,195 @@ export default function ValidationPanel({ roomId, roomCode, roomName, onClose, r
     );
   }
 
-  // ── DONE state — CINEMATIC PREMIUM REPORT ──────────────────────────────────
+  // ── DONE state — Full Report ─────────────────────────────────────────────────
+    const statusStyle = STATUS_COLORS[report.overallStatus] || STATUS_COLORS["Good"];
   const allSuggestions = report.sections.flatMap(s =>
     (s.suggestions || []).map(sg => ({ ...sg, section: s.section, sectionId: s.sectionId }))
-  ).sort((a, b) => ({ High:0, Medium:1, Low:2 }[a.priority]??1) - ({ High:0, Medium:1, Low:2 }[b.priority]??1));
+  ).sort((a, b) => {
+    const p = { High: 0, Medium: 1, Low: 2 };
+    return (p[a.priority] ?? 1) - (p[b.priority] ?? 1);
+  });
 
-  const SC = (score) => score>=80?"#34d399":score>=60?"#60a5fa":score>=40?"#fbbf24":"#f87171";
-  const SG = (score) => score>=80?"linear-gradient(90deg,#34d399,#10b981)":score>=60?"linear-gradient(90deg,#60a5fa,#3b82f6)":score>=40?"linear-gradient(90deg,#fbbf24,#f59e0b)":"linear-gradient(90deg,#f87171,#ef4444)";
-  const PB = { High:{bg:"rgba(239,68,68,0.12)",border:"rgba(239,68,68,0.3)",color:"#f87171",dot:"#ef4444"}, Medium:{bg:"rgba(251,191,36,0.1)",border:"rgba(251,191,36,0.3)",color:"#fbbf24",dot:"#f59e0b"}, Low:{bg:"rgba(52,211,153,0.1)",border:"rgba(52,211,153,0.3)",color:"#34d399",dot:"#10b981"} };
+  const SC  = score => score>=80?"#10b981":score>=60?"#6366f1":score>=40?"#f59e0b":"#ef4444";
+  const SCG = score => score>=80?"90deg,#10b981,#059669":score>=60?"90deg,#6366f1,#8b5cf6":score>=40?"90deg,#f59e0b,#d97706":"90deg,#ef4444,#dc2626";
+  const PRI = {
+    High:   { g:"135deg,#3b0a0a,#1a0404", border:"rgba(239,68,68,0.3)",  glow:"rgba(239,68,68,0.12)",  dot:"#ef4444", text:"#fca5a5", label:"#f87171" },
+    Medium: { g:"135deg,#3b1a03,#1a0c00", border:"rgba(245,158,11,0.3)", glow:"rgba(245,158,11,0.1)",  dot:"#f59e0b", text:"#fcd34d", label:"#fbbf24" },
+    Low:    { g:"135deg,#042713,#021409", border:"rgba(16,185,129,0.25)", glow:"rgba(16,185,129,0.08)", dot:"#10b981", text:"#6ee7b7", label:"#34d399" },
+  };
 
-  const TABS = [
-    { id:"overview", label:"Overview",           icon:"◈" },
-    { id:"sections", label:"Sections (13)",       icon:"≡" },
-    { id:"upgrades", label:`Upgrades (${report.summary.totalSuggestions})`, icon:"⬆" },
-  ];
+  const [hoveredSection, setHoveredSection] = React.useState ? null : null;
+  const [hs, setHs] = useState(null);
+
+  const REPORT_CSS = `
+    @keyframes rp-in    { from{opacity:0;transform:scale(0.97) translateY(14px)} to{opacity:1;transform:none} }
+    @keyframes rp-slide { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:none} }
+    @keyframes rp-glow  { 0%,100%{opacity:0.35} 50%{opacity:0.9} }
+    @keyframes rp-hdr   { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+    @keyframes rp-grid  { from{background-position:0 0} to{background-position:48px 48px} }
+    @keyframes rp-float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)} }
+    @keyframes rp-bar   { from{width:0} to{width:100%} }
+    .rp-sec:hover  { border-color:rgba(99,102,241,0.35)!important; background:rgba(20,30,60,0.85)!important }
+    .rp-card:hover { transform:translateY(-1px); box-shadow:0 8px 32px rgba(0,0,0,0.5)!important }
+    .rp-src:hover  { background:rgba(99,102,241,0.18)!important; color:#c7d2fe!important }
+    .rp-tab:hover  { background:rgba(99,102,241,0.1)!important; color:#c7d2fe!important }
+    .rp-x:hover    { background:rgba(255,255,255,0.12)!important; transform:rotate(90deg) }
+    .rp-re:hover   { background:rgba(99,102,241,0.18)!important }
+    .rp-dn:hover   { filter:brightness(1.18); transform:translateY(-1px) }
+    ::-webkit-scrollbar{width:3px} ::-webkit-scrollbar-track{background:transparent} ::-webkit-scrollbar-thumb{background:rgba(99,102,241,0.35);border-radius:99px}
+  `;
 
   return (
     <div style={{
       position:"fixed", inset:0, zIndex:9999,
       background:"rgba(2,6,23,0.92)",
-      backdropFilter:"blur(12px)",
+      backdropFilter:"blur(16px)",
       display:"flex", alignItems:"flex-start", justifyContent:"center",
-      overflowY:"auto", padding:"24px 16px", minHeight:"100vh",
+      overflowY:"auto", padding:"20px 16px", minHeight:"100vh",
     }}>
-      <style>{`
-        @keyframes rpFadeIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
-        @keyframes rpBarFill{from{width:0}to{width:var(--w)}}
-        @keyframes rpGlow{0%,100%{opacity:0.4}50%{opacity:1}}
-        @keyframes rpPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.04)}}
-        @keyframes rpSlideIn{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:none}}
-        @keyframes rpGrid{from{background-position:0 0}to{background-position:32px 32px}}
-        .rp-tab:hover{color:#a5b4fc!important;background:rgba(99,102,241,0.08)!important}
-        .rp-sec:hover{border-color:rgba(99,102,241,0.3)!important;background:rgba(15,23,42,0.9)!important}
-        .rp-src:hover{background:rgba(99,102,241,0.15)!important;color:#a5b4fc!important}
-        .rp-btn:hover{filter:brightness(1.15)}
-        ::-webkit-scrollbar{width:4px} ::-webkit-scrollbar-track{background:transparent} ::-webkit-scrollbar-thumb{background:rgba(99,102,241,0.3);border-radius:99px}
-      `}</style>
+      <style>{REPORT_CSS}</style>
 
-      {/* Main card */}
       <div style={{
-        width:"100%", maxWidth:900,
-        background:"linear-gradient(180deg,#0d1117 0%,#0a0f1e 100%)",
-        border:"1px solid rgba(99,102,241,0.2)",
+        width:"100%", maxWidth:940,
         borderRadius:24, overflow:"hidden",
-        boxShadow:"0 0 0 1px rgba(99,102,241,0.1),0 32px 80px rgba(0,0,0,0.8),0 0 60px rgba(99,102,241,0.06)",
-        animation:"rpFadeIn 0.5s ease both",
+        boxShadow:"0 0 0 1px rgba(99,102,241,0.18),0 40px 100px rgba(0,0,0,0.88),0 0 100px rgba(99,102,241,0.05)",
+        animation:"rp-in 0.45s cubic-bezier(0.16,1,0.3,1) both",
       }}>
 
-        {/* ── HEADER ─────────────────────────────────────────────────── */}
+        {/* ═══ HEADER ════════════════════════════════════════════════════════ */}
         <div style={{
           position:"relative", overflow:"hidden",
-          background:"linear-gradient(135deg,#0f0a2e 0%,#1a0a3e 50%,#0d1b3e 100%)",
-          padding:"28px 32px",
-          borderBottom:"1px solid rgba(99,102,241,0.15)",
+          padding:"30px 36px 26px",
+          background:"linear-gradient(135deg,#0b0820 0%,#110a2e 45%,#0c1a3a 100%)",
+          borderBottom:"1px solid rgba(99,102,241,0.12)",
         }}>
-          {/* bg grid */}
-          <div style={{position:"absolute",inset:0,pointerEvents:"none",opacity:0.4,
-            backgroundImage:"linear-gradient(rgba(99,102,241,0.07) 1px,transparent 1px),linear-gradient(90deg,rgba(99,102,241,0.07) 1px,transparent 1px)",
-            backgroundSize:"32px 32px",animation:"rpGrid 6s linear infinite"}}/>
-          {/* glow orbs */}
-          <div style={{position:"absolute",top:-40,right:80,width:180,height:180,borderRadius:"50%",background:"radial-gradient(circle,rgba(99,102,241,0.15),transparent 70%)",pointerEvents:"none"}}/>
-          <div style={{position:"absolute",bottom:-60,left:40,width:140,height:140,borderRadius:"50%",background:"radial-gradient(circle,rgba(139,92,246,0.1),transparent 70%)",pointerEvents:"none"}}/>
+          {/* Animated shimmer */}
+          <div style={{position:"absolute",inset:0,background:"linear-gradient(270deg,rgba(99,102,241,0.07),rgba(139,92,246,0.07),rgba(59,130,246,0.04),rgba(99,102,241,0.07))",backgroundSize:"400% 400%",animation:"rp-hdr 9s ease infinite"}}/>
+          {/* Grid */}
+          <div style={{position:"absolute",inset:0,backgroundImage:"linear-gradient(rgba(99,102,241,0.05) 1px,transparent 1px),linear-gradient(90deg,rgba(99,102,241,0.05) 1px,transparent 1px)",backgroundSize:"40px 40px",animation:"rp-grid 8s linear infinite",opacity:0.5}}/>
+          {/* Top accent */}
+          <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,transparent 0%,#6366f1 30%,#8b5cf6 60%,#3b82f6 80%,transparent 100%)"}}/>
+          {/* Glow orbs */}
+          <div style={{position:"absolute",top:-50,right:80,width:240,height:240,borderRadius:"50%",background:"radial-gradient(circle,rgba(99,102,241,0.14),transparent 65%)",pointerEvents:"none"}}/>
+          <div style={{position:"absolute",bottom:-70,left:30,width:200,height:200,borderRadius:"50%",background:"radial-gradient(circle,rgba(139,92,246,0.09),transparent 65%)",pointerEvents:"none"}}/>
 
           <div style={{position:"relative",display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:16}}>
             <div>
-              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
-                <div style={{width:6,height:6,borderRadius:"50%",background:"#6366f1",boxShadow:"0 0 8px #6366f1",animation:"rpGlow 2s ease-in-out infinite"}}/>
-                <span style={{fontSize:10,letterSpacing:3,color:"#6366f1",fontWeight:700}}>AI VALIDATION REPORT</span>
+              {/* Live indicator */}
+              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}>
+                <div style={{display:"flex",gap:5,alignItems:"center"}}>
+                  {["#6366f1","#8b5cf6","#3b82f6"].map((c,i)=>(
+                    <div key={i} style={{width:5,height:5,borderRadius:"50%",background:c,boxShadow:`0 0 8px ${c}`,animation:`rp-glow 2s ease-in-out infinite`,animationDelay:`${i*0.35}s`}}/>
+                  ))}
+                </div>
+                <span style={{fontSize:9,letterSpacing:3.5,color:"#6366f1",fontWeight:700}}>AI VALIDATION REPORT</span>
               </div>
-              <h2 style={{fontSize:24,fontWeight:800,color:"#f1f5f9",marginBottom:6,letterSpacing:0.3}}>
+              {/* Title */}
+              <h1 style={{fontSize:26,fontWeight:900,color:"#fff",marginBottom:10,letterSpacing:"-0.3px",textShadow:"0 0 40px rgba(99,102,241,0.35)"}}>
                 {report.roomName || report.roomCode}
-              </h2>
-              <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
+              </h1>
+              {/* Tags */}
+              <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
                 {[report.roomTypology, report.department].filter(Boolean).map((t,i)=>(
-                  <span key={i} style={{fontSize:11,color:"#a5b4fc",background:"rgba(99,102,241,0.12)",border:"1px solid rgba(99,102,241,0.2)",padding:"2px 10px",borderRadius:99}}>{t}</span>
+                  <span key={i} style={{fontSize:11,color:"#a5b4fc",background:"rgba(99,102,241,0.12)",border:"1px solid rgba(99,102,241,0.28)",padding:"3px 12px",borderRadius:99,fontWeight:500,letterSpacing:0.2}}>{t}</span>
                 ))}
-                <span style={{fontSize:11,color:"#475569"}}>· Validated {new Date(report.validatedAt).toLocaleString("en-IN")}</span>
+                <span style={{fontSize:11,color:"#1e293b",marginLeft:2}}>
+                  · Validated {new Date(report.validatedAt).toLocaleString("en-IN")}
+                </span>
               </div>
             </div>
-            <button onClick={onClose} className="rp-btn" style={{
-              width:36,height:36,borderRadius:"50%",
-              background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.1)",
-              color:"#94a3b8",fontSize:16,cursor:"pointer",flexShrink:0,
-              display:"flex",alignItems:"center",justifyContent:"center",transition:"all 0.2s",
+            <button onClick={onClose} className="rp-x" style={{
+              width:36,height:36,borderRadius:"50%",flexShrink:0,
+              background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",
+              color:"#64748b",fontSize:16,cursor:"pointer",
+              display:"flex",alignItems:"center",justifyContent:"center",transition:"all 0.25s",
             }}>✕</button>
           </div>
         </div>
 
-        {/* ── SCORE CARDS ────────────────────────────────────────────── */}
-        <div style={{
-          display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:1,
-          background:"rgba(99,102,241,0.08)",
-          borderBottom:"1px solid rgba(99,102,241,0.1)",
-        }}>
+        {/* ═══ SCORE CARDS ═══════════════════════════════════════════════════ */}
+        <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",background:"#04070e",borderBottom:"1px solid rgba(99,102,241,0.08)"}}>
           {[
-            { label:"OVERALL SCORE",  value:`${report.overallScore}%`,  sub:report.overallStatus,                              color:SC(report.overallScore), icon:"◎" },
-            { label:"ISSUES FOUND",   value:report.summary.totalIssues, sub:"across all sections",                             color:report.summary.totalIssues>10?"#f87171":report.summary.totalIssues>5?"#fbbf24":"#34d399", icon:"⚠" },
-            { label:"SUGGESTIONS",    value:report.summary.totalSuggestions, sub:`${report.summary.highPriorityCount} high priority`, color:"#818cf8", icon:"💡" },
-            { label:"SECTIONS",       value:"13 / 13",                  sub:"fully validated",                                 color:"#60a5fa", icon:"✓" },
+            {label:"OVERALL SCORE", value:`${report.overallScore}%`, sub:report.overallStatus,                         color:SC(report.overallScore)},
+            {label:"ISSUES FOUND",  value:report.summary.totalIssues, sub:"across all sections",                       color:report.summary.totalIssues>10?"#ef4444":report.summary.totalIssues>5?"#f59e0b":"#10b981"},
+            {label:"SUGGESTIONS",   value:report.summary.totalSuggestions, sub:`${report.summary.highPriorityCount} high priority`, color:"#818cf8"},
+            {label:"SECTIONS",      value:"13 / 13", sub:"fully validated",                                            color:"#38bdf8"},
           ].map((card,i)=>(
             <div key={i} style={{
-              background:"linear-gradient(180deg,#0d1117,#080d1a)",
-              padding:"20px 22px", position:"relative", overflow:"hidden",
+              padding:"20px 24px",position:"relative",overflow:"hidden",
+              borderRight:i<3?"1px solid rgba(99,102,241,0.07)":"none",
+              background:"linear-gradient(180deg,#050912,#030608)",
             }}>
-              <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:`linear-gradient(90deg,transparent,${card.color}55,transparent)`}}/>
-              <div style={{fontSize:9,letterSpacing:2,color:"#475569",fontWeight:700,marginBottom:8}}>{card.label}</div>
-              <div style={{fontSize:28,fontWeight:900,color:card.color,lineHeight:1,marginBottom:4,
-                textShadow:`0 0 20px ${card.color}44`}}>{card.value}</div>
-              <div style={{fontSize:11,color:"#334155"}}>{card.sub}</div>
+              {/* Top accent per card */}
+              <div style={{position:"absolute",top:0,left:0,right:0,height:1.5,background:`linear-gradient(90deg,transparent,${card.color}80,transparent)`}}/>
+              {/* Subtle radial bg */}
+              <div style={{position:"absolute",bottom:-15,right:-5,width:80,height:80,borderRadius:"50%",background:`radial-gradient(circle,${card.color}12,transparent)`,pointerEvents:"none"}}/>
+              <div style={{fontSize:8,letterSpacing:2.5,color:"#1e293b",fontWeight:700,marginBottom:9}}>{card.label}</div>
+              <div style={{fontSize:30,fontWeight:900,color:card.color,lineHeight:1,marginBottom:5,textShadow:`0 0 24px ${card.color}60`}}>{card.value}</div>
+              <div style={{fontSize:10,color:"#1e293b",letterSpacing:0.2}}>{card.sub}</div>
             </div>
           ))}
         </div>
 
-        {/* ── TABS ───────────────────────────────────────────────────── */}
-        <div style={{
-          display:"flex",gap:0,
-          background:"#080d1a",
-          borderBottom:"1px solid rgba(99,102,241,0.12)",
-          padding:"0 28px",
-        }}>
-          {TABS.map(tab=>(
+        {/* ═══ TABS ═══════════════════════════════════════════════════════════ */}
+        <div style={{display:"flex",background:"#030609",borderBottom:"1px solid rgba(99,102,241,0.1)",padding:"0 28px",gap:2}}>
+          {[
+            {id:"overview", icon:"◈", label:"Overview"},
+            {id:"sections", icon:"≡", label:"Sections (13)"},
+            {id:"upgrades", icon:"↑", label:`Upgrades (${report.summary.totalSuggestions})`},
+          ].map(tab=>(
             <button key={tab.id} onClick={()=>setActiveTab(tab.id)} className="rp-tab" style={{
-              padding:"14px 20px",border:"none",
+              padding:"13px 22px",border:"none",cursor:"pointer",letterSpacing:0.3,
               background:activeTab===tab.id?"rgba(99,102,241,0.1)":"transparent",
-              fontSize:12,fontWeight:600,cursor:"pointer",transition:"all 0.2s",
-              color:activeTab===tab.id?"#a5b4fc":"#475569",
+              color:activeTab===tab.id?"#a5b4fc":"#334155",
               borderBottom:activeTab===tab.id?"2px solid #6366f1":"2px solid transparent",
-              display:"flex",alignItems:"center",gap:6,letterSpacing:0.3,
+              fontSize:12,fontWeight:600,transition:"all 0.18s",
+              display:"flex",alignItems:"center",gap:7,
             }}>
-              <span style={{fontSize:10,opacity:0.7}}>{tab.icon}</span>{tab.label}
+              <span style={{fontSize:10,opacity:0.55}}>{tab.icon}</span>{tab.label}
             </button>
           ))}
         </div>
 
-        {/* ── TAB CONTENT ────────────────────────────────────────────── */}
-        <div style={{padding:"28px 32px",background:"#080d1a"}}>
+        {/* ═══ CONTENT ════════════════════════════════════════════════════════ */}
+        <div style={{background:"#030609",padding:"28px 32px"}}>
 
-          {/* OVERVIEW TAB */}
+          {/* ── OVERVIEW ───────────────────────────────────────────────── */}
           {activeTab==="overview" && (
-            <div style={{display:"flex",flexDirection:"column",gap:28}}>
+            <div style={{display:"flex",flexDirection:"column",gap:30}}>
 
-              {/* Section score bars */}
+              {/* Section score rows */}
               <div>
-                <div style={{fontSize:10,letterSpacing:2,color:"#475569",fontWeight:700,marginBottom:16}}>SECTION ANALYSIS</div>
-                <div style={{display:"flex",flexDirection:"column",gap:6}}>
+                <div style={{fontSize:8,letterSpacing:3,color:"#1e293b",fontWeight:700,marginBottom:14}}>SECTION ANALYSIS</div>
+                <div style={{display:"flex",flexDirection:"column",gap:5}}>
                   {report.sections.map((s,idx)=>(
-                    <div key={s.sectionId} style={{
-                      display:"flex",alignItems:"center",gap:12,
-                      padding:"10px 14px",
-                      background:"rgba(15,23,42,0.6)",
-                      border:"1px solid rgba(99,102,241,0.08)",
-                      borderRadius:10,
-                      animation:`rpSlideIn 0.3s ease both`,
-                      animationDelay:`${idx*0.04}s`,
-                    }}>
-                      <span style={{fontSize:15,width:22,textAlign:"center"}}>{SECTION_ICONS[s.sectionId-1]}</span>
-                      <div style={{fontSize:11,color:"#64748b",width:210,flexShrink:0,lineHeight:1.3}}>{s.section}</div>
-                      <div style={{flex:1,height:5,background:"rgba(255,255,255,0.05)",borderRadius:99,overflow:"hidden"}}>
+                    <div key={s.sectionId}
+                      onMouseEnter={()=>setHs(s.sectionId)}
+                      onMouseLeave={()=>setHs(null)}
+                      style={{
+                        display:"flex",alignItems:"center",gap:12,
+                        padding:"11px 16px",
+                        background:hs===s.sectionId?"rgba(20,30,60,0.85)":"rgba(10,15,35,0.6)",
+                        border:`1px solid ${hs===s.sectionId?"rgba(99,102,241,0.35)":"rgba(99,102,241,0.07)"}`,
+                        borderRadius:11,transition:"all 0.18s",
+                        animation:"rp-slide 0.3s ease both",animationDelay:`${idx*0.03}s`,
+                      }}>
+                      <span style={{fontSize:14,width:22,textAlign:"center",flexShrink:0}}>{SECTION_ICONS[s.sectionId-1]}</span>
+                      <div style={{fontSize:11,color:"#475569",width:215,flexShrink:0,lineHeight:1.3}}>{s.section}</div>
+                      <div style={{flex:1,height:4,background:"rgba(255,255,255,0.04)",borderRadius:99,overflow:"hidden"}}>
                         <div style={{
                           width:`${s.confidence}%`,height:"100%",
-                          background:SG(s.confidence),borderRadius:99,
-                          boxShadow:`0 0 6px ${SC(s.confidence)}66`,
-                          transition:"width 0.8s ease",
+                          background:`linear-gradient(${SCG(s.confidence)})`,
+                          borderRadius:99,
+                          boxShadow:`0 0 8px ${SC(s.confidence)}55`,
+                          transition:"width 0.9s cubic-bezier(0.16,1,0.3,1)",
                         }}/>
                       </div>
-                      <div style={{fontSize:12,fontWeight:800,width:34,textAlign:"right",color:SC(s.confidence),
-                        textShadow:`0 0 8px ${SC(s.confidence)}55`}}>{s.confidence}%</div>
-                      <div style={{width:18,textAlign:"center",fontSize:11}}>
+                      <div style={{fontSize:12,fontWeight:800,width:34,textAlign:"right",color:SC(s.confidence),textShadow:`0 0 10px ${SC(s.confidence)}66`}}>{s.confidence}%</div>
+                      <div style={{width:18,textAlign:"center",fontSize:12,flexShrink:0}}>
                         {(s.issues?.length||0)>0
-                          ? <span style={{color:"#fbbf24"}}>⚠</span>
-                          : <span style={{color:"#34d399"}}>✓</span>}
+                          ? <span style={{color:"#f59e0b"}}>⚠</span>
+                          : <span style={{color:"#10b981"}}>✓</span>}
                       </div>
                     </div>
                   ))}
@@ -494,24 +513,26 @@ export default function ValidationPanel({ roomId, roomCode, roomName, onClose, r
               {/* High priority */}
               {report.summary.highPriorityCount>0 && (
                 <div>
-                  <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}>
-                    <div style={{width:4,height:16,background:"#ef4444",borderRadius:99,boxShadow:"0 0 8px #ef444466"}}/>
-                    <div style={{fontSize:10,letterSpacing:2,color:"#f87171",fontWeight:700}}>HIGH PRIORITY RECOMMENDATIONS</div>
+                  <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:14}}>
+                    <div style={{width:3,height:18,borderRadius:99,background:"linear-gradient(180deg,#ef4444,#dc2626)",boxShadow:"0 0 10px #ef444466"}}/>
+                    <div style={{fontSize:8,letterSpacing:3,color:"#f87171",fontWeight:700}}>HIGH PRIORITY RECOMMENDATIONS</div>
                   </div>
                   <div style={{display:"flex",flexDirection:"column",gap:8}}>
-                    {allSuggestions.filter(s=>s.priority==="High").slice(0,6).map((s,i)=>(
-                      <div key={i} style={{
-                        background:"rgba(239,68,68,0.06)",
-                        border:"1px solid rgba(239,68,68,0.2)",
+                    {allSuggestions.filter(s=>s.priority==="High").slice(0,5).map((s,i)=>(
+                      <div key={i} className="rp-card" style={{
+                        background:`linear-gradient(${PRI.High.g})`,
+                        border:`1px solid ${PRI.High.border}`,
                         borderLeft:"3px solid #ef4444",
-                        borderRadius:10,padding:"14px 16px",
-                        animation:`rpSlideIn 0.3s ease both`,animationDelay:`${i*0.05}s`,
+                        borderRadius:12,padding:"14px 18px",
+                        boxShadow:`0 0 20px ${PRI.High.glow}`,
+                        transition:"all 0.2s",
+                        animation:"rp-slide 0.3s ease both",animationDelay:`${i*0.06}s`,
                       }}>
-                        <div style={{fontSize:10,color:"#f87171",fontWeight:700,marginBottom:5,letterSpacing:0.5}}>
+                        <div style={{fontSize:9,color:"#f87171",fontWeight:700,letterSpacing:0.5,marginBottom:6}}>
                           {SECTION_ICONS[s.sectionId-1]} {s.section}
                         </div>
-                        <div style={{fontSize:13,fontWeight:700,color:"#f1f5f9",marginBottom:4}}>{s.recommendation}</div>
-                        <div style={{fontSize:12,color:"#64748b",lineHeight:1.5}}>{s.reason}</div>
+                        <div style={{fontSize:13,fontWeight:700,color:"#fef2f2",marginBottom:4,lineHeight:1.4}}>{s.recommendation}</div>
+                        <div style={{fontSize:12,color:"#7f1d1d",lineHeight:1.55}}>{s.reason}</div>
                       </div>
                     ))}
                   </div>
@@ -520,56 +541,60 @@ export default function ValidationPanel({ roomId, roomCode, roomName, onClose, r
             </div>
           )}
 
-          {/* SECTIONS TAB */}
+          {/* ── SECTIONS ───────────────────────────────────────────────── */}
           {activeTab==="sections" && (
-            <div style={{display:"flex",flexDirection:"column",gap:8}}>
+            <div style={{display:"flex",flexDirection:"column",gap:7}}>
               {report.sections.map((s)=>(
                 <div key={s.sectionId} className="rp-sec" style={{
-                  background:"rgba(15,23,42,0.7)",
+                  background:"rgba(10,15,35,0.7)",
                   border:"1px solid rgba(99,102,241,0.1)",
-                  borderRadius:14,overflow:"hidden",transition:"all 0.2s",
+                  borderRadius:14,overflow:"hidden",
+                  transition:"all 0.22s",
+                  boxShadow:"0 2px 16px rgba(0,0,0,0.45)",
                 }}>
-                  {/* Section header */}
                   <button onClick={()=>toggleSection(s.sectionId)} style={{
-                    width:"100%",padding:"16px 20px",
+                    width:"100%",padding:"15px 20px",
                     display:"flex",alignItems:"center",gap:12,
                     background:"none",border:"none",cursor:"pointer",textAlign:"left",
                   }}>
-                    <span style={{fontSize:18,width:26}}>{SECTION_ICONS[s.sectionId-1]}</span>
+                    <span style={{fontSize:17,width:24,flexShrink:0}}>{SECTION_ICONS[s.sectionId-1]}</span>
                     <span style={{flex:1,fontSize:13,fontWeight:700,color:"#e2e8f0"}}>{s.sectionId}. {s.section}</span>
                     {(s.issues?.length||0)>0 && (
-                      <span style={{fontSize:10,fontWeight:700,color:"#f87171",background:"rgba(239,68,68,0.12)",border:"1px solid rgba(239,68,68,0.25)",padding:"2px 9px",borderRadius:99}}>
+                      <span style={{fontSize:9,fontWeight:700,color:"#f87171",background:"rgba(239,68,68,0.1)",border:"1px solid rgba(239,68,68,0.25)",padding:"2px 9px",borderRadius:99,flexShrink:0,letterSpacing:0.3}}>
                         {s.issues.length} issue{s.issues.length>1?"s":""}
                       </span>
                     )}
                     {(s.suggestions?.length||0)>0 && (
-                      <span style={{fontSize:10,fontWeight:700,color:"#818cf8",background:"rgba(99,102,241,0.12)",border:"1px solid rgba(99,102,241,0.25)",padding:"2px 9px",borderRadius:99}}>
+                      <span style={{fontSize:9,fontWeight:700,color:"#818cf8",background:"rgba(99,102,241,0.1)",border:"1px solid rgba(99,102,241,0.25)",padding:"2px 9px",borderRadius:99,flexShrink:0,letterSpacing:0.3}}>
                         {s.suggestions.length} suggestion{s.suggestions.length>1?"s":""}
                       </span>
                     )}
-                    <span style={{fontSize:13,fontWeight:800,color:SC(s.confidence),minWidth:36,textAlign:"right",
-                      textShadow:`0 0 8px ${SC(s.confidence)}55`}}>{s.confidence}%</span>
-                    <span style={{color:"#334155",fontSize:11,marginLeft:4}}>{expanded.has(s.sectionId)?"▲":"▼"}</span>
+                    <span style={{fontSize:13,fontWeight:800,minWidth:36,textAlign:"right",color:SC(s.confidence),flexShrink:0,textShadow:`0 0 10px ${SC(s.confidence)}55`}}>
+                      {s.confidence}%
+                    </span>
+                    <span style={{color:"#1e293b",fontSize:10,marginLeft:2,flexShrink:0}}>{expanded.has(s.sectionId)?"▲":"▼"}</span>
                   </button>
 
-                  {/* Expanded content */}
                   {expanded.has(s.sectionId) && (
                     <div style={{padding:"0 20px 18px",borderTop:"1px solid rgba(99,102,241,0.08)"}}>
-                      <p style={{fontSize:12.5,color:"#64748b",margin:"12px 0 16px",lineHeight:1.7}}>{s.summary}</p>
+                      <p style={{fontSize:12.5,color:"#475569",margin:"12px 0 16px",lineHeight:1.7}}>{s.summary}</p>
 
                       {/* Issues */}
                       {(s.issues?.length||0)>0 && (
                         <div style={{marginBottom:14}}>
-                          <div style={{fontSize:9,letterSpacing:2,color:"#f87171",fontWeight:700,marginBottom:10}}>⚠ ISSUES</div>
+                          <div style={{fontSize:8,letterSpacing:2,color:"#f87171",fontWeight:700,marginBottom:10}}>⚠ ISSUES</div>
                           {s.issues.map((issue,i)=>(
                             <div key={i} style={{
-                              background:"rgba(239,68,68,0.06)",border:"1px solid rgba(239,68,68,0.18)",
-                              borderLeft:"2px solid #ef4444",borderRadius:8,padding:"10px 14px",marginBottom:6,
+                              background:"rgba(239,68,68,0.06)",
+                              border:"1px solid rgba(239,68,68,0.18)",
+                              borderLeft:"2px solid #ef4444",
+                              borderRadius:9,padding:"10px 14px",marginBottom:6,
                             }}>
                               <div style={{fontSize:12,fontWeight:700,color:"#fca5a5",marginBottom:3}}>
-                                {issue.field}{issue.current&&<span style={{fontWeight:400,color:"#475569"}}> — current: <em style={{color:"#94a3b8"}}>{issue.current}</em></span>}
+                                {issue.field}
+                                {issue.current && <span style={{fontWeight:400,color:"#334155"}}> — current: <em style={{color:"#475569"}}>{issue.current}</em></span>}
                               </div>
-                              <div style={{fontSize:12,color:"#f87171",lineHeight:1.5}}>{issue.problem}</div>
+                              <div style={{fontSize:12,color:"#ef4444",lineHeight:1.5}}>{issue.problem}</div>
                             </div>
                           ))}
                         </div>
@@ -578,24 +603,24 @@ export default function ValidationPanel({ roomId, roomCode, roomName, onClose, r
                       {/* Suggestions */}
                       {(s.suggestions?.length||0)>0 && (
                         <div style={{marginBottom:14}}>
-                          <div style={{fontSize:9,letterSpacing:2,color:"#818cf8",fontWeight:700,marginBottom:10}}>💡 SUGGESTIONS</div>
+                          <div style={{fontSize:8,letterSpacing:2,color:"#818cf8",fontWeight:700,marginBottom:10}}>💡 SUGGESTIONS</div>
                           {s.suggestions.map((sg,i)=>{
-                            const p=PB[sg.priority]||PB.Medium;
+                            const p = PRI[sg.priority] || PRI.Medium;
                             return (
                               <div key={i} style={{
-                                background:p.bg,border:`1px solid ${p.border}`,
+                                background:`linear-gradient(${p.g})`,
+                                border:`1px solid ${p.border}`,
                                 borderLeft:`2px solid ${p.dot}`,
-                                borderRadius:8,padding:"10px 14px",marginBottom:6,
+                                borderRadius:9,padding:"11px 14px",marginBottom:6,
+                                boxShadow:`0 0 12px ${p.glow}`,
                               }}>
                                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:8,marginBottom:4}}>
                                   <div style={{fontSize:13,fontWeight:700,color:"#e2e8f0",lineHeight:1.4}}>{sg.recommendation}</div>
-                                  <span style={{fontSize:9,fontWeight:700,color:p.color,
-                                    background:"rgba(0,0,0,0.3)",border:`1px solid ${p.border}`,
-                                    padding:"2px 8px",borderRadius:99,flexShrink:0,letterSpacing:0.5}}>
+                                  <span style={{fontSize:8,fontWeight:700,color:p.label,background:"rgba(0,0,0,0.35)",border:`1px solid ${p.border}`,padding:"2px 8px",borderRadius:99,flexShrink:0,letterSpacing:1}}>
                                     {sg.priority?.toUpperCase()}
                                   </span>
                                 </div>
-                                <div style={{fontSize:12,color:"#64748b",lineHeight:1.5}}>{sg.reason}</div>
+                                <div style={{fontSize:12,color:"#475569",lineHeight:1.55}}>{sg.reason}</div>
                               </div>
                             );
                           })}
@@ -605,15 +630,15 @@ export default function ValidationPanel({ roomId, roomCode, roomName, onClose, r
                       {/* Sources */}
                       {(s.sources?.length||0)>0 && (
                         <div>
-                          <div style={{fontSize:9,letterSpacing:2,color:"#334155",fontWeight:700,marginBottom:8}}>🌐 SOURCES</div>
+                          <div style={{fontSize:8,letterSpacing:2,color:"#1e293b",fontWeight:700,marginBottom:8}}>🌐 SOURCES</div>
                           <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
                             {s.sources.filter(src=>src.url).map((src,i)=>(
                               <a key={i} href={src.url} target="_blank" rel="noopener noreferrer" className="rp-src" style={{
                                 fontSize:10,color:"#6366f1",
-                                background:"rgba(99,102,241,0.08)",border:"1px solid rgba(99,102,241,0.2)",
-                                padding:"3px 11px",borderRadius:99,textDecoration:"none",
+                                background:"rgba(99,102,241,0.07)",border:"1px solid rgba(99,102,241,0.2)",
+                                padding:"3px 12px",borderRadius:99,textDecoration:"none",
                                 maxWidth:220,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",
-                                transition:"all 0.2s",
+                                transition:"all 0.18s",
                               }}>{src.title||src.url}</a>
                             ))}
                           </div>
@@ -626,34 +651,37 @@ export default function ValidationPanel({ roomId, roomCode, roomName, onClose, r
             </div>
           )}
 
-          {/* UPGRADES TAB */}
+          {/* ── UPGRADES ───────────────────────────────────────────────── */}
           {activeTab==="upgrades" && (
-            <div style={{display:"flex",flexDirection:"column",gap:20}}>
+            <div style={{display:"flex",flexDirection:"column",gap:22}}>
               {["High","Medium","Low"].map(priority=>{
-                const items=allSuggestions.filter(s=>s.priority===priority);
+                const items = allSuggestions.filter(s=>s.priority===priority);
                 if(!items.length) return null;
-                const p=PB[priority];
+                const p = PRI[priority];
                 return (
                   <div key={priority}>
                     <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12}}>
-                      <div style={{width:8,height:8,borderRadius:"50%",background:p.dot,boxShadow:`0 0 8px ${p.dot}`}}/>
-                      <div style={{fontSize:9,letterSpacing:2,color:p.color,fontWeight:700}}>
+                      <div style={{width:8,height:8,borderRadius:"50%",background:p.dot,boxShadow:`0 0 10px ${p.dot}aa`}}/>
+                      <div style={{fontSize:8,letterSpacing:3,color:p.label,fontWeight:700}}>
                         {priority.toUpperCase()} PRIORITY — {items.length} ITEM{items.length>1?"S":""}
                       </div>
                     </div>
-                    <div style={{display:"flex",flexDirection:"column",gap:7}}>
+                    <div style={{display:"flex",flexDirection:"column",gap:6}}>
                       {items.map((s,i)=>(
-                        <div key={i} style={{
-                          background:"rgba(15,23,42,0.8)",
-                          border:`1px solid ${p.border}`,borderLeft:`3px solid ${p.dot}`,
+                        <div key={i} className="rp-card" style={{
+                          background:`linear-gradient(${p.g})`,
+                          border:`1px solid ${p.border}`,
+                          borderLeft:`3px solid ${p.dot}`,
                           borderRadius:12,padding:"14px 18px",
-                          animation:`rpSlideIn 0.3s ease both`,animationDelay:`${i*0.04}s`,
+                          boxShadow:`0 0 16px ${p.glow}`,
+                          transition:"all 0.2s",
+                          animation:"rp-slide 0.3s ease both",animationDelay:`${i*0.04}s`,
                         }}>
-                          <div style={{fontSize:9,color:"#334155",fontWeight:700,marginBottom:6,letterSpacing:0.5}}>
+                          <div style={{fontSize:9,color:p.label,fontWeight:700,marginBottom:6,letterSpacing:0.3,opacity:0.8}}>
                             {SECTION_ICONS[s.sectionId-1]} {s.section}{s.field&&` · ${s.field}`}
                           </div>
                           <div style={{fontSize:13,fontWeight:700,color:"#f1f5f9",marginBottom:5,lineHeight:1.4}}>{s.recommendation}</div>
-                          <div style={{fontSize:12,color:"#64748b",lineHeight:1.6}}>{s.reason}</div>
+                          <div style={{fontSize:12,color:"#475569",lineHeight:1.6}}>{s.reason}</div>
                         </div>
                       ))}
                     </div>
@@ -664,40 +692,37 @@ export default function ValidationPanel({ roomId, roomCode, roomName, onClose, r
           )}
         </div>
 
-        {/* ── FOOTER ─────────────────────────────────────────────────── */}
+        {/* ═══ FOOTER ════════════════════════════════════════════════════════ */}
         <div style={{
-          background:"linear-gradient(180deg,#080d1a,#050810)",
-          borderTop:"1px solid rgba(99,102,241,0.1)",
-          padding:"14px 32px",
+          background:"#020508",
+          borderTop:"1px solid rgba(99,102,241,0.08)",
+          padding:"13px 32px",
           display:"flex",justifyContent:"space-between",alignItems:"center",
         }}>
           <div style={{display:"flex",alignItems:"center",gap:8}}>
-            <div style={{width:5,height:5,borderRadius:"50%",background:"#34d399",boxShadow:"0 0 6px #34d399",animation:"rpGlow 2s ease-in-out infinite"}}/>
-            <span style={{fontSize:11,color:"#334155",letterSpacing:0.3}}>
+            <div style={{width:5,height:5,borderRadius:"50%",background:"#10b981",boxShadow:"0 0 7px #10b981",animation:"rp-glow 2s ease-in-out infinite"}}/>
+            <span style={{fontSize:10,color:"#1e293b",letterSpacing:0.3}}>
               Groq Llama 3.3 70B · Tavily Web Search · 13 Agents · {new Date(report.validatedAt).toLocaleTimeString("en-IN")}
             </span>
           </div>
           <div style={{display:"flex",gap:8}}>
-            <button onClick={runValidation} className="rp-btn" style={{
+            <button onClick={runValidation} className="rp-re" style={{
               padding:"8px 16px",
-              background:"rgba(99,102,241,0.1)",color:"#818cf8",
+              background:"rgba(99,102,241,0.07)",color:"#6366f1",
               border:"1px solid rgba(99,102,241,0.2)",borderRadius:8,
-              fontSize:12,fontWeight:600,cursor:"pointer",transition:"all 0.2s",
-              display:"flex",alignItems:"center",gap:6,
-            }}>
-              <span style={{fontSize:11}}>↺</span> Re-validate
-            </button>
-            <button onClick={onClose} className="rp-btn" style={{
+              fontSize:11,fontWeight:600,cursor:"pointer",transition:"all 0.2s",
+              display:"flex",alignItems:"center",gap:5,
+            }}>↺ Re-validate</button>
+            <button onClick={onClose} className="rp-dn" style={{
               padding:"8px 20px",
               background:"linear-gradient(135deg,#6366f1,#7c3aed)",color:"#fff",
-              border:"none",borderRadius:8,
-              fontSize:12,fontWeight:700,cursor:"pointer",transition:"all 0.2s",
-              boxShadow:"0 4px 14px rgba(99,102,241,0.35)",
-            }}>
-              Done ✓
-            </button>
+              border:"none",borderRadius:8,fontSize:11,fontWeight:700,
+              cursor:"pointer",transition:"all 0.2s",
+              boxShadow:"0 4px 16px rgba(99,102,241,0.4)",
+            }}>Done ✓</button>
           </div>
         </div>
+
       </div>
     </div>
   );
