@@ -870,7 +870,7 @@ function LoadingState({ roomName, roomCode }) {
                       {/* Header row */}
                       <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:2 }}>
                         <span style={{
-                          fontSize:8.5, color:"#1e293b", fontWeight:700,
+                          fontSize:8.5, color:"#475569", fontWeight:700,
                           letterSpacing:1.2, fontFamily:"'Syne',sans-serif",
                         }}>AGENT {String(i+1).padStart(2,"0")}</span>
                         {/* Token counter */}
