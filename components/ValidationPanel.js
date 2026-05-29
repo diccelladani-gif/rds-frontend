@@ -874,10 +874,8 @@ function LoadingState({ roomName, roomCode }) {
                           letterSpacing:1.2, fontFamily:"'Syne',sans-serif",
                         }}>AGENT {String(i+1).padStart(2,"0")}</span>
                         {/* Token counter */}
-                        <span key={tokens} style={{
-                          fontSize:8, color:col, fontFamily:"'IBM Plex Sans',monospace",
-                          animation:"vp-token-up 0.25s ease both",
-                          textShadow:`0 0 8px ${col}80`,
+                        <span key={{
+                          fontSize:8, color:"#334155", fontFamily:"'IBM Plex Sans',monospace",
                         }}>{tokens.toLocaleString()}t</span>
                       </div>
 
