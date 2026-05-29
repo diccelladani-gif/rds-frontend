@@ -16,37 +16,20 @@ const AGENT_COLORS = [
 const GLOBAL_STYLES = `
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
 
-  /* All vars scoped to .vp-root — never conflicts with app :root */
+  /* vars scoped to .vp-root only — never conflicts with app :root */
   .vp-root {
-    --vp-void: #020617;
-    --vp-deep: #060d1f;
-    --vp-surface: #0d1b3e;
-    --vp-glass: rgba(13,27,62,0.6);
-    --vp-glass-light: rgba(255,255,255,0.04);
-    --vp-border: rgba(99,102,241,0.18);
-    --vp-border-bright: rgba(99,102,241,0.4);
-    --vp-indigo: #6366f1;
-    --vp-violet: #8b5cf6;
-    --vp-cyan: #22d3ee;
-    --vp-emerald: #10b981;
-    --vp-rose: #f43f5e;
-    --vp-amber: #f59e0b;
-    --vp-text-primary: #f1f5f9;
-    --vp-text-secondary: #94a3b8;
-    --vp-text-muted: #475569;
-    --vp-glow-indigo: rgba(99,102,241,0.35);
-    --vp-glow-violet: rgba(139,92,246,0.35);
+    --vp-void: #020617; --vp-deep: #060d1f; --vp-surface: #0d1b3e;
+    --vp-glass: rgba(13,27,62,0.6); --vp-glass-light: rgba(255,255,255,0.04);
+    --vp-border: rgba(99,102,241,0.18); --vp-border-bright: rgba(99,102,241,0.4);
+    --vp-indigo: #6366f1; --vp-violet: #8b5cf6; --vp-cyan: #22d3ee;
+    --vp-emerald: #10b981; --vp-rose: #f43f5e; --vp-amber: #f59e0b;
+    --vp-text-primary: #f1f5f9; --vp-text-secondary: #94a3b8; --vp-text-muted: #475569;
+    --vp-glow-indigo: rgba(99,102,241,0.35); --vp-glow-violet: rgba(139,92,246,0.35);
     --vp-glow-cyan: rgba(34,211,238,0.25);
     font-family: 'Inter', system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
   }
-
-  /* Reset scoped inside vp-root only — does not affect rest of the page */
-  .vp-root *, .vp-root *::before, .vp-root *::after {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-  }
+  .vp-root *, .vp-root *::before, .vp-root *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   /* ─── ANIMATIONS ─────────────────────────────────────────────────── */
   @keyframes vp-spin        { to { transform: rotate(360deg) } }
@@ -78,17 +61,21 @@ const GLOBAL_STYLES = `
   @keyframes vp-progress-fill { from{width:0} to{width:var(--pw,50%)} }
   @keyframes vp-node-appear { from{transform:scale(0) rotate(-90deg);opacity:0} to{transform:scale(1) rotate(0deg);opacity:1} }
 
-  /* ─── ENHANCED AGENT ACTIVITY KEYFRAMES ─────────────────────────── */
-  @keyframes vp-data-flow    { 0%{stroke-dashoffset:120} 100%{stroke-dashoffset:0} }
-  @keyframes vp-token-count  { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:translateY(0)} }
-  @keyframes vp-border-race  { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
-  @keyframes vp-thought-in   { from{opacity:0;transform:translateX(-6px)} to{opacity:0.85;transform:translateX(0)} }
-  @keyframes vp-progress-bar { from{width:0%} to{width:var(--vp-prog,60%)} }
-  @keyframes vp-ping         { 0%{transform:scale(1);opacity:0.8} 70%{transform:scale(2.2);opacity:0} 100%{transform:scale(2.2);opacity:0} }
-  @keyframes vp-wave         { 0%,100%{transform:scaleY(0.4)} 50%{transform:scaleY(1)} }
-  @keyframes vp-global-fill  { from{width:0%} to{width:var(--vp-gfill,0%)} }
-  @keyframes vp-neural-pulse { 0%,100%{opacity:0.15;r:3} 50%{opacity:0.9;r:5} }
-  @keyframes vp-conn-dash    { to{stroke-dashoffset:-40} }
+  /* ── ULTRA PREMIUM NEW KEYFRAMES ── */
+  @keyframes vp-aurora-1    { 0%,100%{transform:translate(0%,0%) scale(1) rotate(0deg);opacity:0.7} 33%{transform:translate(4%,-6%) scale(1.08) rotate(2deg);opacity:1} 66%{transform:translate(-3%,4%) scale(0.95) rotate(-1.5deg);opacity:0.85} }
+  @keyframes vp-aurora-2    { 0%,100%{transform:translate(0%,0%) scale(1);opacity:0.6} 40%{transform:translate(-5%,3%) scale(1.1);opacity:0.9} 80%{transform:translate(3%,-4%) scale(0.97);opacity:0.75} }
+  @keyframes vp-wave-bar    { 0%,100%{transform:scaleY(0.3)} 50%{transform:scaleY(1)} }
+  @keyframes vp-border-race { 0%{background-position:0% 50%} 100%{background-position:200% 50%} }
+  @keyframes vp-ping        { 0%{transform:scale(1);opacity:0.9} 70%{transform:scale(2.4);opacity:0} 100%{transform:scale(2.4);opacity:0} }
+  @keyframes vp-thought-in  { from{opacity:0;transform:translateX(-8px)} to{opacity:1;transform:translateX(0)} }
+  @keyframes vp-token-up    { from{opacity:0;transform:translateY(3px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes vp-conn-flow   { 0%{stroke-dashoffset:60} 100%{stroke-dashoffset:-60} }
+  @keyframes vp-matrix-col  { 0%{opacity:0;transform:translateY(-100%)} 100%{opacity:1;transform:translateY(100%)} }
+  @keyframes vp-holo-shift  { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }
+  @keyframes vp-card-active { 0%,100%{box-shadow:0 0 0 1px rgba(99,102,241,0.15)} 50%{box-shadow:0 0 0 1px rgba(99,102,241,0.5),0 0 20px rgba(99,102,241,0.15)} }
+  @keyframes vp-orb-drift   { 0%,100%{transform:translate(0,0) scale(1)} 33%{transform:translate(30px,-20px) scale(1.1)} 66%{transform:translate(-20px,25px) scale(0.9)} }
+  @keyframes vp-digit-roll  { from{transform:translateY(-100%);opacity:0} to{transform:translateY(0);opacity:1} }
+  @keyframes vp-spark       { 0%{transform:translate(0,0) scale(1);opacity:1} 100%{transform:translate(var(--sx,20px),var(--sy,-30px)) scale(0);opacity:0} }
 
   /* ─── SCROLLBAR ───────────────────────────────────────────────────── */
   .vp-scroll::-webkit-scrollbar { width: 4px }
@@ -449,23 +436,26 @@ const AGENT_STATUS_POOL = [
 ];
 
 function LoadingState({ roomName, roomCode }) {
-  const [tick, setTick] = useState(0);
-  const [elapsed, setElapsed] = useState(0);
+  const [tick,          setTick]          = useState(0);
+  const [elapsed,       setElapsed]       = useState(0);
   const [agentProgress, setAgentProgress] = useState(() => Array(13).fill(0));
-  const [agentPhase, setAgentPhase] = useState(() => Array(13).fill(0));
-  const [globalProgress, setGlobalProgress] = useState(0);
-  const [thoughtIdx, setThoughtIdx] = useState(0);
-  const [tokenCounts, setTokenCounts] = useState(() => Array(13).fill(0));
-  const [dataPackets, setDataPackets] = useState([]);
+  const [agentPhase,    setAgentPhase]    = useState(() => Array(13).fill(0));
+  const [globalPct,     setGlobalPct]     = useState(0);
+  const [thoughtIdx,    setThoughtIdx]    = useState(0);
+  const [tokenCounts,   setTokenCounts]   = useState(() => Array(13).fill(0));
+  const [webReqs,       setWebReqs]       = useState(0);
+  const [dataPackets,   setDataPackets]   = useState([]);
+  const [activeConns,   setActiveConns]   = useState([]);
+  const [sparks,        setSparks]        = useState([]);
   const startRef = useRef(Date.now());
 
-  const AGENT_PHASES = [
-    "Initialising…", "Scanning fields…", "Web-searching…",
-    "Cross-validating…", "Analysing trends…", "Querying FGI…",
-    "Checking compliance…", "Synthesising…", "Generating report…", "✓ Complete"
+  const PHASES = [
+    "Initialising…","Scanning fields…","Web-searching…",
+    "Cross-validating…","Analysing trends…","Querying FGI…",
+    "Checking compliance…","Synthesising…","Generating report…"
   ];
 
-  const AI_THOUGHTS = [
+  const THOUGHTS = [
     "Comparing net area against FGI 2022 Table 2.1-1 minimum requirements…",
     "Evaluating infection risk category against ASHRAE 170 ventilation targets…",
     "Cross-referencing door width with accessibility compliance standards…",
@@ -478,425 +468,554 @@ function LoadingState({ roomName, roomCode }) {
     "Correlating stakeholder groups with staffing density norms…",
     "Verifying radiation shielding spec against room typology risk level…",
     "Benchmarking furniture layout against ergonomic workflow guidelines…",
+    "Validating MEP zoning against infection control pressure requirements…",
+    "Assessing waste stream classifications against HTM 07-01 guidance…",
   ];
 
-  useEffect(() => {
-    const t = setInterval(() => setTick(n => n + 1), 2800);
-    return () => clearInterval(t);
-  }, []);
-
-  // Elapsed timer
-  useEffect(() => {
-    const t = setInterval(() => setElapsed(Math.floor((Date.now() - startRef.current) / 1000)), 1000);
-    return () => clearInterval(t);
-  }, []);
-
-  // Cycle AI thoughts
-  useEffect(() => {
-    const t = setInterval(() => setThoughtIdx(n => (n + 1) % AI_THOUGHTS.length), 3200);
-    return () => clearInterval(t);
-  }, []);
-
-  // Animate agent progress bars independently
-  useEffect(() => {
-    const intervals = Array(13).fill(null).map((_, i) => {
-      return setInterval(() => {
-        setAgentProgress(prev => {
-          const next = [...prev];
-          const increment = 0.8 + Math.random() * 1.4;
-          next[i] = Math.min(98, next[i] + increment);
-          return next;
-        });
-        setTokenCounts(prev => {
-          const next = [...prev];
-          next[i] = next[i] + Math.floor(Math.random() * 18 + 4);
-          return next;
-        });
-      }, 280 + i * 40);
-    });
-    return () => intervals.forEach(clearInterval);
-  }, []);
-
-  // Phase progression per agent
-  useEffect(() => {
-    const intervals = Array(13).fill(null).map((_, i) => {
-      return setInterval(() => {
-        setAgentPhase(prev => {
-          const next = [...prev];
-          if (next[i] < AGENT_PHASES.length - 2) next[i] += 1;
-          return next;
-        });
-      }, 2600 + i * 180);
-    });
-    return () => intervals.forEach(clearInterval);
-  }, []);
-
+  // Tick
+  useEffect(() => { const t = setInterval(() => setTick(n => n+1), 2800); return () => clearInterval(t); }, []);
+  // Clock
+  useEffect(() => { const t = setInterval(() => setElapsed(Math.floor((Date.now()-startRef.current)/1000)), 1000); return () => clearInterval(t); }, []);
+  // Thoughts
+  useEffect(() => { const t = setInterval(() => setThoughtIdx(n => (n+1)%THOUGHTS.length), 3400); return () => clearInterval(t); }, []);
   // Global progress
+  useEffect(() => { const t = setInterval(() => setGlobalPct(p => Math.min(97, p + 0.38 + Math.random()*0.25)), 180); return () => clearInterval(t); }, []);
+  // Web requests counter
+  useEffect(() => { const t = setInterval(() => setWebReqs(n => n + (Math.random() > 0.6 ? 1 : 0)), 420); return () => clearInterval(t); }, []);
+  // Per-agent progress + tokens
   useEffect(() => {
-    const t = setInterval(() => {
-      setGlobalProgress(prev => Math.min(97, prev + 0.45 + Math.random() * 0.3));
-    }, 200);
-    return () => clearInterval(t);
+    const ivs = Array(13).fill(null).map((_, i) => setInterval(() => {
+      setAgentProgress(prev => { const n=[...prev]; n[i]=Math.min(97,n[i]+0.7+Math.random()*1.1); return n; });
+      setTokenCounts(prev => { const n=[...prev]; n[i]+=Math.floor(Math.random()*22+5); return n; });
+    }, 260 + i*35));
+    return () => ivs.forEach(clearInterval);
   }, []);
-
-  // Data packets flying between agents
+  // Agent phase
+  useEffect(() => {
+    const ivs = Array(13).fill(null).map((_, i) => setInterval(() => {
+      setAgentPhase(prev => { const n=[...prev]; if(n[i]<PHASES.length-1) n[i]+=1; return n; });
+    }, 2800 + i*200));
+    return () => ivs.forEach(clearInterval);
+  }, []);
+  // Data packets between agents
   useEffect(() => {
     const t = setInterval(() => {
-      const from = Math.floor(Math.random() * 13);
-      const to = Math.floor(Math.random() * 13);
-      if (from !== to) {
-        const id = Date.now();
-        setDataPackets(prev => [...prev.slice(-6), { id, from, to }]);
-        setTimeout(() => setDataPackets(prev => prev.filter(p => p.id !== id)), 1800);
+      const from=Math.floor(Math.random()*13), to=Math.floor(Math.random()*13);
+      if(from!==to){
+        const id=Date.now();
+        setDataPackets(prev=>[...prev.slice(-8),{id,from,to}]);
+        setTimeout(()=>setDataPackets(prev=>prev.filter(p=>p.id!==id)),2000);
       }
-    }, 900);
+    }, 700);
+    return () => clearInterval(t);
+  }, []);
+  // Active connections for SVG lines
+  useEffect(() => {
+    const t = setInterval(() => {
+      const pairs = [];
+      for(let i=0;i<3;i++){
+        const a=Math.floor(Math.random()*13), b=Math.floor(Math.random()*13);
+        if(a!==b) pairs.push({a,b,id:Date.now()+i,col:AGENT_COLORS[a]});
+      }
+      setActiveConns(pairs);
+    }, 1200);
+    return () => clearInterval(t);
+  }, []);
+  // Sparks
+  useEffect(() => {
+    const t = setInterval(() => {
+      const agentIdx=Math.floor(Math.random()*13);
+      const id=Date.now();
+      setSparks(prev=>[...prev.slice(-10),{id,agentIdx}]);
+      setTimeout(()=>setSparks(prev=>prev.filter(s=>s.id!==id)),800);
+    }, 600);
     return () => clearInterval(t);
   }, []);
 
-  const formatTime = (s) => `${String(Math.floor(s / 60)).padStart(2,"0")}:${String(s % 60).padStart(2,"0")}`;
+  const fmt = s => `${String(Math.floor(s/60)).padStart(2,"0")}:${String(s%60).padStart(2,"0")}`;
+  const totalTokens = tokenCounts.reduce((a,b)=>a+b,0);
+
+  // Grid positions for the 13 agent cards (for SVG overlay)
+  // 3-col grid: col widths ~33%, rows ~152px each
+  const getCardCenter = (i) => {
+    const col = i % 3, row = Math.floor(i / 3);
+    return { x: col * 33.3 + 16.6, y: row * 160 + 76 };
+  };
 
   return (
     <div className="vp-root" style={{
-      position: "fixed", inset: 0, zIndex: 9999,
-      background: "linear-gradient(145deg,#020617 0%,#0d1b3e 45%,#0f0a2e 100%)",
-      display: "flex", alignItems: "flex-start", justifyContent: "center",
-      overflowY: "auto", fontFamily: "'DM Sans', system-ui, sans-serif",
+      position:"fixed", inset:0, zIndex:9999,
+      background:"#020617",
+      display:"flex", alignItems:"flex-start", justifyContent:"center",
+      overflowY:"auto", fontFamily:"'DM Sans',system-ui,sans-serif",
     }}>
-      <GridBg />
-      <StarField count={30} />
-      <ScanLines />
 
-      {/* Vertical scan */}
+      {/* ── AURORA BACKGROUND ─────────────────────────────────────────── */}
+      <div style={{ position:"fixed", inset:0, overflow:"hidden", pointerEvents:"none", zIndex:0 }}>
+        {/* Base gradient */}
+        <div style={{ position:"absolute", inset:0, background:"linear-gradient(145deg,#020617 0%,#080d28 40%,#0c0a2e 100%)" }} />
+        {/* Aurora blob 1 */}
+        <div style={{
+          position:"absolute", width:"70%", height:"60%", top:"-20%", left:"-15%",
+          background:"radial-gradient(ellipse,rgba(99,102,241,0.28) 0%,rgba(99,102,241,0.08) 40%,transparent 70%)",
+          filter:"blur(60px)", animation:"vp-aurora-1 18s ease-in-out infinite alternate",
+        }} />
+        {/* Aurora blob 2 */}
+        <div style={{
+          position:"absolute", width:"65%", height:"55%", bottom:"-15%", right:"-10%",
+          background:"radial-gradient(ellipse,rgba(34,211,238,0.22) 0%,rgba(139,92,246,0.12) 45%,transparent 70%)",
+          filter:"blur(55px)", animation:"vp-aurora-2 22s ease-in-out infinite alternate",
+        }} />
+        {/* Aurora blob 3 */}
+        <div style={{
+          position:"absolute", width:"50%", height:"45%", top:"30%", left:"25%",
+          background:"radial-gradient(ellipse,rgba(139,92,246,0.18) 0%,transparent 65%)",
+          filter:"blur(50px)", animation:"vp-orb-drift 15s ease-in-out infinite alternate",
+        }} />
+        <GridBg />
+        <StarField count={40} />
+
+        {/* Matrix rain columns */}
+        {[...Array(8)].map((_,i)=>(
+          <div key={i} style={{
+            position:"absolute", top:0, bottom:0, width:1,
+            left:`${8+i*12}%`,
+            background:`linear-gradient(180deg,transparent,${AGENT_COLORS[i]}22,transparent)`,
+            animation:`vp-matrix-col ${3+i*0.4}s linear infinite`,
+            animationDelay:`${i*0.5}s`,
+            opacity:0.4,
+          }} />
+        ))}
+      </div>
+
+      {/* Horizontal scan line */}
       <div style={{
-        position: "fixed", top: 0, bottom: 0, width: 2, pointerEvents: "none",
-        background: "linear-gradient(180deg,transparent,rgba(34,211,238,0.3),transparent)",
-        animation: "vp-scan-v 6s linear infinite", zIndex: 1,
+        position:"fixed", left:0, right:0, height:2, pointerEvents:"none",
+        background:"linear-gradient(90deg,transparent,rgba(99,102,241,0.6),rgba(34,211,238,0.5),transparent)",
+        animation:"vp-scan-h 4s linear infinite", zIndex:2,
+      }} />
+      {/* Vertical scan line */}
+      <div style={{
+        position:"fixed", top:0, bottom:0, width:2, pointerEvents:"none",
+        background:"linear-gradient(180deg,transparent,rgba(34,211,238,0.35),transparent)",
+        animation:"vp-scan-v 7s linear infinite", zIndex:2,
       }} />
 
+      {/* ── MAIN CONTENT ──────────────────────────────────────────────── */}
       <div style={{
-        position: "relative", zIndex: 10,
-        width: "100%", maxWidth: 820,
-        padding: "36px 20px 48px",
-        display: "flex", flexDirection: "column", alignItems: "center", gap: 22,
-        animation: "vp-fade-up 0.5s ease both",
+        position:"relative", zIndex:10, width:"100%", maxWidth:860,
+        padding:"36px 20px 56px",
+        display:"flex", flexDirection:"column", alignItems:"center", gap:18,
+        animation:"vp-fade-up 0.5s ease both",
       }}>
 
-        {/* Header — unchanged */}
-        <div style={{ textAlign: "center" }}>
-          <AIOrb size={130} />
-          <div style={{ marginTop: 20 }}>
+        {/* ── HEADER ── */}
+        <div style={{ textAlign:"center", position:"relative" }}>
+          {/* Glow behind orb */}
+          <div style={{
+            position:"absolute", top:"50%", left:"50%",
+            transform:"translate(-50%,-50%)",
+            width:200, height:200, borderRadius:"50%",
+            background:"radial-gradient(circle,rgba(99,102,241,0.25) 0%,transparent 70%)",
+            filter:"blur(24px)", pointerEvents:"none",
+            animation:"vp-glow-pulse 3s ease-in-out infinite",
+          }} />
+          <div style={{ position:"relative" }}><AIOrb size={130} /></div>
+          <div style={{ marginTop:20 }}>
             <div style={{
-              fontSize: 9, letterSpacing: 5, color: "#6366f1",
-              fontWeight: 700, marginBottom: 8, fontFamily: "'Syne', sans-serif",
-              animation: "vp-flicker 3s ease-in-out infinite",
-            }}>
-              AI VALIDATION ENGINE · ACTIVE
-            </div>
+              fontSize:9, letterSpacing:5, color:"#6366f1",
+              fontWeight:700, marginBottom:8, fontFamily:"'Syne',sans-serif",
+              animation:"vp-flicker 3s ease-in-out infinite",
+            }}>AI VALIDATION ENGINE · ACTIVE</div>
             <h2 style={{
-              fontSize: 22, fontWeight: 800, color: "#f1f5f9", marginBottom: 6,
-              fontFamily: "'Syne', sans-serif",
-            }}>
-              Validating Room Data Sheet
-            </h2>
-            <p style={{ fontSize: 12, color: "#475569", lineHeight: 1.8 }}>
+              fontSize:24, fontWeight:800, color:"#f1f5f9", marginBottom:6,
+              fontFamily:"'Syne',sans-serif",
+              background:"linear-gradient(90deg,#e0e7ff,#a5b4fc,#c4b5fd,#7dd3fc)",
+              WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent",
+              backgroundSize:"300% 100%", animation:"vp-holo-shift 4s ease infinite",
+            }}>Validating Room Data Sheet</h2>
+            <p style={{ fontSize:12, color:"#334155", lineHeight:1.8 }}>
               13 specialized agents · parallel execution · live web search
             </p>
           </div>
         </div>
 
-        {/* ── NEW: Global progress bar ───────────────────────────────── */}
-        <div style={{ width: "100%", padding: "0 2px" }}>
-          <div style={{
-            display: "flex", justifyContent: "space-between", alignItems: "center",
-            marginBottom: 8,
-          }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              {/* Waveform bars */}
-              {[0.5,1,0.7,1,0.4,0.8,0.6,1,0.5,0.9].map((h, i) => (
+        {/* ── GLOBAL PROGRESS BAR ── */}
+        <div style={{ width:"100%", padding:"16px 18px 14px",
+          background:"rgba(6,13,31,0.7)", borderRadius:14,
+          border:"1px solid rgba(99,102,241,0.14)",
+          backdropFilter:"blur(16px)",
+        }}>
+          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10 }}>
+            <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+              {/* Waveform */}
+              {[0.5,1,0.65,1,0.4,0.85,0.55,1,0.45,0.9,0.7,1].map((h,i)=>(
                 <div key={i} style={{
-                  width: 3, height: 14, borderRadius: 2,
-                  background: `rgba(99,102,241,${0.4 + h * 0.5})`,
-                  transformOrigin: "bottom",
-                  animation: `vp-wave ${0.6 + i * 0.07}s ease-in-out infinite`,
-                  animationDelay: `${i * 0.06}s`,
+                  width:3, height:14, borderRadius:2,
+                  background:`rgba(99,102,241,${0.3+h*0.6})`,
+                  transformOrigin:"center",
+                  animation:`vp-wave-bar ${0.55+i*0.06}s ease-in-out infinite`,
+                  animationDelay:`${i*0.055}s`,
                 }} />
               ))}
-              <span style={{ fontSize: 10, color: "#6366f1", fontWeight: 700, letterSpacing: 1, fontFamily: "'Syne', sans-serif", marginLeft: 4 }}>
+              <span style={{ fontSize:9, color:"#6366f1", fontWeight:700, letterSpacing:1.5, fontFamily:"'Syne',sans-serif", marginLeft:6 }}>
                 PARALLEL EXECUTION
               </span>
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-              <span style={{ fontSize: 10, color: "#334155", fontFamily: "'Syne', sans-serif", letterSpacing: 0.5 }}>
-                ⏱ {formatTime(elapsed)}
-              </span>
+            <div style={{ display:"flex", alignItems:"center", gap:16 }}>
+              <span style={{ fontSize:10, color:"#1e293b", fontFamily:"'Syne',sans-serif" }}>⏱ {fmt(elapsed)}</span>
               <span style={{
-                fontSize: 12, fontWeight: 800, fontFamily: "'Syne', sans-serif",
-                background: "linear-gradient(90deg,#6366f1,#22d3ee)",
-                WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
-              }}>
-                {Math.floor(globalProgress)}%
-              </span>
+                fontSize:15, fontWeight:800, fontFamily:"'Syne',sans-serif",
+                background:"linear-gradient(90deg,#818cf8,#22d3ee)",
+                WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent",
+              }}>{Math.floor(globalPct)}%</span>
             </div>
           </div>
           {/* Track */}
-          <div style={{
-            height: 6, background: "rgba(255,255,255,0.05)", borderRadius: 99,
-            overflow: "hidden", position: "relative",
-          }}>
+          <div style={{ height:7, background:"rgba(255,255,255,0.04)", borderRadius:99, overflow:"visible", position:"relative" }}>
             <div style={{
-              height: "100%", borderRadius: 99,
-              background: "linear-gradient(90deg,#6366f1,#8b5cf6,#22d3ee,#10b981)",
-              backgroundSize: "300% 100%",
-              width: `${globalProgress}%`,
-              transition: "width 0.3s ease",
-              animation: "vp-border-race 3s ease infinite",
-              boxShadow: "0 0 12px rgba(99,102,241,0.6), 0 0 24px rgba(34,211,238,0.3)",
-            }} />
-            {/* Leading orb */}
-            <div style={{
-              position: "absolute", top: "50%", left: `${globalProgress}%`,
-              transform: "translate(-50%,-50%)",
-              width: 10, height: 10, borderRadius: "50%",
-              background: "#fff",
-              boxShadow: "0 0 8px rgba(99,102,241,1), 0 0 20px rgba(34,211,238,0.8)",
-              transition: "left 0.3s ease",
-            }} />
+              height:"100%", borderRadius:99, position:"relative",
+              background:"linear-gradient(90deg,#6366f1,#8b5cf6,#22d3ee,#34d399)",
+              backgroundSize:"300% 100%",
+              width:`${globalPct}%`, transition:"width 0.3s ease",
+              animation:"vp-holo-shift 3s ease infinite",
+              boxShadow:"0 0 14px rgba(99,102,241,0.7),0 0 28px rgba(34,211,238,0.35)",
+            }}>
+              {/* Leading bead */}
+              <div style={{
+                position:"absolute", right:-5, top:"50%", transform:"translateY(-50%)",
+                width:12, height:12, borderRadius:"50%",
+                background:"#fff",
+                boxShadow:"0 0 8px rgba(99,102,241,1),0 0 20px rgba(34,211,238,0.9),0 0 36px rgba(99,102,241,0.5)",
+                animation:"vp-glow-pulse 1s ease-in-out infinite",
+              }} />
+            </div>
+            {/* Tick marks */}
+            {[25,50,75].map(p=>(
+              <div key={p} style={{
+                position:"absolute", top:-3, left:`${p}%`,
+                width:1, height:13,
+                background:`rgba(255,255,255,${globalPct>p?0.3:0.08})`,
+                transition:"background 0.5s ease",
+              }} />
+            ))}
+          </div>
+          {/* Section micro-markers */}
+          <div style={{ display:"flex", gap:2, marginTop:6 }}>
+            {Array(13).fill(null).map((_,i)=>(
+              <div key={i} style={{
+                flex:1, height:3, borderRadius:99,
+                background: agentProgress[i] > 80
+                  ? `linear-gradient(90deg,${AGENT_COLORS[i]},${AGENT_COLORS[i]}aa)`
+                  : agentProgress[i] > 20
+                  ? `${AGENT_COLORS[i]}55`
+                  : "rgba(255,255,255,0.05)",
+                transition:"background 0.6s ease",
+                boxShadow: agentProgress[i]>80 ? `0 0 4px ${AGENT_COLORS[i]}80` : "none",
+              }} />
+            ))}
           </div>
         </div>
 
-        {/* ── NEW: Live AI thought stream ────────────────────────────── */}
+        {/* ── LIVE AI THOUGHT STREAM ── */}
         <div style={{
-          width: "100%",
-          background: "rgba(6,13,31,0.6)",
-          border: "1px solid rgba(99,102,241,0.12)",
-          borderRadius: 10, padding: "10px 16px",
-          display: "flex", alignItems: "center", gap: 10,
-          backdropFilter: "blur(8px)",
-          overflow: "hidden",
+          width:"100%", padding:"11px 16px",
+          background:"rgba(4,9,22,0.75)",
+          border:"1px solid rgba(34,211,238,0.12)",
+          borderRadius:10, display:"flex", alignItems:"center", gap:10,
+          backdropFilter:"blur(12px)", overflow:"hidden", position:"relative",
         }}>
-          {/* Animated brain icon */}
+          {/* Scanline overlay */}
           <div style={{
-            fontSize: 14, flexShrink: 0,
-            animation: "vp-pulse 1.5s ease-in-out infinite",
-          }}>🧠</div>
-          {/* Cursor blink */}
-          <div style={{
-            width: 6, height: 6, borderRadius: "50%", flexShrink: 0,
-            background: "#22d3ee",
-            boxShadow: "0 0 8px #22d3ee",
-            animation: "vp-glow-pulse 0.8s ease-in-out infinite",
+            position:"absolute", inset:0, pointerEvents:"none",
+            background:"repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(34,211,238,0.015) 2px,rgba(34,211,238,0.015) 3px)",
           }} />
+          <div style={{ fontSize:15, flexShrink:0, animation:"vp-pulse 1.8s ease-in-out infinite" }}>🧠</div>
+          {/* Blinking cursor */}
           <div style={{
-            fontSize: 10.5, color: "#94a3b8", flex: 1,
-            fontFamily: "'IBM Plex Sans', monospace",
-            whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
-            animation: "vp-thought-in 0.4s ease both",
-            key: thoughtIdx,
-          }}>
-            {AI_THOUGHTS[thoughtIdx]}
-          </div>
+            width:7, height:7, borderRadius:"50%", flexShrink:0,
+            background:"#22d3ee", boxShadow:"0 0 10px #22d3ee",
+            animation:"vp-glow-pulse 0.7s ease-in-out infinite",
+          }} />
+          <div key={thoughtIdx} style={{
+            fontSize:10.5, color:"#64748b", flex:1,
+            fontFamily:"'IBM Plex Sans',monospace",
+            whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis",
+            animation:"vp-thought-in 0.35s ease both",
+          }}>{THOUGHTS[thoughtIdx]}</div>
+          {/* LIVE badge */}
           <div style={{
-            fontSize: 9, color: "#1e293b", fontFamily: "'Syne', sans-serif",
-            letterSpacing: 1, flexShrink: 0,
+            fontSize:8, fontWeight:700, color:"#22d3ee",
+            border:"1px solid rgba(34,211,238,0.3)",
+            borderRadius:4, padding:"2px 6px",
+            fontFamily:"'Syne',sans-serif", letterSpacing:1.5,
+            flexShrink:0, animation:"vp-flicker 2s ease-in-out infinite",
           }}>LIVE</div>
         </div>
 
-        {/* Agent grid — enhanced */}
-        <div style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fill,minmax(220px,1fr))",
-          gap: 8, width: "100%",
-        }}>
-          {SECTIONS_LIST.map((sec, i) => {
-            const col = AGENT_COLORS[i];
-            const statusIdx = (tick + i) % AGENT_STATUS_POOL.length;
-            const prog = agentProgress[i];
-            const phase = agentPhase[i];
-            const tokens = tokenCounts[i];
-            const isActive = phase < AGENT_PHASES.length - 1;
-            const hasPacket = dataPackets.some(p => p.from === i || p.to === i);
+        {/* ── AGENT GRID WITH SVG CONNECTION LAYER ── */}
+        <div style={{ width:"100%", position:"relative" }}>
 
-            return (
-              <div key={i} style={{
-                background: hasPacket
-                  ? `rgba(6,13,31,0.85)`
-                  : "rgba(6,13,31,0.7)",
-                border: hasPacket
-                  ? `1px solid ${col}55`
-                  : `1px solid ${col}22`,
-                borderRadius: 12, padding: "12px 14px",
-                position: "relative", overflow: "hidden",
-                backdropFilter: "blur(10px)",
-                animation: `vp-pop 0.45s ease both`,
-                animationDelay: `${i * 0.05}s`,
-                boxShadow: hasPacket
-                  ? `0 4px 24px ${col}22, 0 0 0 1px ${col}22, inset 0 1px 0 rgba(255,255,255,0.05)`
-                  : `0 4px 20px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.03)`,
-                transition: "border-color 0.3s ease, box-shadow 0.3s ease",
-              }}>
-                {/* Existing animated bottom bar */}
-                <div style={{
-                  position: "absolute", bottom: 0, left: 0, height: 2,
-                  background: `linear-gradient(90deg,${col},transparent)`,
-                  animation: `vp-bar-load ${2.2 + i * 0.18}s ease-in-out infinite alternate`,
-                  animationDelay: `${i * 0.08}s`,
-                  "--w": "100%",
-                }} />
+          {/* SVG connection lines overlay */}
+          <svg style={{
+            position:"absolute", inset:0, width:"100%", height:"100%",
+            pointerEvents:"none", zIndex:5, overflow:"visible",
+          }}>
+            {activeConns.map(({a,b,id,col})=>{
+              const ca=getCardCenter(a), cb=getCardCenter(b);
+              const mx=(ca.x+cb.x)/2, my=(ca.y+cb.y)/2-8;
+              return (
+                <g key={id}>
+                  <path
+                    d={`M ${ca.x}% ${ca.y} Q ${mx}% ${my} ${cb.x}% ${cb.y}`}
+                    fill="none" stroke={col} strokeWidth="1.2"
+                    strokeOpacity="0.35" strokeDasharray="6 4"
+                    style={{ animation:"vp-conn-flow 1.2s linear infinite" }}
+                  />
+                  {/* Moving dot on path */}
+                  <circle r="3" fill={col} opacity="0.8"
+                    style={{ filter:`drop-shadow(0 0 4px ${col})` }}>
+                    <animateMotion dur="1.2s" repeatCount="indefinite"
+                      path={`M ${ca.x * 8.6} ${ca.y} Q ${mx * 8.6} ${my} ${cb.x * 8.6} ${cb.y}`} />
+                  </circle>
+                </g>
+              );
+            })}
+          </svg>
 
-                {/* ── NEW: Progress bar track ── */}
-                <div style={{
-                  position: "absolute", top: 0, left: 0, right: 0, height: 2,
-                  background: "rgba(255,255,255,0.04)",
+          {/* Grid */}
+          <div style={{
+            display:"grid",
+            gridTemplateColumns:"repeat(3,1fr)",
+            gap:8,
+          }}>
+            {SECTIONS_LIST.map((sec,i)=>{
+              const col = AGENT_COLORS[i];
+              const prog = agentProgress[i];
+              const phase = agentPhase[i];
+              const tokens = tokenCounts[i];
+              const hasPacket = dataPackets.some(p=>p.from===i||p.to===i);
+              const hasSpark = sparks.some(s=>s.agentIdx===i);
+              const isNearDone = prog > 85;
+
+              return (
+                <div key={i} style={{
+                  background: hasPacket
+                    ? `linear-gradient(135deg,rgba(6,13,31,0.95),rgba(${parseInt(col.slice(1,3),16)},${parseInt(col.slice(3,5),16)},${parseInt(col.slice(5,7),16)},0.08))`
+                    : "rgba(5,11,26,0.8)",
+                  border:`1px solid ${hasPacket ? col+"50" : col+"1a"}`,
+                  borderRadius:12, padding:"13px 14px",
+                  position:"relative", overflow:"hidden",
+                  backdropFilter:"blur(12px)",
+                  animation:`vp-pop 0.45s ease both`,
+                  animationDelay:`${i*0.045}s`,
+                  transition:"border-color 0.4s ease, box-shadow 0.4s ease, background 0.4s ease",
+                  boxShadow: hasPacket
+                    ? `0 0 0 1px ${col}40, 0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.04)`
+                    : `0 4px 20px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.02)`,
                 }}>
-                  <div style={{
-                    height: "100%", borderRadius: "2px 0 0 0",
-                    background: `linear-gradient(90deg,${col},${col}88)`,
-                    width: `${prog}%`,
-                    transition: "width 0.4s ease",
-                    boxShadow: `0 0 6px ${col}80`,
-                  }} />
-                </div>
-
-                {/* ── NEW: Data packet ping indicator ── */}
-                {hasPacket && (
-                  <div style={{
-                    position: "absolute", top: 8, right: 8,
-                    width: 6, height: 6, borderRadius: "50%",
-                    background: col, zIndex: 2,
-                  }}>
+                  {/* Top progress bar */}
+                  <div style={{ position:"absolute", top:0, left:0, right:0, height:2, background:"rgba(255,255,255,0.03)" }}>
                     <div style={{
-                      position: "absolute", inset: 0, borderRadius: "50%",
-                      background: col,
-                      animation: "vp-ping 1s ease-out infinite",
+                      height:"100%", borderRadius:"2px 0 0 0",
+                      width:`${prog}%`, transition:"width 0.4s ease",
+                      background:`linear-gradient(90deg,${col}cc,${col})`,
+                      boxShadow:`0 0 6px ${col}90`,
                     }} />
                   </div>
-                )}
-
-                <div style={{ display: "flex", alignItems: "flex-start", gap: 9 }}>
-                  {/* Existing pulse dot */}
+                  {/* Bottom accent */}
                   <div style={{
-                    width: 8, height: 8, borderRadius: "50%", flexShrink: 0, marginTop: 3,
-                    background: col,
-                    boxShadow: `0 0 8px ${col}`,
-                    animation: `vp-pulse ${1.3 + i * 0.09}s ease-in-out infinite`,
+                    position:"absolute", bottom:0, left:0, height:2,
+                    background:`linear-gradient(90deg,${col},transparent)`,
+                    animation:`vp-bar-load ${2.2+i*0.18}s ease-in-out infinite alternate`,
+                    "--w":"100%",
                   }} />
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                      <div style={{
-                        fontSize: 9, color: "#334155", fontWeight: 700,
-                        letterSpacing: 1, fontFamily: "'Syne', sans-serif",
-                      }}>
-                        AGENT {String(i + 1).padStart(2, "0")}
+                  {/* Holographic corner shine */}
+                  <div style={{
+                    position:"absolute", top:0, right:0, width:50, height:50,
+                    background:`radial-gradient(circle at top right,${col}18,transparent 70%)`,
+                    pointerEvents:"none",
+                  }} />
+                  {/* Data packet ping */}
+                  {hasPacket && (
+                    <div style={{ position:"absolute", top:8, right:8, width:8, height:8, zIndex:2 }}>
+                      <div style={{ position:"absolute", inset:0, borderRadius:"50%", background:col }} />
+                      <div style={{ position:"absolute", inset:0, borderRadius:"50%", background:col, animation:"vp-ping 0.9s ease-out infinite" }} />
+                    </div>
+                  )}
+                  {/* Spark burst */}
+                  {hasSpark && [0,1,2].map(s=>(
+                    <div key={s} style={{
+                      position:"absolute", top:"40%", left:"50%",
+                      width:3, height:3, borderRadius:"50%", background:col,
+                      boxShadow:`0 0 4px ${col}`,
+                      animation:"vp-spark 0.8s ease-out forwards",
+                      "--sx":`${(s-1)*18}px`, "--sy":`${-20-s*8}px`,
+                      animationDelay:`${s*0.06}s`,
+                      pointerEvents:"none",
+                    }} />
+                  ))}
+
+                  <div style={{ display:"flex", alignItems:"flex-start", gap:9 }}>
+                    {/* Status dot */}
+                    <div style={{
+                      width:8, height:8, borderRadius:"50%", flexShrink:0, marginTop:4,
+                      background: isNearDone ? "#34d399" : col,
+                      boxShadow:`0 0 ${isNearDone?10:7}px ${isNearDone?"#34d399":col}`,
+                      animation:`vp-pulse ${1.2+i*0.09}s ease-in-out infinite`,
+                      transition:"background 0.5s ease, box-shadow 0.5s ease",
+                    }} />
+
+                    <div style={{ flex:1, minWidth:0 }}>
+                      {/* Header row */}
+                      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:2 }}>
+                        <span style={{
+                          fontSize:8.5, color:"#1e293b", fontWeight:700,
+                          letterSpacing:1.2, fontFamily:"'Syne',sans-serif",
+                        }}>AGENT {String(i+1).padStart(2,"0")}</span>
+                        {/* Token counter */}
+                        <span key={tokens} style={{
+                          fontSize:8, color:col, fontFamily:"'IBM Plex Sans',monospace",
+                          animation:"vp-token-up 0.25s ease both",
+                          textShadow:`0 0 8px ${col}80`,
+                        }}>{tokens.toLocaleString()}t</span>
                       </div>
-                      {/* ── NEW: Token counter ── */}
+
+                      {/* Section name */}
                       <div style={{
-                        fontSize: 8, color: col, fontFamily: "'IBM Plex Sans', monospace",
-                        opacity: 0.7, letterSpacing: 0.3,
-                        animation: "vp-token-count 0.3s ease both",
+                        fontSize:11, fontWeight:700, color:"#cbd5e1",
+                        lineHeight:1.3, whiteSpace:"nowrap",
+                        overflow:"hidden", textOverflow:"ellipsis",
+                        marginBottom:3,
+                      }}>{SECTION_ICONS[i]} {sec}</div>
+
+                      {/* Phase */}
+                      <div style={{
+                        fontSize:9, color:col, letterSpacing:0.2,
+                        animation:`vp-tick ${1.6+i*0.1}s ease-in-out infinite`,
+                        animationDelay:`${i*0.06}s`,
+                        display:"flex", alignItems:"center", gap:4,
                       }}>
-                        {tokens.toLocaleString()}t
+                        <span style={{ animation:`vp-spin ${1+i*0.1}s linear infinite`, display:"inline-block", fontSize:8 }}>◈</span>
+                        {PHASES[phase]}
                       </div>
-                    </div>
 
-                    <div style={{
-                      fontSize: 11, color: "#cbd5e1", fontWeight: 600,
-                      lineHeight: 1.3, whiteSpace: "nowrap",
-                      overflow: "hidden", textOverflow: "ellipsis",
-                      marginTop: 2,
-                    }}>
-                      {SECTION_ICONS[i]} {sec}
-                    </div>
+                      {/* Progress bar */}
+                      <div style={{ marginTop:7, height:3, background:"rgba(255,255,255,0.05)", borderRadius:99, overflow:"hidden", position:"relative" }}>
+                        <div style={{
+                          height:"100%", borderRadius:99,
+                          background:`linear-gradient(90deg,${col}99,${col})`,
+                          width:`${prog}%`, transition:"width 0.35s ease",
+                          boxShadow:`0 0 5px ${col}70`,
+                          position:"relative", overflow:"hidden",
+                        }}>
+                          {/* Shimmer on bar */}
+                          <div style={{
+                            position:"absolute", inset:0,
+                            background:"linear-gradient(90deg,transparent,rgba(255,255,255,0.3),transparent)",
+                            backgroundSize:"200% 100%",
+                            animation:"vp-shimmer 1.5s linear infinite",
+                          }} />
+                        </div>
+                      </div>
 
-                    {/* ── NEW: Phase label replaces status ── */}
-                    <div style={{
-                      fontSize: 9, color: col, marginTop: 4,
-                      letterSpacing: 0.3,
-                      animation: `vp-tick ${1.7 + i * 0.11}s ease-in-out infinite`,
-                      animationDelay: `${i * 0.07}s`,
-                    }}>
-                      ◈ {AGENT_PHASES[phase]}
-                    </div>
-
-                    {/* ── NEW: Mini progress bar per agent ── */}
-                    <div style={{
-                      marginTop: 7, height: 3,
-                      background: "rgba(255,255,255,0.05)", borderRadius: 99,
-                      overflow: "hidden",
-                    }}>
-                      <div style={{
-                        height: "100%", borderRadius: 99,
-                        background: `linear-gradient(90deg,${col}cc,${col})`,
-                        width: `${prog}%`,
-                        transition: "width 0.4s ease",
-                        boxShadow: `0 0 4px ${col}60`,
-                      }} />
-                    </div>
-
-                    {/* ── NEW: % complete label ── */}
-                    <div style={{
-                      marginTop: 4, fontSize: 8,
-                      color: "#1e293b", fontFamily: "'Syne', sans-serif",
-                      letterSpacing: 0.5,
-                    }}>
-                      {Math.floor(prog)}% · {isActive ? "ACTIVE" : "DONE"}
+                      {/* Footer */}
+                      <div style={{ marginTop:5, display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+                        <span style={{ fontSize:8, color:"#1e293b", fontFamily:"'Syne',sans-serif", letterSpacing:0.4 }}>
+                          {Math.floor(prog)}%
+                        </span>
+                        <span style={{
+                          fontSize:8, fontWeight:700, letterSpacing:0.8,
+                          color: isNearDone ? "#34d399" : "#1e293b",
+                          fontFamily:"'Syne',sans-serif",
+                          textShadow: isNearDone ? "0 0 8px rgba(52,211,153,0.6)" : "none",
+                          transition:"all 0.5s ease",
+                        }}>
+                          {isNearDone ? "✓ DONE" : "● ACTIVE"}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
 
-        {/* ── NEW: Live data flow summary strip ─────────────────────── */}
+        {/* ── LIVE TELEMETRY STRIP ── */}
         <div style={{
-          width: "100%",
-          background: "rgba(6,13,31,0.5)",
-          border: "1px solid rgba(34,211,238,0.1)",
-          borderRadius: 10, padding: "10px 18px",
-          display: "flex", gap: 24, alignItems: "center",
-          backdropFilter: "blur(8px)",
-          flexWrap: "wrap",
+          width:"100%", padding:"14px 20px",
+          background:"rgba(4,9,22,0.8)",
+          border:"1px solid rgba(99,102,241,0.12)",
+          borderRadius:12, display:"flex", gap:0,
+          backdropFilter:"blur(16px)",
+          overflow:"hidden", position:"relative",
         }}>
+          {/* Background shimmer */}
+          <div style={{
+            position:"absolute", inset:0, pointerEvents:"none",
+            background:"linear-gradient(90deg,transparent 0%,rgba(99,102,241,0.04) 50%,transparent 100%)",
+            backgroundSize:"200% 100%", animation:"vp-shimmer 4s linear infinite",
+          }} />
           {[
-            { label: "AGENTS ACTIVE", value: "13 / 13", color: "#4ade80" },
-            { label: "WEB REQUESTS", value: `${Math.floor(elapsed * 1.8 + 12)}`, color: "#38bdf8" },
-            { label: "TOKENS USED", value: `${(tokenCounts.reduce((a,b)=>a+b,0)/1000).toFixed(1)}k`, color: "#a78bfa" },
-            { label: "DATA PACKETS", value: `${dataPackets.length + Math.floor(elapsed * 3)}`, color: "#f472b6" },
-            { label: "ELAPSED", value: formatTime(elapsed), color: "#facc15" },
-          ].map(({ label, value, color }) => (
-            <div key={label} style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-              <div style={{ fontSize: 8, color: "#1e293b", fontFamily: "'Syne', sans-serif", letterSpacing: 1.2 }}>{label}</div>
-              <div style={{
-                fontSize: 13, fontWeight: 800, color, fontFamily: "'Syne', sans-serif",
-                letterSpacing: 0.5,
-                textShadow: `0 0 12px ${color}60`,
+            { label:"AGENTS",   value:"13 / 13",                                              color:"#4ade80",  icon:"⚡" },
+            { label:"WEB REQS", value:`${webReqs + Math.floor(elapsed*0.8 + 8)}`,              color:"#38bdf8",  icon:"🌐" },
+            { label:"TOKENS",   value:`${(totalTokens/1000).toFixed(1)}k`,                    color:"#a78bfa",  icon:"🔤" },
+            { label:"PACKETS",  value:`${dataPackets.length + Math.floor(elapsed*2.8 + 5)}`,  color:"#f472b6",  icon:"📡" },
+            { label:"ELAPSED",  value:fmt(elapsed),                                           color:"#facc15",  icon:"⏱" },
+          ].map(({label,value,color,icon},i)=>(
+            <div key={label} style={{
+              flex:1, display:"flex", flexDirection:"column", gap:4, padding:"0 12px",
+              borderRight: i<4 ? "1px solid rgba(255,255,255,0.05)" : "none",
+              position:"relative",
+            }}>
+              <div style={{ fontSize:9, color:"#1e293b", fontFamily:"'Syne',sans-serif", letterSpacing:1.5, display:"flex", alignItems:"center", gap:5 }}>
+                <span style={{ fontSize:10 }}>{icon}</span>{label}
+              </div>
+              <div key={value} style={{
+                fontSize:14, fontWeight:800, color, fontFamily:"'Syne',sans-serif",
+                textShadow:`0 0 12px ${color}60`,
+                animation:"vp-digit-roll 0.3s ease both",
               }}>{value}</div>
             </div>
           ))}
         </div>
 
-        {/* Status bar — original unchanged */}
+        {/* ── STATUS BAR ── */}
         <div style={{
-          width: "100%",
-          background: "rgba(6,13,31,0.7)",
-          border: "1px solid rgba(99,102,241,0.15)",
-          borderRadius: 12, padding: "12px 20px",
-          display: "flex", alignItems: "center", justifyContent: "space-between",
-          backdropFilter: "blur(10px)",
+          width:"100%",
+          background:"rgba(4,9,22,0.85)",
+          border:"1px solid rgba(99,102,241,0.15)",
+          borderRadius:12, padding:"12px 20px",
+          display:"flex", alignItems:"center", justifyContent:"space-between",
+          backdropFilter:"blur(12px)", position:"relative", overflow:"hidden",
         }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div className="vp-glow-dot" style={{
-              background: "#4ade80",
-              boxShadow: "0 0 10px #4ade80",
-            }} />
-            <span style={{ fontSize: 11, color: "#94a3b8", letterSpacing: 0.5, fontFamily: "'Syne', sans-serif" }}>
+          {/* Animated border-top */}
+          <div style={{
+            position:"absolute", top:0, left:0, right:0, height:1,
+            background:"linear-gradient(90deg,transparent,#6366f1,#22d3ee,#8b5cf6,transparent)",
+            backgroundSize:"300% 100%", animation:"vp-holo-shift 3s ease infinite",
+          }} />
+          <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+            <div style={{ position:"relative", width:10, height:10 }}>
+              <div style={{ position:"absolute", inset:0, borderRadius:"50%", background:"#4ade80", boxShadow:"0 0 8px #4ade80" }} />
+              <div style={{ position:"absolute", inset:0, borderRadius:"50%", background:"#4ade80", animation:"vp-ping 1.2s ease-out infinite" }} />
+            </div>
+            <span style={{ fontSize:11, color:"#64748b", letterSpacing:0.8, fontFamily:"'Syne',sans-serif" }}>
               PROCESSING — ALL 13 AGENTS RUNNING IN PARALLEL
             </span>
           </div>
-          <span style={{ fontSize: 10, color: "#334155", fontFamily: "'Syne', sans-serif" }}>
-            Groq · Tavily
-          </span>
+          <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+            {["Groq","Tavily"].map(s=>(
+              <span key={s} style={{
+                fontSize:9, color:"#334155", fontFamily:"'Syne',sans-serif",
+                border:"1px solid rgba(255,255,255,0.06)", borderRadius:4,
+                padding:"2px 7px", letterSpacing:0.5,
+              }}>{s}</span>
+            ))}
+          </div>
         </div>
+
       </div>
     </div>
   );
