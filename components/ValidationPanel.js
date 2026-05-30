@@ -1246,6 +1246,53 @@ function SuggestionCard({ sg, index, compact = false }) {
   );
 }
 
+/* Selectable suggestion card — used in upgrades tab */
+function SelectableSuggestionCard({ sg, index, selected, onToggle }) {
+  const pColor = sg.priority === "High" ? "#f43f5e" : sg.priority === "Low" ? "#10b981" : "#f59e0b";
+  const pBg = sg.priority === "High" ? "rgba(244,63,94,0.08)" : sg.priority === "Low" ? "rgba(16,185,129,0.08)" : "rgba(245,158,11,0.08)";
+  const pBorder = sg.priority === "High" ? "rgba(244,63,94,0.22)" : sg.priority === "Low" ? "rgba(16,185,129,0.22)" : "rgba(245,158,11,0.22)";
+
+  return (
+    <div
+      onClick={onToggle}
+      className="vp-suggestion-card"
+      style={{
+        background: selected ? "rgba(99,102,241,0.1)" : pBg,
+        border: `1px solid ${selected ? "rgba(99,102,241,0.45)" : pBorder}`,
+        borderRadius: 12, padding: "14px 16px",
+        animation: `vp-card-reveal 0.4s ease both`,
+        animationDelay: `${index * 0.04}s`,
+        cursor: "pointer",
+        display: "flex", gap: 12, alignItems: "flex-start",
+        boxShadow: selected ? "0 0 0 1px rgba(99,102,241,0.3)" : "none",
+        transition: "all 0.18s ease",
+      }}
+    >
+      <div style={{
+        width: 18, height: 18, borderRadius: 5, flexShrink: 0, marginTop: 2,
+        border: `2px solid ${selected ? "#6366f1" : "rgba(255,255,255,0.15)"}`,
+        background: selected ? "#6366f1" : "transparent",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        transition: "all 0.15s ease",
+      }}>
+        {selected && <span style={{ color: "#fff", fontSize: 11, lineHeight: 1 }}>✓</span>}
+      </div>
+      <div style={{ flex: 1 }}>
+        {sg.section && (
+          <div style={{ fontSize: 10, color: "#475569", fontWeight: 600, marginBottom: 5, letterSpacing: 0.4 }}>
+            {SECTION_ICONS[sg.sectionId - 1]} {sg.section}{sg.field ? ` · ${sg.field}` : ""}
+          </div>
+        )}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10, marginBottom: 4 }}>
+          <div style={{ fontSize: 13.5, fontWeight: 700, color: "#f1f5f9", lineHeight: 1.4 }}>{sg.recommendation}</div>
+          <span style={{ fontSize: 9, fontWeight: 800, color: pColor, background: "rgba(0,0,0,0.3)", border: `1px solid ${pBorder}`, padding: "2px 8px", borderRadius: 99, flexShrink: 0, letterSpacing: 0.5, fontFamily: "'Syne', sans-serif" }}>{sg.priority?.toUpperCase()}</span>
+        </div>
+        <div style={{ fontSize: 12, color: "#64748b", lineHeight: 1.6 }}>{sg.reason}</div>
+      </div>
+    </div>
+  );
+}
+
 /* Source chip */
 function SourceChip({ src }) {
   return (
@@ -1396,6 +1443,9 @@ function SectionRow({ s, expanded, onToggle }) {
 function ReportView({ report, onClose, onRevalidate }) {
   const [activeTab, setActiveTab] = useState("overview");
   const [expanded, setExpanded] = useState(new Set([1]));
+  const [selected, setSelected] = useState(new Set());
+  const [applying, setApplying] = useState(false);
+  const [applyDone, setApplyDone] = useState(null); // { applied: [], failed: bool }
 
   const toggleSection = (id) => {
     setExpanded(prev => {
@@ -1411,6 +1461,36 @@ function ReportView({ report, onClose, onRevalidate }) {
     const p = { High: 0, Medium: 1, Low: 2 };
     return (p[a.priority] ?? 1) - (p[b.priority] ?? 1);
   });
+
+  const toggleSelect = (key) => {
+    setSelected(prev => {
+      const next = new Set(prev);
+      next.has(key) ? next.delete(key) : next.add(key);
+      return next;
+    });
+  };
+
+  const selectAll = () => setSelected(new Set(allSuggestions.map((s, i) => i)));
+  const clearAll  = () => setSelected(new Set());
+
+  const applyChanges = async () => {
+    const toApply = allSuggestions.filter((_, i) => selected.has(i));
+    if (!toApply.length) return;
+    setApplying(true);
+    setApplyDone(null);
+    try {
+      const { data } = await axios.post(`${API}/apply-suggestions`, {
+        roomId: report.roomId,
+        suggestions: toApply.map(s => ({ field: s.field, recommendation: s.recommendation, sectionId: s.sectionId })),
+      });
+      setApplyDone({ applied: data.appliedFields || [], failed: false });
+      setSelected(new Set());
+    } catch {
+      setApplyDone({ applied: [], failed: true });
+    } finally {
+      setApplying(false);
+    }
+  };
 
   const tabs = [
     { id: "overview",  label: "Overview",    icon: "◈", count: null },
@@ -1641,6 +1721,48 @@ function ReportView({ report, onClose, onRevalidate }) {
           {/* ALL SUGGESTIONS */}
           {activeTab === "upgrades" && (
             <div style={{ animation: "vp-fade-up 0.35s ease both" }}>
+
+              {/* Select controls */}
+              <div style={{
+                display: "flex", alignItems: "center", justifyContent: "space-between",
+                marginBottom: 16, padding: "10px 14px",
+                background: "rgba(99,102,241,0.06)",
+                border: "1px solid rgba(99,102,241,0.15)",
+                borderRadius: 10,
+              }}>
+                <div style={{ fontSize: 12, color: "#94a3b8" }}>
+                  <span style={{ color: "#818cf8", fontWeight: 700 }}>{selected.size}</span>
+                  {" "}of {allSuggestions.length} selected
+                </div>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button onClick={selectAll} className="vp-btn" style={{
+                    fontSize: 11, padding: "4px 12px", borderRadius: 6,
+                    background: "rgba(99,102,241,0.12)", color: "#818cf8",
+                    border: "1px solid rgba(99,102,241,0.25)", cursor: "pointer", fontWeight: 600,
+                  }}>Select All</button>
+                  <button onClick={clearAll} className="vp-btn" style={{
+                    fontSize: 11, padding: "4px 12px", borderRadius: 6,
+                    background: "rgba(255,255,255,0.04)", color: "#64748b",
+                    border: "1px solid rgba(255,255,255,0.08)", cursor: "pointer", fontWeight: 600,
+                  }}>Clear</button>
+                </div>
+              </div>
+
+              {/* Apply result banner */}
+              {applyDone && (
+                <div style={{
+                  marginBottom: 14, padding: "10px 14px", borderRadius: 10, fontSize: 12,
+                  background: applyDone.failed ? "rgba(244,63,94,0.08)" : "rgba(16,185,129,0.08)",
+                  border: `1px solid ${applyDone.failed ? "rgba(244,63,94,0.25)" : "rgba(16,185,129,0.25)"}`,
+                  color: applyDone.failed ? "#f87171" : "#34d399",
+                  display: "flex", alignItems: "center", gap: 8,
+                }}>
+                  {applyDone.failed
+                    ? "❌ Failed to apply changes. Please try again."
+                    : `✅ Applied ${applyDone.applied.length} field${applyDone.applied.length !== 1 ? "s" : ""} to your form: ${applyDone.applied.join(", ")}`}
+                </div>
+              )}
+
               {["High", "Medium", "Low"].map(priority => {
                 const items = allSuggestions.filter(s => s.priority === priority);
                 if (!items.length) return null;
@@ -1662,9 +1784,17 @@ function ReportView({ report, onClose, onRevalidate }) {
                       </span>
                     </div>
                     <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                      {items.map((s, i) => (
-                        <SuggestionCard key={i} sg={s} index={i} />
-                      ))}
+                      {items.map((s, i) => {
+                        const globalIdx = allSuggestions.indexOf(s);
+                        const isSelected = selected.has(globalIdx);
+                        return (
+                          <SelectableSuggestionCard
+                            key={i} sg={s} index={i}
+                            selected={isSelected}
+                            onToggle={() => toggleSelect(globalIdx)}
+                          />
+                        );
+                      })}
                     </div>
                   </div>
                 );
@@ -1689,6 +1819,20 @@ function ReportView({ report, onClose, onRevalidate }) {
             {new Date(report.validatedAt).toLocaleTimeString("en-IN")}
           </div>
           <div style={{ display: "flex", gap: 8 }}>
+            {activeTab === "upgrades" && selected.size > 0 && (
+              <button onClick={applyChanges} disabled={applying} className="vp-btn" style={{
+                padding: "9px 20px",
+                background: applying ? "rgba(16,185,129,0.2)" : "linear-gradient(135deg,#10b981,#059669)",
+                color: applying ? "#34d399" : "#fff",
+                border: applying ? "1px solid rgba(16,185,129,0.3)" : "none",
+                borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: applying ? "not-allowed" : "pointer",
+                boxShadow: applying ? "none" : "0 4px 16px rgba(16,185,129,0.4)",
+                fontFamily: "'Syne', sans-serif",
+                opacity: applying ? 0.8 : 1,
+              }}>
+                {applying ? "⏳ Applying…" : `✅ Apply ${selected.size} Change${selected.size !== 1 ? "s" : ""}`}
+              </button>
+            )}
             <button onClick={onRevalidate} className="vp-btn" style={{
               padding: "9px 18px",
               background: "rgba(255,255,255,0.04)",
