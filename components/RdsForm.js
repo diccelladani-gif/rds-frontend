@@ -387,7 +387,7 @@ function groupFields(fields) {
 }
 
 // ─── SectionFields renderer ──────────────────────────────────────────────────
-function SectionFields({ section, register, errors, setValue, watch, aiReasons, aiFilledFields, docFilledFields }) {
+function SectionFields({ section, register, errors, setValue, watch, aiReasons, aiFilledFields, docFilledFields, validationFilledFields }) {
 
   const renderGroups = (fields) =>
     groupFields(fields).map((grp, gi) => {
@@ -396,7 +396,7 @@ function SectionFields({ section, register, errors, setValue, watch, aiReasons, 
           {grp.fields.map(field => (
             <FieldRendererWithBadge key={field.name} field={field}
               register={register} errors={errors} setValue={setValue}
-              watch={watch} aiReason={aiReasons?.[field.name]} isDocFilled={docFilledFields?.has(field.name)} isAiFilled={aiFilledFields?.has(field.name)} />
+              watch={watch} aiReason={aiReasons?.[field.name]} isDocFilled={docFilledFields?.has(field.name)} isAiFilled={aiFilledFields?.has(field.name)} isValidationFilled={validationFilledFields?.has(field.name)} />
           ))}
         </div>
       );
@@ -405,14 +405,14 @@ function SectionFields({ section, register, errors, setValue, watch, aiReasons, 
           {grp.fields.map(field => (
             <FieldRendererWithBadge key={field.name} field={field}
               register={register} errors={errors} setValue={setValue}
-              watch={watch} aiReason={aiReasons?.[field.name]} isDocFilled={docFilledFields?.has(field.name)} isAiFilled={aiFilledFields?.has(field.name)} />
+              watch={watch} aiReason={aiReasons?.[field.name]} isDocFilled={docFilledFields?.has(field.name)} isAiFilled={aiFilledFields?.has(field.name)} isValidationFilled={validationFilledFields?.has(field.name)} />
           ))}
         </div>
       );
       return (
         <FieldRendererWithBadge key={grp.field.name} field={grp.field}
           register={register} errors={errors} setValue={setValue}
-          watch={watch} aiReason={aiReasons?.[grp.field.name]} isDocFilled={docFilledFields?.has(grp.field.name)} isAiFilled={aiFilledFields?.has(grp.field.name)} />
+          watch={watch} aiReason={aiReasons?.[grp.field.name]} isDocFilled={docFilledFields?.has(grp.field.name)} isAiFilled={aiFilledFields?.has(grp.field.name)} isValidationFilled={validationFilledFields?.has(grp.field.name)} />
       );
     });
 
@@ -460,33 +460,33 @@ const BADGE_KEYFRAMES = `
     0%,100% { box-shadow: 0 0 0 0 transparent; }
     50%      { box-shadow: 0 0 0 3px rgba(109,40,217,0.18); }
   }
-  @keyframes docGlow {
+  @keyframes validationGlow {
     0%,100% { box-shadow: 0 0 0 0 transparent; }
-    50%      { box-shadow: 0 0 0 3px rgba(6,182,212,0.18); }
+    50%      { box-shadow: 0 0 0 3px rgba(16,185,129,0.2); }
   }
 `;
 
-function FieldRendererWithBadge({ field, register, errors, setValue, watch, aiReason, isDocFilled, isAiFilled }) {
+function FieldRendererWithBadge({ field, register, errors, setValue, watch, aiReason, isDocFilled, isAiFilled, isValidationFilled }) {
   const [showTip, setShowTip] = useState(false);
   const [mounted, setMounted] = useState(false);
   const prevAiReason   = useRef(null);
   const prevDocFilled  = useRef(false);
   const prevAiFilled   = useRef(false);
+  const prevValFilled  = useRef(false);
 
-  // Trigger pop animation when badge first appears
   useEffect(() => {
-    if ((isAiFilled && !prevAiFilled.current) || (isDocFilled && !prevDocFilled.current)) {
+    if ((isAiFilled && !prevAiFilled.current) || (isDocFilled && !prevDocFilled.current) || (isValidationFilled && !prevValFilled.current)) {
       setMounted(false);
       requestAnimationFrame(() => setMounted(true));
     }
     prevAiReason.current  = aiReason;
     prevDocFilled.current = isDocFilled;
     prevAiFilled.current  = isAiFilled;
-  }, [aiReason, isDocFilled, isAiFilled]);
+    prevValFilled.current = isValidationFilled;
+  }, [aiReason, isDocFilled, isAiFilled, isValidationFilled]);
 
-  // Show AI badge if field was AI-filled (with or without reason text)
   const showAiBadge = isAiFilled || !!aiReason;
-  const hasBadge    = showAiBadge || isDocFilled;
+  const hasBadge    = showAiBadge || isDocFilled || isValidationFilled;
 
   return (
     <div style={{ position: "relative" }}>
@@ -627,6 +627,55 @@ function FieldRendererWithBadge({ field, register, errors, setValue, watch, aiRe
           </div>
         </div>
       )}
+
+      {/* ── Validation Badge ── */}
+      {isValidationFilled && (
+        <div style={{
+          position: "absolute",
+          top: 2,
+          right: showAiBadge ? 88 : isDocFilled ? 44 : 2,
+          zIndex: 8,
+        }}>
+          <div
+            onMouseEnter={() => setShowTip("validation")}
+            onMouseLeave={() => setShowTip(false)}
+            style={{
+              display: "inline-flex", alignItems: "center", gap: 4,
+              padding: "3px 8px", borderRadius: 10,
+              background: "linear-gradient(135deg, #059669, #047857)",
+              border: "1px solid rgba(110,231,183,0.5)",
+              cursor: "help", fontSize: 10, fontWeight: 800, color: "#fff",
+              userSelect: "none", letterSpacing: "0.3px",
+              boxShadow: "0 2px 8px rgba(16,185,129,0.35)",
+              animation: mounted ? "badgePop 0.35s cubic-bezier(0.34,1.56,0.64,1) both" : "none",
+            }}
+          >
+            <span style={{ fontSize: 9 }}>✓</span>
+            Validated
+          </div>
+
+          {showTip === "validation" && (
+            <div style={{
+              position: "absolute", right: 0, top: "calc(100% + 6px)",
+              background: "linear-gradient(145deg, #022c22, #064e3b)",
+              color: "#d1fae5", borderRadius: 10, padding: "10px 13px",
+              fontSize: 11.5, lineHeight: 1.55, width: 220,
+              boxShadow: "0 8px 30px rgba(0,0,0,0.35), 0 0 0 1px rgba(110,231,183,0.2)",
+              zIndex: 100, pointerEvents: "none",
+              animation: "badgePop 0.2s ease both",
+            }}>
+              <div style={{ position: "absolute", right: 10, top: -5, width: 10, height: 10, background: "#022c22", transform: "rotate(45deg)", borderTop: "1px solid rgba(110,231,183,0.2)", borderLeft: "1px solid rgba(110,231,183,0.2)" }} />
+              <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 5 }}>
+                <span style={{ fontSize: 12 }}>✓</span>
+                <span style={{ fontWeight: 800, color: "#6ee7b7", fontSize: 11 }}>Applied via Validation</span>
+              </div>
+              <div style={{ color: "#a7f3d0", fontSize: 11 }}>
+                This value was updated based on a validation suggestion.
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -645,6 +694,7 @@ export default function RdsForm({ onSectionChange, jumpToSection, editRecord, on
   const [isEditMode,        setIsEditMode]        = useState(false);
   const [editId,            setEditId]            = useState(null);
   const [validationNotes,   setValidationNotes]   = useState({}); // { [sectionId]: "note text" }
+  const [validationFilledFields, setValidationFilledFields] = useState(new Set());
 
   // ── AI state ────────────────────────────────────────────────────────────────
   const [aiOptIn,   setAiOptIn]   = useState(null);   // null = not chosen, true = yes, false = no
@@ -796,6 +846,7 @@ export default function RdsForm({ onSectionChange, jumpToSection, editRecord, on
       setEditId(editRecord.id);
       setCurrentIdx(0);
       setValidationNotes(editRecord.data.validationNotes || {});
+      setValidationFilledFields(new Set(editRecord.data.validationFilledFields || []));
       window.scrollTo({ top: 0, behavior: "smooth" });
       addToast("Room data loaded — make your changes and resubmit", "success");
     }
@@ -1155,6 +1206,7 @@ export default function RdsForm({ onSectionChange, jumpToSection, editRecord, on
             aiReasons={aiReasons}
             aiFilledFields={aiFilledFields}
             docFilledFields={docFilledFields}
+            validationFilledFields={validationFilledFields}
           />
         </SectionCard>
 
@@ -1242,6 +1294,13 @@ export default function RdsForm({ onSectionChange, jumpToSection, editRecord, on
             setShowValidation(false);
             setValidationRoomId(null);
             setShowSuccess(true);
+          }}
+          onApplied={(fields) => {
+            setValidationFilledFields(prev => new Set([...prev, ...fields]));
+            fields.forEach(fieldName => {
+              // Reflect applied value into form immediately if possible
+              // (value is already saved in Supabase; badge shows on next edit load)
+            });
           }}
         />
       )}

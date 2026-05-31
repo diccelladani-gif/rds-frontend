@@ -1440,7 +1440,7 @@ function SectionRow({ s, expanded, onToggle }) {
 }
 
 /* ─── MAIN DONE/REPORT RENDER ────────────────────────────────────── */
-function ReportView({ report, onClose, onRevalidate }) {
+function ReportView({ report, onClose, onRevalidate, onApplied }) {
   const [activeTab, setActiveTab] = useState("overview");
   const [expanded, setExpanded] = useState(new Set([1]));
   const [selected, setSelected] = useState(new Set());
@@ -1485,6 +1485,7 @@ function ReportView({ report, onClose, onRevalidate }) {
       });
       setApplyDone({ applied: data.appliedFields || [], noted: data.notedSections || [], failed: false });
       setSelected(new Set());
+      onApplied?.(data.appliedFields || []);
     } catch {
       setApplyDone({ applied: [], failed: true });
     } finally {
@@ -1860,7 +1861,7 @@ function ReportView({ report, onClose, onRevalidate }) {
 }
 
 /* ════════════════════════════════════════════ ROOT EXPORT ══════════ */
-export default function ValidationPanel({ roomId, roomCode, roomName, onClose, readOnly = false }) {
+export default function ValidationPanel({ roomId, roomCode, roomName, onClose, onApplied, readOnly = false }) {
   const [status, setStatus]       = useState(readOnly ? "fetching" : "idle");
   const [report, setReport]       = useState(null);
   const [errorMsg, setErrorMsg]   = useState("");
@@ -1927,6 +1928,7 @@ export default function ValidationPanel({ roomId, roomCode, roomName, onClose, r
       report={report}
       onClose={onClose}
       onRevalidate={runValidation}
+      onApplied={onApplied}
     />
   );
 }
