@@ -644,6 +644,7 @@ export default function RdsForm({ onSectionChange, jumpToSection, editRecord, on
   const [submittedRoom,     setSubmittedRoom]     = useState({ code: "", name: "" });
   const [isEditMode,        setIsEditMode]        = useState(false);
   const [editId,            setEditId]            = useState(null);
+  const [validationNotes,   setValidationNotes]   = useState({}); // { [sectionId]: "note text" }
 
   // ── AI state ────────────────────────────────────────────────────────────────
   const [aiOptIn,   setAiOptIn]   = useState(null);   // null = not chosen, true = yes, false = no
@@ -794,6 +795,7 @@ export default function RdsForm({ onSectionChange, jumpToSection, editRecord, on
       setIsEditMode(true);
       setEditId(editRecord.id);
       setCurrentIdx(0);
+      setValidationNotes(editRecord.data.validationNotes || {});
       window.scrollTo({ top: 0, behavior: "smooth" });
       addToast("Room data loaded — make your changes and resubmit", "success");
     }
@@ -1115,6 +1117,8 @@ export default function RdsForm({ onSectionChange, jumpToSection, editRecord, on
           color={currentSection.color}
           description={sectionDesc[currentSection.id]}
           badge={`${currentIdx + 1} of ${rdsSchema.length}`}
+          validationNote={validationNotes[currentSection.id] || ""}
+          onNoteChange={(text) => setValidationNotes(prev => ({ ...prev, [currentSection.id]: text }))}
         >
           {currentIdx === funcSectionIdx && roomImage && (
             <div style={{

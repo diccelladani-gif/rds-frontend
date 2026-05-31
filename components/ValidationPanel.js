@@ -1445,7 +1445,7 @@ function ReportView({ report, onClose, onRevalidate }) {
   const [expanded, setExpanded] = useState(new Set([1]));
   const [selected, setSelected] = useState(new Set());
   const [applying, setApplying] = useState(false);
-  const [applyDone, setApplyDone] = useState(null); // { applied: [], failed: bool }
+  const [applyDone, setApplyDone] = useState(null); // { applied: [], noted: [], failed: bool }
 
   const toggleSection = (id) => {
     setExpanded(prev => {
@@ -1483,7 +1483,7 @@ function ReportView({ report, onClose, onRevalidate }) {
         roomId: report.roomId,
         suggestions: toApply.map(s => ({ field: s.field, recommendation: s.recommendation, sectionId: s.sectionId })),
       });
-      setApplyDone({ applied: data.appliedFields || [], failed: false });
+      setApplyDone({ applied: data.appliedFields || [], noted: data.notedSections || [], failed: false });
       setSelected(new Set());
     } catch {
       setApplyDone({ applied: [], failed: true });
@@ -1759,7 +1759,7 @@ function ReportView({ report, onClose, onRevalidate }) {
                 }}>
                   {applyDone.failed
                     ? "❌ Failed to apply changes. Please try again."
-                    : `✅ Applied ${applyDone.applied.length} field${applyDone.applied.length !== 1 ? "s" : ""} to your form: ${applyDone.applied.join(", ")}`}
+                    : `✅ Applied ${applyDone.applied.length} field${applyDone.applied.length !== 1 ? "s" : ""}${applyDone.noted.length ? ` · Notes saved to ${applyDone.noted.length} section${applyDone.noted.length !== 1 ? "s" : ""}` : ""}. Reload the form to see changes.`}
                 </div>
               )}
 
