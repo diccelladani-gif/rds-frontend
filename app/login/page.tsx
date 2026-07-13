@@ -17,7 +17,9 @@ export default function LoginPage() {
   const [successName, setSuccessName] = useState("");
   const [tilt,        setTilt]        = useState({ x: 0, y: 0 });
   const [typedText,   setTypedText]   = useState("");
+
   const canvasRef  = useRef<HTMLCanvasElement>(null);
+  const shaderRef  = useRef<HTMLCanvasElement>(null);
   const cardRef    = useRef<HTMLDivElement>(null);
   const animRef    = useRef<number>(0);
 
@@ -40,13 +42,115 @@ export default function LoginPage() {
     if (typeof window !== "undefined" && sessionStorage.getItem("rds_user")) router.replace("/");
   }, [router]);
 
+  // WebGL fire-nebula shader (recolored to dark-blue theme)
+  useEffect(() => {
+    const canvas = shaderRef.current;
+    if (!canvas) return;
+    const gl = canvas.getContext("webgl2");
+    if (!gl) return; // Graceful fallback: aurora + particles still render
+
+    const vertexSrc = `#version 300 es
+precision highp float;
+in vec4 position;
+void main(){gl_Position=position;}`;
+
+    const fragmentSrc = `#version 300 es
+precision highp float;
+out vec4 O;
+uniform vec2 resolution;
+uniform float time;
+#define FC gl_FragCoord.xy
+#define T time
+#define R resolution
+#define MN min(R.x,R.y)
+float rnd(vec2 p){p=fract(p*vec2(12.9898,78.233));p+=dot(p,p+34.56);return fract(p.x*p.y);}
+float noise(in vec2 p){vec2 i=floor(p),f=fract(p),u=f*f*(3.-2.*f);float a=rnd(i),b=rnd(i+vec2(1,0)),c=rnd(i+vec2(0,1)),d=rnd(i+1.);return mix(mix(a,b,u.x),mix(c,d,u.x),u.y);}
+float fbm(vec2 p){float t=.0,a=1.;mat2 m=mat2(1.,-.5,.2,1.2);for(int i=0;i<5;i++){t+=a*noise(p);p*=2.*m;a*=.5;}return t;}
+float clouds(vec2 p){float d=1.,t=.0;for(float i=.0;i<3.;i++){float a=d*fbm(i*10.+p.x*.2+.2*(1.+i)*p.y+d+i*i+p);t=mix(t,d,a);d=a;p*=2./(i+1.);}return t;}
+void main(void){
+  vec2 uv=(FC-.5*R)/MN,st=uv*vec2(2,1);
+  vec3 col=vec3(0);
+  float bg=clouds(vec2(st.x+T*.5,-st.y));
+  uv*=1.-.3*(sin(T*.2)*.5+.5);
+  for(float i=1.;i<12.;i++){
+    uv+=.1*cos(i*vec2(.1+.01*i,.8)+i*i+T*.5+.1*uv.x);
+    vec2 p=uv;
+    float d=length(p);
+    col+=.00125/d*(cos(sin(i)*vec3(3.,2.,1.))+1.);      // blue/cyan glints
+    float b=noise(i+p+bg*1.731);
+    col+=.002*b/length(max(p,vec2(b*p.x*.02,p.y)));
+    col=mix(col,vec3(bg*.05,bg*.12,bg*.28),d);           // deep-blue nebula haze
+  }
+  O=vec4(col,1);
+}`;
+
+    const compile = (type: number, src: string) => {
+      const sh = gl.createShader(type)!;
+      gl.shaderSource(sh, src);
+      gl.compileShader(sh);
+      if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS))
+        console.error(gl.getShaderInfoLog(sh));
+      return sh;
+    };
+
+    const vs = compile(gl.VERTEX_SHADER, vertexSrc);
+    const fs = compile(gl.FRAGMENT_SHADER, fragmentSrc);
+    const program = gl.createProgram()!;
+    gl.attachShader(program, vs);
+    gl.attachShader(program, fs);
+    gl.linkProgram(program);
+    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+      console.error(gl.getProgramInfoLog(program));
+      return;
+    }
+
+    const buffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, 1, -1, -1, 1, 1, 1, -1]), gl.STATIC_DRAW);
+    const position = gl.getAttribLocation(program, "position");
+    gl.enableVertexAttribArray(position);
+    gl.vertexAttribPointer(position, 2, gl.FLOAT, false, 0, 0);
+
+    const uRes  = gl.getUniformLocation(program, "resolution");
+    const uTime = gl.getUniformLocation(program, "time");
+
+    const dpr = Math.max(1, 0.5 * window.devicePixelRatio);
+    const resize = () => {
+      canvas.width  = window.innerWidth  * dpr;
+      canvas.height = window.innerHeight * dpr;
+      gl.viewport(0, 0, canvas.width, canvas.height);
+    };
+    resize();
+    window.addEventListener("resize", resize);
+
+    let raf = 0;
+    const render = (now: number) => {
+      gl.clearColor(0, 0, 0, 1);
+      gl.clear(gl.COLOR_BUFFER_BIT);
+      gl.useProgram(program);
+      gl.uniform2f(uRes, canvas.width, canvas.height);
+      gl.uniform1f(uTime, now * 1e-3);
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+      raf = requestAnimationFrame(render);
+    };
+    raf = requestAnimationFrame(render);
+
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("resize", resize);
+      gl.deleteProgram(program);
+      gl.deleteShader(vs);
+      gl.deleteShader(fs);
+      gl.deleteBuffer(buffer);
+    };
+  }, []);
+
   // Aurora canvas
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d")!;
     let t = 0;
-
     const resize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
     resize();
     window.addEventListener("resize", resize);
@@ -72,7 +176,6 @@ export default function LoginPage() {
         { x: canvas.width * 0.5  + Math.sin(t * 0.4) * 100, y: canvas.height * 0.5  + Math.cos(t * 0.9) * 80, r: 250, c1: "rgba(124,58,237,0.10)",  c2: "transparent" },
         { x: canvas.width * 0.7  + Math.cos(t * 1.1) * 60,  y: canvas.height * 0.15 + Math.sin(t * 0.6) * 40, r: 200, c1: "rgba(16,185,129,0.08)",  c2: "transparent" },
       ];
-
       blobs.forEach(b => {
         const g = ctx.createRadialGradient(b.x, b.y, 0, b.x, b.y, b.r);
         g.addColorStop(0, b.c1);
@@ -113,6 +216,7 @@ export default function LoginPage() {
       animRef.current = requestAnimationFrame(draw);
     };
     draw();
+
     return () => { cancelAnimationFrame(animRef.current); window.removeEventListener("resize", resize); };
   }, []);
 
@@ -166,26 +270,29 @@ export default function LoginPage() {
         @import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
         *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
         html,body{height:100%;font-family:'Sora',sans-serif;background:#020c1e;color:#fff;overflow:hidden;}
-
         .root{position:relative;width:100vw;height:100vh;display:flex;align-items:center;justify-content:center;}
-
         canvas{position:fixed;inset:0;z-index:0;pointer-events:none;}
-
+        /* WebGL shader = deepest layer, aurora sits on top */
+        .shader-bg{
+          z-index:0;
+          opacity:0.45;                       /* keeps dark-blue theme dominant */
+          mix-blend-mode:screen;
+          mask-image:radial-gradient(ellipse 120% 120% at 50% 50%,black 25%,transparent 92%);
+        }
+        .aurora{ z-index:1; }
         .grid{
-          position:fixed;inset:0;z-index:1;pointer-events:none;
+          position:fixed;inset:0;z-index:2;pointer-events:none;
           background-image:
             linear-gradient(rgba(59,130,246,0.035) 1px,transparent 1px),
             linear-gradient(90deg,rgba(59,130,246,0.035) 1px,transparent 1px);
           background-size:72px 72px;
           mask-image:radial-gradient(ellipse 90% 90% at 50% 50%,black 20%,transparent 100%);
         }
-
         /* Scanline effect */
         .scanlines{
-          position:fixed;inset:0;z-index:1;pointer-events:none;
+          position:fixed;inset:0;z-index:2;pointer-events:none;
           background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.03) 2px,rgba(0,0,0,0.03) 4px);
         }
-
         .layout{
           position:relative;z-index:10;
           display:flex;align-items:center;
@@ -193,7 +300,6 @@ export default function LoginPage() {
           padding:0 40px;
           width:100%;max-width:1100px;
         }
-
         /* Left side text */
         .left{flex:1;min-width:0;}
         .eyebrow{
@@ -206,7 +312,6 @@ export default function LoginPage() {
         .eyebrow-dot{width:7px;height:7px;border-radius:50%;background:#3b82f6;box-shadow:0 0 10px rgba(59,130,246,0.8);animation:epulse 2s ease-in-out infinite;}
         @keyframes epulse{0%,100%{opacity:1;box-shadow:0 0 10px rgba(59,130,246,0.8);}50%{opacity:0.5;box-shadow:0 0 4px rgba(59,130,246,0.4);}}
         .eyebrow-text{font-size:11px;font-weight:700;color:rgba(59,130,246,0.9);letter-spacing:1.5px;text-transform:uppercase;font-family:'JetBrains Mono',monospace;}
-
         .main-title{
           font-size:56px;font-weight:900;line-height:1.05;
           letter-spacing:-2px;margin-bottom:20px;
@@ -217,7 +322,6 @@ export default function LoginPage() {
           background:linear-gradient(135deg,#60a5fa,#06b6d4,#818cf8);
           -webkit-background-clip:text;-webkit-text-fill-color:transparent;
         }
-
         .typewriter{
           font-size:14px;color:rgba(255,255,255,0.35);
           font-family:'JetBrains Mono',monospace;
@@ -226,7 +330,6 @@ export default function LoginPage() {
         }
         .cursor{display:inline-block;width:2px;height:14px;background:#60a5fa;margin-left:2px;animation:blink 1s step-end infinite;vertical-align:text-bottom;}
         @keyframes blink{0%,100%{opacity:1;}50%{opacity:0;}}
-
         .feature-cards{display:flex;flex-direction:column;gap:12px;}
         .feat{
           display:flex;align-items:center;gap:14px;
@@ -244,7 +347,6 @@ export default function LoginPage() {
         }
         .feat-text strong{display:block;font-size:13px;font-weight:700;color:rgba(255,255,255,0.85);margin-bottom:2px;}
         .feat-text span{font-size:11.5px;color:rgba(255,255,255,0.35);}
-
         /* Right: Card */
         .card-outer{
           width:440px;flex-shrink:0;
@@ -253,7 +355,6 @@ export default function LoginPage() {
           will-change:transform;
         }
         .card-outer.visible{opacity:1;transform:translateY(0) scale(1);}
-
         .card{
           background:rgba(8,18,45,0.82);
           border:1px solid rgba(255,255,255,0.1);
@@ -267,7 +368,6 @@ export default function LoginPage() {
             0 0 80px rgba(37,99,235,0.08);
           position:relative;overflow:hidden;
         }
-
         /* Shimmer on top edge */
         .card::before{
           content:'';position:absolute;
@@ -276,7 +376,6 @@ export default function LoginPage() {
           animation:shimmer 4s ease-in-out infinite;
         }
         @keyframes shimmer{0%,100%{opacity:0.6;left:15%;right:15%;}50%{opacity:1;left:10%;right:10%;}}
-
         /* Glow corner */
         .card::after{
           content:'';position:absolute;
@@ -285,7 +384,6 @@ export default function LoginPage() {
           background:radial-gradient(circle,rgba(37,99,235,0.15),transparent 70%);
           pointer-events:none;
         }
-
         /* Logo */
         .logo-row{display:flex;align-items:center;gap:13px;margin-bottom:30px;}
         .logo-mark{
@@ -299,7 +397,6 @@ export default function LoginPage() {
         .logo-mark::after{content:'';position:absolute;inset:0;border-radius:15px;background:linear-gradient(135deg,rgba(255,255,255,0.2),transparent 60%);pointer-events:none;}
         .logo-name{font-size:16px;font-weight:800;color:#fff;letter-spacing:-0.3px;}
         .logo-sub{font-size:10px;color:rgba(255,255,255,0.25);letter-spacing:1.8px;text-transform:uppercase;margin-top:2px;font-family:'JetBrains Mono',monospace;}
-
         /* Live badge */
         .live-badge{
           display:inline-flex;align-items:center;gap:7px;
@@ -310,10 +407,8 @@ export default function LoginPage() {
         .live-dot{width:6px;height:6px;border-radius:50%;background:#10b981;box-shadow:0 0 10px rgba(16,185,129,0.9);animation:lpulse 2.5s ease-in-out infinite;}
         @keyframes lpulse{0%,100%{transform:scale(1);opacity:1;}50%{transform:scale(0.75);opacity:0.5;}}
         .live-text{font-size:10.5px;font-weight:600;color:rgba(16,185,129,0.85);letter-spacing:1.2px;text-transform:uppercase;font-family:'JetBrains Mono',monospace;}
-
         .card-title{font-size:27px;font-weight:900;color:#fff;letter-spacing:-0.8px;margin-bottom:5px;}
         .card-sub{font-size:13.5px;color:rgba(255,255,255,0.32);margin-bottom:30px;line-height:1.55;}
-
         /* Error */
         .err{
           display:flex;align-items:flex-start;gap:9px;
@@ -326,7 +421,6 @@ export default function LoginPage() {
           animation:errIn 0.3s ease both;
         }
         @keyframes errIn{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:none;}}
-
         /* Fields */
         .field{margin-bottom:16px;}
         .field-label{
@@ -338,7 +432,6 @@ export default function LoginPage() {
           font-family:'JetBrains Mono',monospace;
         }
         .label-line{flex:1;height:1px;background:rgba(255,255,255,0.04);}
-
         .input-shell{
           position:relative;
           background:rgba(255,255,255,0.04);
@@ -360,7 +453,6 @@ export default function LoginPage() {
         }
         .input-shell.focused::before{transform:scaleX(1);}
         .input-shell.err-f{border-color:rgba(239,68,68,0.4);}
-
         .input-prefix{position:absolute;left:15px;top:50%;transform:translateY(-50%);opacity:0.28;pointer-events:none;}
         .field-input{
           width:100%;height:50px;background:transparent;border:none;outline:none;
@@ -375,7 +467,6 @@ export default function LoginPage() {
           display:flex;align-items:center;
         }
         .eye-btn:hover{color:rgba(255,255,255,0.55);}
-
         /* Extras */
         .extras{display:flex;align-items:center;justify-content:space-between;margin-bottom:26px;}
         .keep{display:flex;align-items:center;gap:8px;cursor:pointer;}
@@ -389,7 +480,6 @@ export default function LoginPage() {
         .keep-label{font-size:12.5px;color:rgba(255,255,255,0.35);font-weight:500;}
         .forgot{font-size:12.5px;color:rgba(96,165,250,0.75);font-weight:600;cursor:pointer;text-decoration:none;transition:color 0.2s;}
         .forgot:hover{color:#bfdbfe;}
-
         /* Submit */
         .submit-wrap{position:relative;margin-bottom:22px;}
         .submit{
@@ -419,15 +509,12 @@ export default function LoginPage() {
         .submit:disabled{opacity:0.75;cursor:not-allowed;}
         .submit-icon{font-size:16px;transition:transform 0.3s;}
         .submit:hover:not(:disabled) .submit-icon{transform:translateX(4px);}
-
         .spinner{width:19px;height:19px;border:2px solid rgba(255,255,255,0.25);border-top-color:#fff;border-radius:50%;animation:spin 0.65s linear infinite;flex-shrink:0;}
         @keyframes spin{to{transform:rotate(360deg);}}
-
         /* Divider */
         .div-row{display:flex;align-items:center;gap:12px;margin-bottom:16px;}
         .div-line{flex:1;height:1px;background:rgba(255,255,255,0.06);}
         .div-text{font-size:10px;color:rgba(255,255,255,0.18);letter-spacing:1.5px;text-transform:uppercase;font-family:'JetBrains Mono',monospace;white-space:nowrap;}
-
         /* Badges */
         .badges{display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap;}
         .bdg{
@@ -438,7 +525,6 @@ export default function LoginPage() {
         }
         .bdg-icon{width:12px;height:12px;flex-shrink:0;}
         .bdg span{font-size:10px;color:rgba(255,255,255,0.22);font-weight:600;letter-spacing:0.5px;font-family:'JetBrains Mono',monospace;}
-
         /* Success */
         .success-wrap{display:flex;flex-direction:column;align-items:center;gap:18px;padding:12px 0 4px;text-align:center;}
         .s-ring-outer{
@@ -462,7 +548,6 @@ export default function LoginPage() {
         .s-progress{width:100%;height:3px;background:rgba(255,255,255,0.07);border-radius:100px;overflow:hidden;margin-top:4px;}
         .s-fill{height:100%;border-radius:100px;background:linear-gradient(90deg,#10b981,#34d399,#6ee7b7);animation:sFill 2s ease both;}
         @keyframes sFill{from{width:0%;}to{width:100%;}}
-
         @media(max-width:900px){
           .left{display:none;}
           .card-outer{width:100%;max-width:440px;}
@@ -475,10 +560,10 @@ export default function LoginPage() {
       `}</style>
 
       <div className="root">
-        <canvas ref={canvasRef} />
+        <canvas className="shader-bg" ref={shaderRef} />
+        <canvas className="aurora"    ref={canvasRef} />
         <div className="grid" />
         <div className="scanlines" />
-
         <div className="layout">
           {/* LEFT */}
           <div className="left">
@@ -486,17 +571,14 @@ export default function LoginPage() {
               <div className="eyebrow-dot" />
               <span className="eyebrow-text">Medical Infra RDS </span>
             </div>
-
             <h1 className="main-title">
               Enterprise<br />
               <span className="accent">Facility</span><br />
               Management
             </h1>
-
             <div className="typewriter">
               {typedText}<span className="cursor" />
             </div>
-
             <div className="feature-cards">
               {[
                 { bg:"rgba(37,99,235,0.15)", border:"rgba(37,99,235,0.3)", icon:"🏥", title:"Multi-Department RDS",     desc:"Centralized room data across all clinical departments" },
@@ -543,15 +625,12 @@ export default function LoginPage() {
                       <div className="logo-sub">Medical College · Secure Portal</div>
                     </div>
                   </div>
-
                   <div className="live-badge">
                     <div className="live-dot" />
                     <span className="live-text">All systems operational</span>
                   </div>
-
                   <div className="card-title">Welcome back</div>
                   <div className="card-sub">Sign in with your employee credentials to access the facility management dashboard.</div>
-
                   {error && (
                     <div className="err">
                       <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0, marginTop: 1 }}>
@@ -561,7 +640,6 @@ export default function LoginPage() {
                       {error}
                     </div>
                   )}
-
                   {/* Email */}
                   <div className="field">
                     <div className="field-label">
@@ -588,7 +666,6 @@ export default function LoginPage() {
                       />
                     </div>
                   </div>
-
                   {/* Password */}
                   <div className="field">
                     <div className="field-label">
@@ -629,7 +706,6 @@ export default function LoginPage() {
                       </button>
                     </div>
                   </div>
-
                   <div className="extras">
                     <div className="keep">
                       <div className="chk">
@@ -639,9 +715,8 @@ export default function LoginPage() {
                       </div>
                       <span className="keep-label">Keep me signed in</span>
                     </div>
-                    <a className="forgot" href="#">Forgot password?</a>
+                    #
                   </div>
-
                   <div className="submit-wrap">
                     <button className="submit" onClick={handleLogin} disabled={loading}>
                       {loading ? (
@@ -651,13 +726,11 @@ export default function LoginPage() {
                       )}
                     </button>
                   </div>
-
                   <div className="div-row">
                     <div className="div-line" />
                     <span className="div-text">256-bit encrypted · secured access</span>
                     <div className="div-line" />
                   </div>
-
                   <div className="badges">
                     {[
                       { color:"#60a5fa", label:"TLS 1.3" },
