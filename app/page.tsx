@@ -3,11 +3,12 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import RdsForm     from "../components/RdsForm";
 import RecordsPage from "../components/RecordsPage";
+import AmbientBackground from "../components/AmbientBackground";   // 👈 ADDED
 import { rdsSchema } from "../schema";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
-type View = "form" | "records" | "search";
 
+type View = "form" | "records" | "search";
 interface RDSUser { name: string; role: string; email: string; }
 interface EditRecord { id: string; data: Record<string, any>; }
 
@@ -31,12 +32,10 @@ function useCountUp(target: number, duration: number = 900, delay: number = 0) {
   const frameRef = useRef<number>(0);
   const startRef = useRef<number | null>(null);
   const fromRef  = useRef(0);
-
   useEffect(() => {
     const from = fromRef.current;
     const diff  = target - from;
     if (diff === 0) return;
-
     let started = false;
     const delayTimer = setTimeout(() => {
       started = true;
@@ -44,7 +43,6 @@ function useCountUp(target: number, duration: number = 900, delay: number = 0) {
         if (startRef.current === null) startRef.current = ts;
         const elapsed = ts - startRef.current;
         const t = Math.min(elapsed / duration, 1);
-        // Ease-out-expo
         const eased = t === 1 ? 1 : 1 - Math.pow(2, -10 * t);
         setDisplay(Math.round(from + diff * eased));
         if (t < 1) {
@@ -56,7 +54,6 @@ function useCountUp(target: number, duration: number = 900, delay: number = 0) {
       };
       frameRef.current = requestAnimationFrame(animate);
     }, delay);
-
     return () => {
       clearTimeout(delayTimer);
       if (!started) return;
@@ -64,7 +61,6 @@ function useCountUp(target: number, duration: number = 900, delay: number = 0) {
       startRef.current = null;
     };
   }, [target, duration, delay]);
-
   return display;
 }
 
@@ -75,15 +71,12 @@ function AnimatedStat({
   icon: string; label: string; value: number | string;
   color: string; ac: string; index: number;
 }) {
-  // Parse numeric value — "92%" → 92 (animate), then re-add "%"
   const isPercent = typeof value === "string" && value.endsWith("%");
   const numericTarget = isPercent
     ? parseInt(value as string, 10)
     : typeof value === "number" ? value : 0;
-
   const counted = useCountUp(numericTarget, 1000, index * 120);
   const display = isPercent ? `${counted}%` : counted;
-
   return (
     <div className="stat-card">
       <div className="stat-icon" style={{ background: color }}>{icon}</div>
@@ -112,7 +105,6 @@ function Page() {
   const [sidebarOpen,    setSidebarOpen]    = useState(true);
   const [editRecord,     setEditRecord]     = useState<EditRecord | null>(null);
 
-  // Section slide direction tracking
   const prevSectionRef    = useRef(0);
   const sectionWrapperRef = useRef<HTMLDivElement>(null);
   const cursorOrbRef      = useRef<HTMLDivElement>(null);
@@ -152,20 +144,15 @@ function Page() {
   useEffect(() => {
     let rafId: number;
     let timerId: ReturnType<typeof setTimeout>;
-
     const setupObserver = () => {
       const cards = document.querySelectorAll<HTMLElement>(".rds-card");
-
-      // No cards yet — RdsForm still rendering, retry once more
       if (cards.length === 0) {
         timerId = setTimeout(setupObserver, 120);
         return;
       }
-
       cards.forEach((card, i) => {
         card.style.setProperty("--stagger-delay", `${i * 55}ms`);
       });
-
       const obs = new IntersectionObserver(
         (entries) => entries.forEach(entry => {
           if (entry.isIntersecting) {
@@ -173,26 +160,18 @@ function Page() {
             obs.unobserve(entry.target);
           }
         }),
-        // Generous rootMargin — catches cards already in viewport on first load
         { threshold: 0.01, rootMargin: "120px 0px 120px 0px" }
       );
-
       cards.forEach(card => obs.observe(card));
-
-      // Safety fallback — if observer never fires (e.g. hidden tab), force-show all after 800ms
       timerId = setTimeout(() => {
         document.querySelectorAll<HTMLElement>(".rds-card:not(.card-visible)")
           .forEach(card => card.classList.add("card-visible"));
       }, 800);
-
       return () => obs.disconnect();
     };
-
-    // Wait one animation frame for React to flush the DOM, then a small buffer
     rafId = requestAnimationFrame(() => {
       timerId = setTimeout(setupObserver, 80);
     });
-
     return () => {
       cancelAnimationFrame(rafId);
       clearTimeout(timerId);
@@ -206,7 +185,6 @@ function Page() {
     const goingForward = nextIdx > prevSectionRef.current;
     const exitClass   = goingForward ? "section-exit-next"  : "section-exit-prev";
     const enterClass  = goingForward ? "section-enter-next" : "section-enter-prev";
-    // Exit
     wrapper.classList.add(exitClass);
     setTimeout(() => {
       wrapper.classList.remove(exitClass);
@@ -244,10 +222,11 @@ function Page() {
 
   return (
     <div style={{ display:"flex", minHeight:"100vh" }}>
+      {/* Ambient aurora canvas — behind everything */}
+      <AmbientBackground />                                        {/* 👈 ADDED */}
 
       {/* Ambient cursor orb */}
       <div ref={cursorOrbRef} className="cursor-orb" />
-
       {/* Floating ambient particles */}
       <div className="ambient-particle" />
       <div className="ambient-particle" />
@@ -257,19 +236,15 @@ function Page() {
 
       {/* ── SIDEBAR ─────────────────────────────────── */}
       <aside className="sidebar" style={{ transform: sidebarOpen ? "none" : "translateX(-100%)", transition:"transform 0.3s cubic-bezier(0.23,1,0.32,1)" }}>
-
-        {/* ── Aurora atmosphere layers ─────────────── */}
         <div className="sidebar-dot-grid" />
         <div className="sidebar-edge-glow" />
         <div className="sidebar-veil" />
-
         <div className="sidebar-logo-area">
           <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between" }}>
             <div className="sidebar-brand">
               RDS System
               <span>Medical Infra </span>
             </div>
-            {/* Heartbeat online dot — indigo/cyan to match new palette */}
             <div
               className="online-dot"
               style={{
@@ -280,7 +255,6 @@ function Page() {
               title="System online"
             />
           </div>
-
           <div style={{ marginTop:18, display:"flex", alignItems:"center", gap:10 }}>
             <div style={{
               width:36, height:36, borderRadius:11,
@@ -307,10 +281,8 @@ function Page() {
             >⏻</button>
           </div>
         </div>
-
         <nav className="sidebar-nav">
           <div className="nav-group-label">Form Sections</div>
-
           {rdsSchema.map((section, idx) => {
             const isActive = view === "form" && idx === activeSection;
             const isDone   = view === "form" && idx < activeSection;
@@ -339,9 +311,7 @@ function Page() {
               </div>
             );
           })}
-
-          <div className="nav-group-label" style={{ marginTop:12 }}>Records &amp; Export</div>
-
+          <div className="nav-group-label" style={{ marginTop:12 }}>Records & Export</div>
           {([
             { icon:"📋", label:"All Room Sheets",    id:"records" },
             { icon:"🔍", label:"Search & Filter",    id:"search"  },
@@ -361,7 +331,6 @@ function Page() {
             </div>
           ))}
         </nav>
-
         <div className="sidebar-progress-area">
           <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
             <span style={{ fontSize:9, color:"rgba(255,255,255,0.28)", fontWeight:700, letterSpacing:2, textTransform:"uppercase", fontFamily:"'Sora',sans-serif" }}>
@@ -390,7 +359,6 @@ function Page() {
 
       {/* ── MAIN ─────────────────────────────────────── */}
       <div className="main-wrapper">
-
         <header className="topbar">
           <div style={{ display:"flex", alignItems:"center", gap:14 }}>
             <button
@@ -407,7 +375,6 @@ function Page() {
                   ? (editRecord ? "Edit Room Data Sheet" : "Room Data Sheet Dashboard")
                   : "All Room Records"}
               </h1>
-              {/* Animated label — re-mounts on section change to trigger animation */}
               <p key={labelKey.current} className="topbar-section-label">
                 {view === "form"
                   ? editRecord
@@ -417,7 +384,6 @@ function Page() {
               </p>
             </div>
           </div>
-
           <div className="topbar-actions">
             {view === "form" && !editRecord && (
               <>
@@ -452,9 +418,7 @@ function Page() {
             )}
           </div>
         </header>
-
         <main className="page-content">
-
           {view === "form" && !editRecord && (
             <div className="stats-strip">
               {[
@@ -467,8 +431,6 @@ function Page() {
               ))}
             </div>
           )}
-
-          {/* Section transition wrapper */}
           <div ref={sectionWrapperRef}>
             {view === "form" && (
               <RdsForm
@@ -482,14 +444,12 @@ function Page() {
               />
             )}
           </div>
-
           {(view === "records" || view === "search") && (
             <RecordsPage
               onBack={() => { setEditRecord(null); setView("form"); }}
               onEdit={handleEdit}
             />
           )}
-
         </main>
       </div>
     </div>
