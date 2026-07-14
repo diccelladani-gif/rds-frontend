@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import RdsForm     from "../components/RdsForm";
 import RecordsPage from "../components/RecordsPage";
 import AmbientBackground from "../components/AmbientBackground";   // 👈 ADDED
+import MedicalAmbient from "../components/MedicalAmbient";
 import { rdsSchema } from "../schema";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
@@ -224,6 +225,7 @@ function Page() {
     <div style={{ display:"flex", minHeight:"100vh" }}>
       {/* Ambient aurora canvas — behind everything */}
       <AmbientBackground />                                        {/* 👈 ADDED */}
+      <MedicalAmbient />
 
       {/* Ambient cursor orb */}
       <div ref={cursorOrbRef} className="cursor-orb" />
