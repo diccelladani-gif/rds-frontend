@@ -1809,3 +1809,42 @@ div[title="System online"] {
   56%     { transform: scale(1);    box-shadow: 0 0 6px  rgba(16,185,129,0.5); }
 }
 
+/* ═══════════════════════════════════════════════════════════════════
+   AMBIENT AURORA VISIBILITY — dashboard only (login page untouched)
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* CRITICAL: main wrapper was an opaque layer covering the canvas */
+.main-wrapper {
+  background: transparent !important;
+}
+
+/* Page content transparent so aurora shows behind cards */
+.page-content {
+  background: transparent !important;
+}
+
+/* Frosted-glass section cards — aurora glows softly through */
+.rds-card {
+  background: rgba(255, 255, 255, 0.82) !important;
+  backdrop-filter: blur(22px) saturate(170%);
+  -webkit-backdrop-filter: blur(22px) saturate(170%);
+}
+
+/* Frosted-glass stat cards to match */
+.stat-card {
+  background: rgba(255, 255, 255, 0.80) !important;
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+}
+
+/* Topbar slightly more translucent so aurora peeks at the top */
+.topbar {
+  background: rgba(242, 245, 249, 0.68) !important;
+}
+
+/* Records table also frosted for consistency */
+.records-table-wrap {
+  background: rgba(255, 255, 255, 0.82) !important;
+  backdrop-filter: blur(20px) saturate(165%);
+  -webkit-backdrop-filter: blur(20px) saturate(165%);
+}
