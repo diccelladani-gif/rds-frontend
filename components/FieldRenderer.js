@@ -2142,13 +2142,18 @@ export default function FieldRenderer({ field, register, errors, setValue, watch
     )}
 
       {field.type === "text" && (
-        <input
-          className={`rds-input ${baseClass}`}
-          placeholder={field.placeholder || `Enter ${field.label.toLowerCase()}`}
-          {...register(field.name, {
-            required: field.required ? `${field.label} is required` : false
-          })}
-        />
+        <div style={{ position: "relative" }}>
+          <input
+            className={`rds-input ${baseClass}`}
+            placeholder={field.placeholder || `Enter ${field.label.toLowerCase()}`}
+            style={{ transition: "all 0.22s cubic-bezier(0.34,1.4,0.64,1)" }}
+            onFocus={e => { e.target.style.transform = "translateY(-1px)"; }}
+            onBlur={e => { e.target.style.transform = "translateY(0)"; }}
+            {...register(field.name, {
+              required: field.required ? `${field.label} is required` : false
+            })}
+          />
+        </div>
       )}
 
       {field.type === "number" && (
