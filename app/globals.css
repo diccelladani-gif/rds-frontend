@@ -1881,3 +1881,18 @@ div[title="System online"] {
     box-shadow: var(--shadow-card);
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   SECTION COMPLETE — HEARTBEAT FLASH (overrides card-visible !important)
+   ═══════════════════════════════════════════════════════════════════ */
+.rds-card.section-complete-flash {
+  animation: completeFlashStrong 0.85s cubic-bezier(0.25,1.2,0.5,1) both !important;
+}
+
+@keyframes completeFlashStrong {
+  0%   { box-shadow: var(--shadow-card); }
+  25%  { box-shadow: 0 0 0 4px rgba(16,185,129,0.45), 0 0 34px rgba(16,185,129,0.5), 0 0 60px rgba(16,185,129,0.3); }
+  50%  { box-shadow: 0 0 0 2px rgba(16,185,129,0.25), 0 0 20px rgba(16,185,129,0.25); }
+  75%  { box-shadow: 0 0 0 5px rgba(16,185,129,0.5), 0 0 40px rgba(16,185,129,0.55), 0 0 70px rgba(16,185,129,0.35); }
+  100% { box-shadow: var(--shadow-card); }
+}
