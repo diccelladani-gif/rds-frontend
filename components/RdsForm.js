@@ -10,6 +10,37 @@ import UploadZone from "./UploadZone";
 import SuccessOverlay from "./SuccessOverlay";
 import ValidationPanel from "./ValidationPanel";
 
+// ─── Heartbeat flash + soft beep on section complete ──────────────
+function triggerCompleteFlash() {
+  // 1. Green heartbeat pulse + expanding beep ring on the current card
+  const card = document.querySelector(".rds-card");
+  if (card) {
+    card.classList.remove("section-complete-flash");
+    void card.offsetWidth;                 // force reflow so animation re-fires
+    card.classList.add("section-complete-flash");
+    setTimeout(() => card.classList.remove("section-complete-flash"), 750);
+  }
+
+  // 2. Soft "beep" — Web Audio, no file needed
+  try {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    const ctx = new AC();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(880, ctx.currentTime);
+    gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.12, ctx.currentTime + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.18);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.2);
+    osc.onended = () => ctx.close();
+  } catch (e) { /* audio unavailable — silently skip */ }
+}
+
+
 const DRAFT_KEY = "rds_draft_v2";
 const API = process.env.NEXT_PUBLIC_API_URL || "";
 const GROQ_API_KEY = process.env.NEXT_PUBLIC_GROQ_API_KEY || "";
