@@ -945,6 +945,7 @@ export default function RdsForm({ onSectionChange, jumpToSection, editRecord, on
     const valid = await trigger(getSectionFieldNames(currentSection));
     if (!valid) { addToast("Please complete required fields", "error"); return; }
     setCompletedSections(prev => new Set([...prev, currentSection.id]));
+    triggerCompleteFlash();                                    // 👈 ADDED
     if (currentIdx < rdsSchema.length - 1) {
       setCurrentIdx(i => i + 1);
       window.scrollTo({ top: 0, behavior: "smooth" });
